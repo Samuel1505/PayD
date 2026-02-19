@@ -2,17 +2,35 @@ import { Button, Icon, Layout } from "@stellar/design-system";
 import "./App.module.css";
 import ConnectAccount from "./components/ConnectAccount.tsx";
 import { Routes, Route, Outlet, NavLink } from "react-router-dom";
-import Home from "./pages/Home";
+// import Home from "./pages/Home";
 import Debugger from "./pages/Debugger.tsx";
+import PayrollScheduler from "./pages/PayrollScheduler";
+import EmployeeEntry from "./pages/EmployeeEntry";
 
 const AppLayout: React.FC = () => (
   <main>
     <Layout.Header
-      projectId="My App"
-      projectTitle="My App"
+      projectId="PayD"
+      projectTitle="PayD"
       contentRight={
         <>
-          <nav>
+          <nav className="flex space-x-4">
+            <NavLink
+              to="/payroll"
+              className={({ isActive }: { isActive: boolean }) =>
+                `text-sm font-medium ${isActive ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`
+              }
+            >
+              Payroll
+            </NavLink>
+            <NavLink
+              to="/employee"
+              className={({ isActive }: { isActive: boolean }) =>
+                `text-sm font-medium ${isActive ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`
+              }
+            >
+              Employees
+            </NavLink>
             <NavLink
               to="/debug"
               style={{
@@ -39,7 +57,7 @@ const AppLayout: React.FC = () => (
     <Outlet />
     <Layout.Footer>
       <span>
-        © {new Date().getFullYear()} My App. Licensed under the{" "}
+        © {new Date().getFullYear()} PayD. Licensed under the{" "}
         <a
           href="http://www.apache.org/licenses/LICENSE-2.0"
           target="_blank"
@@ -57,7 +75,9 @@ function App() {
   return (
     <Routes>
       <Route element={<AppLayout />}>
-        <Route path="/" element={<Home />} />
+        {/* <Route path="/" element={<Home />} /> */}
+        <Route path="/payroll" element={<PayrollScheduler />} />
+        <Route path="/employee" element={<EmployeeEntry />} />
         <Route path="/debug" element={<Debugger />} />
         <Route path="/debug/:contractName" element={<Debugger />} />
       </Route>
