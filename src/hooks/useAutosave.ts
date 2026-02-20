@@ -17,7 +17,11 @@ export function useAutosave<T>(key: string, data: T, delay: number = 1000) {
     const loadSavedData = useCallback((): T | null => {
         try {
             const item = window.localStorage.getItem(key);
-            return item ? JSON.parse(item) : null;
+            if (item) {
+                const parsed = JSON.parse(item) as unknown;
+                return parsed as T;
+            }
+            return null;
         } catch (error) {
             console.error(`Error loading autosave data for key "${key}":`, error);
             return null;

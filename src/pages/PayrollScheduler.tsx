@@ -1,125 +1,311 @@
 import React, { useEffect, useState } from "react";
 import { AutosaveIndicator } from "../components/AutosaveIndicator";
 import { useAutosave } from "../hooks/useAutosave";
+import { createClaimableBalanceTransaction, generateWallet } from "../services/stellar";
+import {
+  Button,
+  Card,
+  Input,
+  Select,
+  Alert,
+} from "@stellar/design-system";
+
+interface PendingClaim {
+  id: string;
+  employeeName: string;
+  amount: string;
+  dateScheduled: string;
+  claimantPublicKey: string;
+  status: string;
+}
+
+// Mock employer secret key for simulation purposes
+const MOCK_EMPLOYER_SECRET =
+  "SD3X5K7G7XV4K5V3M2G5QXH434M3VX6O5P3QVQO3L2PQSQQQQQQQQQQQ";
 
 interface PayrollFormState {
-    employeeName: string;
-    amount: string;
-    frequency: "weekly" | "monthly";
-    startDate: string;
+  employeeName: string;
+  amount: string;
+  frequency: "weekly" | "monthly";
+  startDate: string;
 }
 
 const initialFormState: PayrollFormState = {
-    employeeName: "",
-    amount: "",
-    frequency: "monthly",
-    startDate: "",
+  employeeName: "",
+  amount: "",
+  frequency: "monthly",
+  startDate: "",
 };
 
 export default function PayrollScheduler() {
-    const [formData, setFormData] = useState<PayrollFormState>(initialFormState);
+  const [formData, setFormData] = useState<PayrollFormState>(initialFormState);
+  const [pendingClaims, setPendingClaims] = useState<PendingClaim[]>(() => {
+    const saved = localStorage.getItem("pending-claims");
+    if (saved) {
+      const parsed = JSON.parse(saved) as unknown;
+      return parsed as PendingClaim[];
+    }
+    return [];
+  });
+  const [txResult, setTxResult] = useState<{
+    success: boolean;
+    message: string;
+  } | null>(null);
 
-    // Use the autosave hook
-    const { saving, lastSaved, loadSavedData } = useAutosave<PayrollFormState>(
-        "payroll-scheduler-draft",
-        formData
+  // Use the autosave hook
+  const { saving, lastSaved, loadSavedData } = useAutosave<PayrollFormState>(
+    "payroll-scheduler-draft",
+    formData
+  );
+
+  // Load saved data on mount
+  useEffect(() => {
+    const saved = loadSavedData();
+    if (saved) {
+      setFormData(saved);
+    }
+  }, [loadSavedData]);
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Assume employee's wallet address would be looked up by name or stored.
+    // Since we are mocking, we will just generate a random recipient for the claim test
+    // if we don't know it, or we could prompt for it.
+    // In a real flow, employeeName would map to their database record -> walletAddress.
+    const mockRecipientPublicKey = generateWallet().publicKey;
+
+    const result = createClaimableBalanceTransaction(
+      MOCK_EMPLOYER_SECRET,
+      mockRecipientPublicKey,
+      String(formData.amount),
+      "USDC"
     );
 
-    // Load saved data on mount
-    useEffect(() => {
-        const saved = loadSavedData();
-        if (saved) {
-            setFormData(saved);
-        }
-    }, [loadSavedData]);
+    if (result.success) {
+      const newClaim: PendingClaim = {
+        id: Math.random().toString(36).substr(2, 9),
+        employeeName: formData.employeeName,
+        amount: formData.amount,
+        dateScheduled:
+          formData.startDate || new Date().toISOString().split("T")[0],
+        claimantPublicKey: mockRecipientPublicKey,
+        status: "Pending Claim",
+      };
+      const updatedClaims = [...pendingClaims, newClaim];
+      setPendingClaims(updatedClaims);
+      localStorage.setItem("pending-claims", JSON.stringify(updatedClaims));
 
-    const handleChange = (
-        e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-    ) => {
-        const { name, value } = e.target;
-        setFormData((prev) => ({ ...prev, [name]: value }));
-    };
+      setTxResult({
+        success: true,
+        message: `Claimable balance of ${formData.amount} USDC created for ${formData.employeeName}.`,
+      });
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        console.log("Form submitted:", formData);
-        // In a real app, you would submit to API and clear saved data
-        // clearSavedData();
-    };
+      setFormData({ ...initialFormState });
+    } else {
+      setTxResult({
+        success: false,
+        message: "Failed to create claimable balance.",
+      });
+    }
+  };
 
-    return (
-        <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-md mt-10">
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold text-gray-800">Payroll Scheduler</h1>
-                <AutosaveIndicator saving={saving} lastSaved={lastSaved} />
-            </div>
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                        Employee Name
-                    </label>
-                    <input
-                        type="text"
-                        name="employeeName"
-                        value={formData.employeeName}
-                        onChange={handleChange}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
-                        placeholder="John Doe"
-                    />
-                </div>
-
-                <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                        Amount (USD)
-                    </label>
-                    <input
-                        type="number"
-                        name="amount"
-                        value={formData.amount}
-                        onChange={handleChange}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
-                        placeholder="5000"
-                    />
-                </div>
-
-                <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                        Frequency
-                    </label>
-                    <select
-                        name="frequency"
-                        value={formData.frequency}
-                        onChange={handleChange}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
-                    >
-                        <option value="weekly">Weekly</option>
-                        <option value="monthly">Monthly</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                        Start Date
-                    </label>
-                    <input
-                        type="date"
-                        name="startDate"
-                        value={formData.startDate}
-                        onChange={handleChange}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
-                    />
-                </div>
-
-                <div className="pt-4">
-                    <button
-                        type="submit"
-                        className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                    >
-                        Schedule Payroll
-                    </button>
-                </div>
-            </form>
+  return (
+    <div
+      style={{
+        maxWidth: "900px",
+        margin: "2rem auto",
+        padding: "0 1rem",
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(350px, 1fr))",
+        gap: "2rem",
+      }}
+    >
+      <div>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "1.5rem",
+          }}
+        >
+          <h1 style={{ fontWeight: "bold", fontSize: "1.5rem" }}>
+            Payroll Scheduler
+          </h1>
+          <AutosaveIndicator saving={saving} lastSaved={lastSaved} />
         </div>
-    );
+
+        {txResult && (
+          <div style={{ marginBottom: "1.5rem" }}>
+            <Alert
+              variant={txResult.success ? "success" : "error"}
+              title={txResult.success ? "Success" : "Error"}
+              placement="inline"
+            >
+              {txResult.message}
+            </Alert>
+          </div>
+        )}
+
+        <Card>
+          <form
+            onSubmit={handleSubmit}
+            style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}
+          >
+            <Input
+              id="employeeName"
+              fieldSize="md"
+              label="Employee Name"
+              name="employeeName"
+              value={formData.employeeName}
+              onChange={handleChange}
+              placeholder="John Doe"
+            />
+
+            <Input
+              id="amount"
+              fieldSize="md"
+              label="Amount (USD)"
+              name="amount"
+              value={formData.amount}
+              onChange={handleChange}
+              placeholder="5000"
+            />
+
+            <Select
+              id="frequency"
+              fieldSize="md"
+              label="Frequency"
+              value={formData.frequency}
+              onChange={(e) => handleSelectChange("frequency", e.target.value)}
+            >
+              <option value="weekly">Weekly</option>
+              <option value="monthly">Monthly</option>
+            </Select>
+
+            <Input
+              id="startDate"
+              fieldSize="md"
+              label="Start Date (YYYY-MM-DD)"
+              name="startDate"
+              value={formData.startDate}
+              onChange={handleChange}
+              placeholder="2024-01-01"
+            />
+
+            <Button type="submit" variant="primary" size="md">
+              Schedule Payroll
+            </Button>
+          </form>
+        </Card>
+      </div>
+
+      <div>
+        <h2
+          style={{
+            fontWeight: "bold",
+            fontSize: "1.25rem",
+            marginBottom: "1.5rem",
+          }}
+        >
+          Pending Claims
+        </h2>
+        <Card>
+          {pendingClaims.length === 0 ? (
+            <p style={{ color: "var(--color-gray-500)", margin: 0 }}>
+              No pending claimable balances.
+            </p>
+          ) : (
+            <ul
+              style={{
+                listStyle: "none",
+                padding: 0,
+                margin: 0,
+                display: "flex",
+                flexDirection: "column",
+                gap: "1rem",
+              }}
+            >
+              {pendingClaims.map((claim) => (
+                <li
+                  key={claim.id}
+                  style={{
+                    border: "1px solid var(--color-gray-300)",
+                    padding: "1rem",
+                    borderRadius: "8px",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "flex-start",
+                      marginBottom: "0.5rem",
+                    }}
+                  >
+                    <h3 style={{ fontWeight: "500", margin: 0 }}>
+                      {claim.employeeName}
+                    </h3>
+                    <span
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        padding: "0.125rem 0.625rem",
+                        borderRadius: "9999px",
+                        fontSize: "0.75rem",
+                        fontWeight: "500",
+                        backgroundColor: "var(--color-yellow-100)",
+                        color: "var(--color-yellow-800)",
+                      }}
+                    >
+                      {claim.status}
+                    </span>
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "0.875rem",
+                      color: "var(--color-gray-600)",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "0.25rem",
+                    }}
+                  >
+                    <p style={{ margin: 0 }}>
+                      Amount: {claim.amount} USDC
+                    </p>
+                    <p style={{ margin: 0 }}>
+                      Scheduled: {claim.dateScheduled}
+                    </p>
+                    <p
+                      style={{
+                        margin: 0,
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      }}
+                      title={claim.claimantPublicKey}
+                    >
+                      To: {claim.claimantPublicKey}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+      </div>
+    </div>
+  );
 }
