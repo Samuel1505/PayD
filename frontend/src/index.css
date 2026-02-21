@@ -1,5 +1,4 @@
 @import "tailwindcss";
-
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&family=Inter:wght@100..900&display=swap');
 
 *,
@@ -121,6 +120,7 @@ h6 {
         transform: translateY(0);
     }
 }
+
 /* ── SDS Component Fixes ── */
 select {
     appearance: none !important;
