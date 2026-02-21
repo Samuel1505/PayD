@@ -4,7 +4,10 @@ import { createServer } from 'http';
 import { config } from './config/env';
 import searchRoutes from './routes/searchRoutes';
 import employeeRoutes from './routes/employeeRoutes';
+import paymentRoutes from './routes/paymentRoutes';
+import authRoutes from './routes/authRoutes';
 import { initializeSocket, emitTransactionUpdate } from './services/socketService';
+import { HealthController } from './controllers/healthController';
 
 const app = express();
 const httpServer = createServer(app);
@@ -18,8 +21,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Routes
+app.use('/api/auth', authRoutes);
 app.use('/api/search', searchRoutes);
 app.use('/api/employees', employeeRoutes);
+app.use('/api/payments', paymentRoutes);
 
 // Transaction simulation endpoint (for testing WebSocket updates)
 app.post('/api/simulate-transaction-update', (req, res) => {
@@ -38,9 +43,7 @@ app.post('/api/simulate-transaction-update', (req, res) => {
 });
 
 // Health check
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
-});
+app.get('/health', HealthController.getHealthStatus);
 
 // 404 handler
 app.use((req, res) => {
