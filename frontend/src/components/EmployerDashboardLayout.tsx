@@ -157,8 +157,8 @@ const EmployerDashboardLayout: React.FC = () => {
 
           {/* Balance Display */}
           <div className="flex items-center gap-4">
-            <div className="bg-white/5 border border-white/10 rounded-lg px-4 py-2">
-              <div className="flex items-center gap-2">
+            <Card>
+              <div className="flex items-center gap-2 px-2 py-1">
                 <Coins className="w-5 h-5 text-[#4af0b8]" />
                 <div className="flex flex-col">
                   <span className="text-xs text-[#8b949e] font-mono">
@@ -169,7 +169,7 @@ const EmployerDashboardLayout: React.FC = () => {
                   </span>
                 </div>
               </div>
-            </div>
+            </Card>
           </div>
         </header>
 
