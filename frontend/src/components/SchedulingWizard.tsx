@@ -93,7 +93,7 @@ export const SchedulingWizard = ({
                                     key={freq}
                                     type="button"
                                     onClick={() =>
-                                        setConfig({ ...config, frequency: freq as any })
+                                        setConfig({ ...config, frequency: freq as SchedulingConfig['frequency'] })
                                     }
                                     className={`flex-1 py-3 rounded-xl border font-bold capitalize transition-all ${config.frequency === freq
                                         ? "border-accent text-accent bg-accent/10"
@@ -232,7 +232,7 @@ export const SchedulingWizard = ({
                         <h4 className="text-sm font-bold uppercase tracking-widest text-muted mb-3">Upcoming Runs</h4>
                         <ul className="flex flex-col gap-3">
                             {generatePreviewDates().map((date, i) => (
-                                <li key={i} className="flex items-center gap-4 bg-black/20 border border-hi p-4 rounded-xl">
+                                <li key={date.toISOString()} className="flex items-center gap-4 bg-black/20 border border-hi p-4 rounded-xl">
                                     <span className="flex-shrink-0 w-8 h-8 rounded-full bg-surface flex items-center justify-center font-bold text-muted text-xs">{i + 1}</span>
                                     <span className="font-mono">{date.toLocaleString()}</span>
                                 </li>

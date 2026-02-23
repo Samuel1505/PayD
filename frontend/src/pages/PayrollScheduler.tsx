@@ -3,8 +3,8 @@ import { AutosaveIndicator } from "../components/AutosaveIndicator";
 import { useAutosave } from "../hooks/useAutosave";
 import { useTransactionSimulation } from "../hooks/useTransactionSimulation";
 import { TransactionSimulationPanel } from "../components/TransactionSimulationPanel";
-import { useNotification } from "../providers/NotificationProvider";
-import { useSocket } from "../providers/SocketProvider";
+import { useNotification } from "../hooks/useNotification";
+import { useSocket } from "../hooks/useSocket";
 import { generateWallet } from "../services/stellar";
 import { useTranslation } from "react-i18next";
 import { Card } from "@stellar/design-system";
@@ -43,7 +43,7 @@ export default function PayrollScheduler() {
   const [formData, setFormData] = useState<PayrollFormState>(initialFormState);
   const [isBroadcasting, setIsBroadcasting] = useState(false);
   const [isWizardOpen, setIsWizardOpen] = useState(false);
-  const [activeSchedule, setActiveSchedule] = useState<any>(null);
+  const [activeSchedule, setActiveSchedule] = useState<{ frequency: string; timeOfDay: string } | null>(null);
   const [nextRunDate, setNextRunDate] = useState<Date | null>(null);
 
   const [pendingClaims, setPendingClaims] = useState<PendingClaim[]>(() => {
@@ -79,7 +79,7 @@ export default function PayrollScheduler() {
     }
   }, [loadSavedData]);
 
-  const handleScheduleComplete = (config: any) => {
+  const handleScheduleComplete = (config: { frequency: string; timeOfDay: string }) => {
     setActiveSchedule(config);
     setIsWizardOpen(false);
     notifySuccess("Payroll schedule configured!", `Frequency: ${config.frequency}, time: ${config.timeOfDay}`);
@@ -106,7 +106,7 @@ export default function PayrollScheduler() {
   useEffect(() => {
     if (!socket) return;
 
-    const handleTransactionUpdate = (data: any) => {
+    const handleTransactionUpdate = (data: { transactionId: string; status: string }) => {
       console.log("Received transaction update:", data);
       setPendingClaims((prev) =>
         prev.map((claim) =>
@@ -115,7 +115,7 @@ export default function PayrollScheduler() {
             : claim
         )
       );
-      
+
       if (data.status === 'confirmed') {
         notifySuccess("Payment confirmed!", `TX: ${data.transactionId}`);
       }

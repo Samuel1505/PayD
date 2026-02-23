@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   StellarWalletsKit,
   WalletNetwork,
@@ -7,18 +7,8 @@ import {
   LobstrModule,
 } from "@creit.tech/stellar-wallets-kit";
 import { useTranslation } from "react-i18next";
-import { useNotification } from "./NotificationProvider";
-
-interface WalletContextType {
-  address: string | null;
-  walletName: string | null;
-  isConnecting: boolean;
-  connect: () => Promise<void>;
-  disconnect: () => void;
-  signTransaction: (xdr: string) => Promise<string>;
-}
-
-const WalletContext = createContext<WalletContextType | undefined>(undefined);
+import { useNotification } from "../hooks/useNotification";
+import { WalletContext } from "../hooks/useWallet";
 
 export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -54,6 +44,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({
           void (async () => {
             const { address } = await kit.getAddress();
             setAddress(address);
+            setWalletName(option.id);
             notifySuccess("Wallet connected", `${address.slice(0, 6)}...${address.slice(-4)} via ${option.id}`);
           })();
         },
@@ -69,11 +60,19 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const disconnect = () => {
     setAddress(null);
+    setWalletName(null);
     notify("Wallet disconnected");
   };
 
+  const signTransaction = async (xdr: string) => {
+    const kit = kitRef.current;
+    if (!kit) throw new Error("Wallet kit not initialized");
+    const result = await kit.signTransaction(xdr);
+    return result.signedTxXdr;
+  };
+
   return (
-    <WalletContext.Provider
+    <WalletContext
       value={{
         address,
         walletName,
@@ -84,12 +83,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({
       }}
     >
       {children}
-    </WalletContext.Provider>
+    </WalletContext>
   );
 };
 
-export const useWallet = () => {
-  const context = useContext(WalletContext);
-  if (!context) throw new Error("useWallet must be used within WalletProvider");
-  return context;
-};

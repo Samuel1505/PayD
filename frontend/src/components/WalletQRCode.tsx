@@ -1,7 +1,16 @@
 import React, { useState } from "react";
+// @ts-expect-error - qrcode.react missing type definitions
 import { QRCodeSVG } from "qrcode.react";
-import { Icon, Button } from "@stellar/design-system";
-import { useNotification } from "../providers/NotificationProvider";
+import { Button } from "@stellar/design-system";
+import {
+  Copy,
+  Key,
+  Eye,
+  BookOpen,
+  ChevronDown,
+  Coins
+} from "lucide-react";
+import { useNotification } from "../hooks/useNotification";
 
 interface WalletQRCodeProps {
   walletAddress: string;
@@ -117,14 +126,14 @@ export const WalletQRCode: React.FC<WalletQRCodeProps> = ({
               size="md"
               onClick={() => void copyToClipboard(walletAddress, "Wallet address")}
             >
-              <Icon.Copy size="sm" />
+              <Copy size={16} className="mr-2" />
               Copy Address
             </Button>
 
             {secretKey && (
               <div className="mt-4">
                 <label className="text-sm text-yellow-500 font-mono uppercase tracking-wider flex items-center gap-2">
-                  <Icon.Key size="sm" />
+                  <Key size={16} className="mr-2" />
                   Secret Key (Save Securely!)
                 </label>
                 <div className="mt-1 p-3 bg-yellow-900/20 border border-yellow-600/30 rounded-lg">
@@ -138,7 +147,7 @@ export const WalletQRCode: React.FC<WalletQRCodeProps> = ({
                         size="sm"
                         onClick={() => void copyToClipboard(secretKey, "Secret key")}
                       >
-                        <Icon.Copy size="sm" />
+                        <Copy size={16} className="mr-2" />
                         Copy Secret Key
                       </Button>
                     </div>
@@ -147,7 +156,7 @@ export const WalletQRCode: React.FC<WalletQRCodeProps> = ({
                       onClick={() => setShowSecret(true)}
                       className="text-yellow-400 hover:text-yellow-300 text-sm flex items-center gap-2"
                     >
-                      <Icon.Eye size="sm" />
+                      <Eye size={16} className="mr-2" />
                       Click to reveal secret key
                     </button>
                   )}
@@ -160,7 +169,7 @@ export const WalletQRCode: React.FC<WalletQRCodeProps> = ({
 
       <div className="bg-surface rounded-xl p-6 border border-hi">
         <h3 className="text-lg font-bold mb-4 text-text flex items-center gap-2">
-          <Icon.BookOpen size="md" />
+          <BookOpen size={20} className="mr-2" />
           Trustline Setup Guide
         </h3>
         <p className="text-muted text-sm mb-4">
@@ -184,11 +193,10 @@ export const WalletQRCode: React.FC<WalletQRCodeProps> = ({
                   {item.step}
                 </span>
                 <span className="font-semibold text-text">{item.title}</span>
-                <Icon.ChevronDown
-                  size="sm"
-                  className={`ml-auto transition-transform ${
-                    expandedStep === item.step ? "rotate-180" : ""
-                  }`}
+                <ChevronDown
+                  size={16}
+                  className={`ml-auto transition-transform ${expandedStep === item.step ? "rotate-180" : ""
+                    }`}
                 />
               </button>
               {expandedStep === item.step && (
@@ -203,7 +211,7 @@ export const WalletQRCode: React.FC<WalletQRCodeProps> = ({
 
       <div className="bg-surface rounded-xl p-6 border border-hi">
         <h3 className="text-lg font-bold mb-4 text-text flex items-center gap-2">
-          <Icon.Coins size="md" />
+          <Coins size={20} className="mr-2" />
           Supported Assets
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -228,7 +236,7 @@ export const WalletQRCode: React.FC<WalletQRCodeProps> = ({
                       className="hover:text-accent transition-colors"
                     >
                       {truncateAddress(asset.issuer)}
-                      <Icon.Copy size="xs" className="inline ml-1" />
+                      <Copy size={12} className="inline ml-1" />
                     </button>
                   )}
                 </div>
@@ -238,12 +246,14 @@ export const WalletQRCode: React.FC<WalletQRCodeProps> = ({
         </div>
       </div>
 
-      {employeeName && (
-        <div className="text-center text-sm text-muted">
-          Share this QR code with {employeeName} so they can receive payments
-          directly to their wallet.
-        </div>
-      )}
-    </div>
+      {
+        employeeName && (
+          <div className="text-center text-sm text-muted">
+            Share this QR code with {employeeName} so they can receive payments
+            directly to their wallet.
+          </div>
+        )
+      }
+    </div >
   );
 };

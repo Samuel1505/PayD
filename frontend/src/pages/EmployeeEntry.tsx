@@ -13,7 +13,7 @@ import { WalletQRCode } from "../components/WalletQRCode";
 import { useAutosave } from "../hooks/useAutosave";
 import { generateWallet } from "../services/stellar";
 import { useTranslation } from "react-i18next";
-import { useNotification } from "../providers/NotificationProvider";
+import { useNotification } from "../hooks/useNotification";
 
 interface EmployeeFormState {
   fullName: string;
@@ -137,9 +137,8 @@ export default function EmployeeEntry() {
     );
 
     setNotification({
-      message: `Employee ${submitData.fullName} added successfully! ${
-        generatedWallet ? "A wallet was created for them." : ""
-      }`,
+      message: `Employee ${submitData.fullName} added successfully! ${generatedWallet ? "A wallet was created for them." : ""
+        }`,
       secretKey: generatedWallet?.secretKey,
       walletAddress: submitData.walletAddress,
       employeeName: submitData.fullName,

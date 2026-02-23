@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
+const API_BASE_URL = (import.meta.env.VITE_API_URL as string) || "http://localhost:3000/api";
 
 export interface SEP31Transaction {
     id: string;
@@ -13,14 +13,14 @@ export interface SEP31Transaction {
 
 export const anchorService = {
     getAnchorInfo: async (domain: string) => {
-        const response = await axios.get(`${API_BASE_URL}/payments/anchor-info`, {
+        const response = await axios.get<{ info: Record<string, unknown> }>(`${API_BASE_URL}/payments/anchor-info`, {
             params: { domain }
         });
         return response.data;
     },
 
-    initiatePayment: async (domain: string, secretKey: string, paymentData: any) => {
-        const response = await axios.post(`${API_BASE_URL}/payments/sep31/initiate`, {
+    initiatePayment: async (domain: string, secretKey: string, paymentData: { amount: string; asset_code: string; receiver_id: string }) => {
+        const response = await axios.post<{ id: string }>(`${API_BASE_URL}/payments/sep31/initiate`, {
             domain,
             secretKey,
             paymentData
@@ -29,7 +29,7 @@ export const anchorService = {
     },
 
     getTransactionStatus: async (domain: string, id: string, secretKey: string) => {
-        const response = await axios.get(`${API_BASE_URL}/payments/sep31/status/${domain}/${id}`, {
+        const response = await axios.get<SEP31Transaction>(`${API_BASE_URL}/payments/sep31/status/${domain}/${id}`, {
             params: { secretKey }
         });
         return response.data;

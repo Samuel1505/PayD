@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useWallet } from "../providers/WalletProvider";
+import { useWallet } from "./useWallet";
 
 /**
  * Convenience hook for signing Stellar transactions via the connected wallet.

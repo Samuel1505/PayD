@@ -1,7 +1,22 @@
 import { useState } from "react";
 import { anchorService } from "../services/anchor";
 import { Loader2, ArrowRightLeft, ShieldCheck, Info, CheckCircle2 } from "lucide-react";
-import { useNotification } from "../providers/NotificationProvider";
+import { useNotification } from "../hooks/useNotification";
+
+interface Quote {
+    rate: number;
+    fee: number;
+    total_out: number;
+}
+
+interface SEP31Transaction {
+    id: string;
+    status: string;
+}
+
+interface InitiationResult {
+    id: string;
+}
 
 export default function CrossAssetPayment() {
     const { notifySuccess, notifyError } = useNotification();
@@ -11,26 +26,24 @@ export default function CrossAssetPayment() {
     const [amount, setAmount] = useState("");
     const [receiver, setReceiver] = useState("");
     const [isLoading, setIsLoading] = useState(false);
-    const [quote, setQuote] = useState<any>(null);
-    const [transaction, setTransaction] = useState<any>(null);
+    const [quote, setQuote] = useState<Quote | null>(null);
+    const [transaction, setTransaction] = useState<InitiationResult | SEP31Transaction | null>(null);
     const [status, setStatus] = useState<string>("idle");
 
     const fetchQuote = async () => {
         if (!amount || Number(amount) <= 0) return;
         setIsLoading(true);
         try {
-            // Simulation of quote fetching from anchor
-            setTimeout(() => {
-                setQuote({
-                    rate: 1550.25,
-                    fee: 2.50,
-                    total_out: (Number(amount) * 1550.25) - 2.50
-                });
-                setIsLoading(false);
-            }, 1000);
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+            setQuote({
+                rate: 1550.25,
+                fee: 2.50,
+                total_out: (Number(amount) * 1550.25) - 2.50
+            });
         } catch (error) {
             console.error(error);
             notifyError("Quote fetch failed", "Could not retrieve conversion rate from anchor.");
+        } finally {
             setIsLoading(false);
         }
     };
@@ -50,14 +63,16 @@ export default function CrossAssetPayment() {
             notifySuccess("Payment initiated", `Transaction ID: ${result.id}`);
 
             // Start polling for status
-            const interval = setInterval(async () => {
-                const statusUpdate = await anchorService.getTransactionStatus(domain, result.id, "S...MOCKED");
-                setTransaction(statusUpdate);
-                if (statusUpdate.status === "completed") {
-                    setStatus("completed");
-                    notifySuccess("Payment completed!", `${amount} ${assetIn} sent successfully.`);
-                    clearInterval(interval);
-                }
+            const interval = setInterval(() => {
+                void (async () => {
+                    const statusUpdate = await anchorService.getTransactionStatus(domain, result.id, "S...MOCKED");
+                    setTransaction(statusUpdate);
+                    if (statusUpdate.status === "completed") {
+                        setStatus("completed");
+                        notifySuccess("Payment completed!", `${amount} ${assetIn} sent successfully.`);
+                        clearInterval(interval);
+                    }
+                })();
             }, 3000);
 
         } catch (error) {
@@ -127,7 +142,7 @@ export default function CrossAssetPayment() {
                                         type="number"
                                         value={amount}
                                         onChange={(e) => setAmount(e.target.value)}
-                                        onBlur={fetchQuote}
+                                        onBlur={() => { void fetchQuote(); }}
                                         placeholder="0.00"
                                         className="w-full bg-[#0a0a0c] border border-zinc-800 rounded-xl px-4 py-3 text-2xl font-bold focus:ring-2 focus:ring-blue-500 outline-none"
                                     />
@@ -147,7 +162,7 @@ export default function CrossAssetPayment() {
                             </div>
 
                             <button
-                                onClick={handleInitiate}
+                                onClick={() => { void handleInitiate(); }}
                                 disabled={status !== "idle" || !quote}
                                 className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 py-4 rounded-xl font-bold text-lg hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                             >
