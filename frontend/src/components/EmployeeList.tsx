@@ -136,13 +136,6 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
     <div className="w-full card glass noise overflow-hidden p-0">
       <div className="flex justify-between items-center p-6">
         <span className="font-bold text-lg">Employees</span>
-        <button
-          className="flex items-center gap-2 px-3 py-2 bg-blue-500 text-white rounded"
-          onClick={() => setShowAddModal(true)}
-        >
-          <PlusCircle className="w-5 h-5" />
-          Add Employee
-        </button>
       </div>
       <table className="w-full text-left border-collapse">
         <thead>
