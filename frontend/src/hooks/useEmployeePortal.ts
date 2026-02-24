@@ -1,8 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
-import {
-  fetchExchangeRates,
-  getStellarExpertLink,
-} from "../services/currencyConversion";
+import { useState, useEffect, useCallback } from 'react';
+import { fetchExchangeRates, getStellarExpertLink } from '../services/currencyConversion';
 
 /**
  * Mock transaction data representing incoming payments for an employee.
@@ -16,8 +13,8 @@ export interface EmployeeTransaction {
   assetCode: string;
   from: string;
   memo: string;
-  status: "completed" | "pending" | "failed";
-  type: "salary" | "bonus" | "reimbursement";
+  status: 'completed' | 'pending' | 'failed';
+  type: 'salary' | 'bonus' | 'reimbursement';
   stellarExpertUrl: string;
 }
 
@@ -52,55 +49,66 @@ interface UseEmployeePortalReturn {
 // Generate realistic mock transaction data
 function generateMockTransactions(): EmployeeTransaction[] {
   const baseTxHashes = [
-    "a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456",
-    "b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef1234567a",
-    "c3d4e5f6789012345678901234567890abcdef1234567890abcdef1234567ab2",
-    "d4e5f6789012345678901234567890abcdef1234567890abcdef1234567abc34",
-    "e5f6789012345678901234567890abcdef1234567890abcdef1234567abcd456",
-    "f6789012345678901234567890abcdef1234567890abcdef1234567abcde5678",
-    "78901234567890abcdef1234567890abcdef1234567abcde567890abcdef1234",
-    "89012345678901234567890abcdef1234567890abcdef567890abcdef12345678",
-    "90123456789012345678901234567890abcdef1234567890abcdef1234567890a",
-    "01234567890123456789012345678901234567890abcdef1234567890abcdef12",
-    "1234567890abcdef0123456789012345678901234567890abcdef1234567890ab",
-    "23456789abcdef01234567890123456789012345678901234567890abcdef1234",
+    'a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456',
+    'b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef1234567a',
+    'c3d4e5f6789012345678901234567890abcdef1234567890abcdef1234567ab2',
+    'd4e5f6789012345678901234567890abcdef1234567890abcdef1234567abc34',
+    'e5f6789012345678901234567890abcdef1234567890abcdef1234567abcd456',
+    'f6789012345678901234567890abcdef1234567890abcdef1234567abcde5678',
+    '78901234567890abcdef1234567890abcdef1234567abcde567890abcdef1234',
+    '89012345678901234567890abcdef1234567890abcdef567890abcdef12345678',
+    '90123456789012345678901234567890abcdef1234567890abcdef1234567890a',
+    '01234567890123456789012345678901234567890abcdef1234567890abcdef12',
+    '1234567890abcdef0123456789012345678901234567890abcdef1234567890ab',
+    '23456789abcdef01234567890123456789012345678901234567890abcdef1234',
   ];
 
-  const orgWallet = "GBZH...EMPLOYER";
+  const orgWallet = 'GBZH...EMPLOYER';
   const memos = [
-    "Salary Jan 2026",
-    "Salary Feb 2026",
-    "Salary Mar 2026",
-    "Salary Apr 2026",
-    "Salary May 2026",
-    "Salary Jun 2026",
-    "Q1 Performance Bonus",
-    "Q2 Performance Bonus",
-    "Travel Reimbursement",
-    "WFH Equipment Allow.",
-    "Salary Jul 2026",
-    "Salary Aug 2026",
+    'Salary Jan 2026',
+    'Salary Feb 2026',
+    'Salary Mar 2026',
+    'Salary Apr 2026',
+    'Salary May 2026',
+    'Salary Jun 2026',
+    'Q1 Performance Bonus',
+    'Q2 Performance Bonus',
+    'Travel Reimbursement',
+    'WFH Equipment Allow.',
+    'Salary Jul 2026',
+    'Salary Aug 2026',
   ];
 
-  const types: ("salary" | "bonus" | "reimbursement")[] = [
-    "salary", "salary", "salary", "salary", "salary", "salary",
-    "bonus", "bonus",
-    "reimbursement", "reimbursement",
-    "salary", "salary",
+  const types: ('salary' | 'bonus' | 'reimbursement')[] = [
+    'salary',
+    'salary',
+    'salary',
+    'salary',
+    'salary',
+    'salary',
+    'bonus',
+    'bonus',
+    'reimbursement',
+    'reimbursement',
+    'salary',
+    'salary',
   ];
 
-  const amounts = [
-    2500, 2500, 2500, 2500, 2500, 2500,
-    800, 1200,
-    350, 150,
-    2650, 2650,
-  ];
+  const amounts = [2500, 2500, 2500, 2500, 2500, 2500, 800, 1200, 350, 150, 2650, 2650];
 
-  const statuses: ("completed" | "pending" | "failed")[] = [
-    "completed", "completed", "completed", "completed", "completed", "completed",
-    "completed", "completed",
-    "completed", "completed",
-    "pending", "completed",
+  const statuses: ('completed' | 'pending' | 'failed')[] = [
+    'completed',
+    'completed',
+    'completed',
+    'completed',
+    'completed',
+    'completed',
+    'completed',
+    'completed',
+    'completed',
+    'completed',
+    'pending',
+    'completed',
   ];
 
   return baseTxHashes.map((hash, i) => {
@@ -110,7 +118,7 @@ function generateMockTransactions(): EmployeeTransaction[] {
       txHash: hash,
       date: date.toISOString(),
       amount: amounts[i],
-      assetCode: "ORGUSD",
+      assetCode: 'ORGUSD',
       from: orgWallet,
       memo: memos[i],
       status: statuses[i],
@@ -127,11 +135,11 @@ export function useEmployeePortal(): UseEmployeePortalReturn {
   const [balance, setBalance] = useState<EmployeeBalance | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedCurrency, setSelectedCurrency] = useState("NGN");
+  const [selectedCurrency, setSelectedCurrency] = useState('NGN');
   const [currentPage, setCurrentPage] = useState(1);
-  const [filterStatus, setFilterStatus] = useState("all");
-  const [filterType, setFilterType] = useState("all");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [filterType, setFilterType] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const loadData = useCallback(async () => {
     setIsLoading(true);
@@ -141,13 +149,13 @@ export function useEmployeePortal(): UseEmployeePortalReturn {
       // Simulate API delay
       await new Promise((resolve) => setTimeout(resolve, 800));
 
-      // Load transactions 
+      // Load transactions
       const txs = generateMockTransactions();
       setTransactions(txs);
 
       // Calculate total balance from completed transactions
       const totalOrgUsd = txs
-        .filter((tx) => tx.status === "completed")
+        .filter((tx) => tx.status === 'completed')
         .reduce((sum, tx) => sum + tx.amount, 0);
 
       // Fetch exchange rates
@@ -162,7 +170,7 @@ export function useEmployeePortal(): UseEmployeePortalReturn {
         lastUpdated: new Date(),
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load data");
+      setError(err instanceof Error ? err.message : 'Failed to load data');
     } finally {
       setIsLoading(false);
     }
@@ -174,8 +182,8 @@ export function useEmployeePortal(): UseEmployeePortalReturn {
 
   // Filter transactions
   const filteredTransactions = transactions.filter((tx) => {
-    if (filterStatus !== "all" && tx.status !== filterStatus) return false;
-    if (filterType !== "all" && tx.type !== filterType) return false;
+    if (filterStatus !== 'all' && tx.status !== filterStatus) return false;
+    if (filterType !== 'all' && tx.type !== filterType) return false;
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       return (

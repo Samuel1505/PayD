@@ -11,7 +11,7 @@
 }
 
 .balanceCard::before {
-  content: "";
+  content: '';
   position: absolute;
   top: -50%;
   right: -30%;
@@ -22,7 +22,7 @@
 }
 
 .balanceCard::after {
-  content: "";
+  content: '';
   position: absolute;
   bottom: -50%;
   left: -20%;
@@ -128,7 +128,9 @@
   border: 1px solid var(--border);
   border-radius: 14px;
   padding: 20px;
-  transition: border-color 0.2s ease, transform 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    transform 0.2s ease;
 }
 
 .statCard:hover {
@@ -472,21 +474,34 @@
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* ── Loading Skeleton ─────────────── */
 .skeleton {
-  background: linear-gradient(90deg, var(--surface-hi) 25%, rgba(255,255,255,0.05) 50%, var(--surface-hi) 75%);
+  background: linear-gradient(
+    90deg,
+    var(--surface-hi) 25%,
+    rgba(255, 255, 255, 0.05) 50%,
+    var(--surface-hi) 75%
+  );
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
   border-radius: 8px;
 }
 
 @keyframes shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 .skeletonRow {

@@ -24,25 +24,25 @@ export interface ConvertedBalance {
 }
 
 const SUPPORTED_CURRENCIES: Record<string, string> = {
-  USD: "US Dollar",
-  NGN: "Nigerian Naira",
-  EUR: "Euro",
-  GBP: "British Pound",
-  KES: "Kenyan Shilling",
-  GHS: "Ghanaian Cedi",
-  ZAR: "South African Rand",
-  INR: "Indian Rupee",
+  USD: 'US Dollar',
+  NGN: 'Nigerian Naira',
+  EUR: 'Euro',
+  GBP: 'British Pound',
+  KES: 'Kenyan Shilling',
+  GHS: 'Ghanaian Cedi',
+  ZAR: 'South African Rand',
+  INR: 'Indian Rupee',
 };
 
 const CURRENCY_SYMBOLS: Record<string, string> = {
-  USD: "$",
-  NGN: "₦",
-  EUR: "€",
-  GBP: "£",
-  KES: "KSh",
-  GHS: "GH₵",
-  ZAR: "R",
-  INR: "₹",
+  USD: '$',
+  NGN: '₦',
+  EUR: '€',
+  GBP: '£',
+  KES: 'KSh',
+  GHS: 'GH₵',
+  ZAR: 'R',
+  INR: '₹',
 };
 
 // Cache exchange rates for 5 minutes
@@ -62,7 +62,7 @@ export async function fetchExchangeRates(): Promise<Record<string, number>> {
   try {
     // Use a free exchange rate API
     const response = await fetch(
-      "https://api.coingecko.com/api/v3/simple/price?ids=usd-coin&vs_currencies=usd,ngn,eur,gbp,kes,ghs,zar,inr"
+      'https://api.coingecko.com/api/v3/simple/price?ids=usd-coin&vs_currencies=usd,ngn,eur,gbp,kes,ghs,zar,inr'
     );
 
     if (!response.ok) {
@@ -70,9 +70,9 @@ export async function fetchExchangeRates(): Promise<Record<string, number>> {
     }
 
     const data = (await response.json()) as {
-      "usd-coin"?: Record<string, number>;
+      'usd-coin'?: Record<string, number>;
     };
-    const usdcRates = data["usd-coin"] ?? {};
+    const usdcRates = data['usd-coin'] ?? {};
 
     const rates: Record<string, number> = {
       USD: usdcRates.usd ?? 1,
@@ -88,7 +88,7 @@ export async function fetchExchangeRates(): Promise<Record<string, number>> {
     cachedRates = { rates, timestamp: Date.now() };
     return rates;
   } catch (error) {
-    console.warn("Failed to fetch live rates, using fallback:", error);
+    console.warn('Failed to fetch live rates, using fallback:', error);
 
     // Fallback rates
     const fallbackRates: Record<string, number> = {
@@ -118,7 +118,7 @@ export async function convertToLocal(
 
   return {
     originalAmount: amount,
-    originalCurrency: "ORGUSD",
+    originalCurrency: 'ORGUSD',
     localAmount: amount * rate,
     localCurrency: targetCurrency.toUpperCase(),
     exchangeRate: rate,
@@ -132,11 +132,11 @@ export async function convertToLocal(
 export function formatCurrency(amount: number, currency: string): string {
   const symbol = CURRENCY_SYMBOLS[currency.toUpperCase()] || currency;
 
-  if (currency === "USD" || currency === "ORGUSD") {
-    return `${symbol}${amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  if (currency === 'USD' || currency === 'ORGUSD') {
+    return `${symbol}${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   }
 
-  return `${symbol}${amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return `${symbol}${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 export function getCurrencySymbol(currency: string): string {
@@ -150,13 +150,19 @@ export function getSupportedCurrencies(): Record<string, string> {
 /**
  * Generate Stellar Expert deep link for a transaction hash
  */
-export function getStellarExpertLink(txHash: string, network: "public" | "testnet" = "testnet"): string {
+export function getStellarExpertLink(
+  txHash: string,
+  network: 'public' | 'testnet' = 'testnet'
+): string {
   return `https://stellar.expert/explorer/${network}/tx/${txHash}`;
 }
 
 /**
  * Generate Stellar Expert link for an account
  */
-export function getStellarExpertAccountLink(publicKey: string, network: "public" | "testnet" = "testnet"): string {
+export function getStellarExpertAccountLink(
+  publicKey: string,
+  network: 'public' | 'testnet' = 'testnet'
+): string {
   return `https://stellar.expert/explorer/${network}/account/${publicKey}`;
 }
