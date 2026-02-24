@@ -1,222 +1,127 @@
 import request from 'supertest';
 import express from 'express';
-import employeeController from '../employeeController';
-import employeeService from '../../services/employeeService';
 
-jest.mock('../../services/employeeService');
-jest.mock('../../config/database', () => ({
-  pool: {
-    query: jest.fn(),
+// Mock env config before importing routes
+jest.mock('../../config/env', () => ({
+  config: {
+    DATABASE_URL: 'postgres://mock',
+    PORT: 3000,
   },
 }));
 
+import employeeRoutes from '../../routes/employeeRoutes';
+import { employeeService } from '../../services/employeeService';
+
+// Mock the employee service
+jest.mock('../../services/employeeService');
+
 const app = express();
 app.use(express.json());
-app.post('/employees', employeeController.createEmployee.bind(employeeController));
-app.get('/employees/organizations/:organizationId', employeeController.getAllEmployees.bind(employeeController));
-app.get('/employees/organizations/:organizationId/:id', employeeController.getEmployee.bind(employeeController));
-app.put('/employees/organizations/:organizationId/:id', employeeController.updateEmployee.bind(employeeController));
-app.delete('/employees/organizations/:organizationId/:id', employeeController.deleteEmployee.bind(employeeController));
+app.use('/api/employees', employeeRoutes);
 
 describe('EmployeeController', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  describe('POST /employees', () => {
-    it('should create an employee with valid data', async () => {
-      const input = {
-        organization_id: 1,
-        first_name: 'John',
-        last_name: 'Doe',
-        email: 'john.doe@example.com',
-        phone: '+1234567890',
-        job_title: 'Software Engineer',
-        withdrawal_preference: 'bank',
-      };
+  describe('POST /api/employees', () => {
+    const validEmployeeData = {
+      organization_id: 1,
+      first_name: 'John',
+      last_name: 'Doe',
+      email: 'john.doe@example.com',
+      status: 'active',
+    };
 
-      const mockEmployee = { id: 1, ...input, created_at: new Date(), updated_at: new Date() };
-      (employeeService.createEmployee as jest.Mock).mockResolvedValue(mockEmployee);
+    it('should create an employee successfully', async () => {
+      const mockCreatedEmployee = { id: 1, ...validEmployeeData };
+      (employeeService.create as jest.Mock).mockResolvedValue(mockCreatedEmployee);
 
       const response = await request(app)
-        .post('/employees')
-        .send(input)
+        .post('/api/employees')
+        .send(validEmployeeData)
         .expect(201);
 
-      expect(response.body).toMatchObject(input);
-      expect(employeeService.createEmployee).toHaveBeenCalledWith(input);
-    });
-
-    it('should return 400 for missing required fields', async () => {
-      const response = await request(app)
-        .post('/employees')
-        .send({ first_name: 'John' })
-        .expect(400);
-
-      expect(response.body.error).toBe('Validation failed');
-    });
-
-    it('should return 400 for invalid email', async () => {
-      const response = await request(app)
-        .post('/employees')
-        .send({
-          organization_id: 1,
-          first_name: 'John',
-          last_name: 'Doe',
-          email: 'invalid-email',
-        })
-        .expect(400);
-
-      expect(response.body.error).toBe('Validation failed');
-    });
-
-    it('should return 400 for invalid withdrawal preference', async () => {
-      const response = await request(app)
-        .post('/employees')
-        .send({
-          organization_id: 1,
-          first_name: 'John',
-          last_name: 'Doe',
-          email: 'john@example.com',
-          withdrawal_preference: 'invalid',
-        })
-        .expect(400);
-
-      expect(response.body.error).toBe('Validation failed');
-    });
-  });
-
-  describe('GET /employees/organizations/:organizationId/:id', () => {
-    it('should return an employee when found', async () => {
-      const mockEmployee = {
-        id: 1,
-        organization_id: 1,
-        first_name: 'John',
-        last_name: 'Doe',
-        email: 'john@example.com',
-      };
-
-      (employeeService.getEmployeeById as jest.Mock).mockResolvedValue(mockEmployee);
-
-      const response = await request(app)
-        .get('/employees/organizations/1/1')
-        .expect(200);
-
-      expect(response.body).toEqual(mockEmployee);
-    });
-
-    it('should return 404 when employee not found', async () => {
-      (employeeService.getEmployeeById as jest.Mock).mockResolvedValue(null);
-
-      const response = await request(app)
-        .get('/employees/organizations/1/999')
-        .expect(404);
-
-      expect(response.body.error).toBe('Employee not found');
-    });
-
-    it('should return 400 for invalid ID', async () => {
-      const response = await request(app)
-        .get('/employees/organizations/1/invalid')
-        .expect(400);
-
-      expect(response.body.error).toBe('Invalid ID');
-    });
-  });
-
-  describe('GET /employees/organizations/:organizationId', () => {
-    it('should return all employees for an organization', async () => {
-      const mockEmployees = [
-        { id: 1, organization_id: 1, first_name: 'John', last_name: 'Doe' },
-        { id: 2, organization_id: 1, first_name: 'Jane', last_name: 'Smith' },
-      ];
-
-      (employeeService.getAllEmployees as jest.Mock).mockResolvedValue(mockEmployees);
-
-      const response = await request(app)
-        .get('/employees/organizations/1')
-        .expect(200);
-
-      expect(response.body).toEqual(mockEmployees);
-      expect(response.body).toHaveLength(2);
-    });
-
-    it('should return empty array when no employees found', async () => {
-      (employeeService.getAllEmployees as jest.Mock).mockResolvedValue([]);
-
-      const response = await request(app)
-        .get('/employees/organizations/1')
-        .expect(200);
-
-      expect(response.body).toEqual([]);
-    });
-  });
-
-  describe('PUT /employees/organizations/:organizationId/:id', () => {
-    it('should update an employee', async () => {
-      const updateData = {
-        phone: '+9876543210',
-        job_title: 'Senior Engineer',
-      };
-
-      const mockUpdatedEmployee = {
-        id: 1,
-        organization_id: 1,
-        first_name: 'John',
-        last_name: 'Doe',
-        ...updateData,
-      };
-
-      (employeeService.updateEmployee as jest.Mock).mockResolvedValue(mockUpdatedEmployee);
-
-      const response = await request(app)
-        .put('/employees/organizations/1/1')
-        .send(updateData)
-        .expect(200);
-
-      expect(response.body).toEqual(mockUpdatedEmployee);
-    });
-
-    it('should return 404 when employee not found', async () => {
-      (employeeService.updateEmployee as jest.Mock).mockResolvedValue(null);
-
-      const response = await request(app)
-        .put('/employees/organizations/1/999')
-        .send({ phone: '123' })
-        .expect(404);
-
-      expect(response.body.error).toBe('Employee not found');
+      expect(response.body).toEqual(mockCreatedEmployee);
+      expect(employeeService.create).toHaveBeenCalledWith(
+        expect.objectContaining(validEmployeeData)
+      );
     });
 
     it('should return 400 for invalid data', async () => {
-      const response = await request(app)
-        .put('/employees/organizations/1/1')
-        .send({ email: 'invalid-email' })
-        .expect(400);
+      const invalidData = { first_name: 'John' }; // Missing required fields
 
-      expect(response.body.error).toBe('Validation failed');
+      const response = await request(app).post('/api/employees').send(invalidData).expect(400);
+
+      expect(response.body).toHaveProperty('error', 'Validation Error');
+      expect(employeeService.create).not.toHaveBeenCalled();
     });
   });
 
-  describe('DELETE /employees/organizations/:organizationId/:id', () => {
-    it('should delete an employee', async () => {
-      (employeeService.deleteEmployee as jest.Mock).mockResolvedValue(true);
+  describe('GET /api/employees', () => {
+    it('should return paginated employees', async () => {
+      const mockResult = {
+        data: [{ id: 1, first_name: 'John' }],
+        pagination: { total: 1, page: 1, limit: 10, totalPages: 1 },
+      };
+      (employeeService.findAll as jest.Mock).mockResolvedValue(mockResult);
 
-      await request(app)
-        .delete('/employees/organizations/1/1')
-        .expect(204);
+      const response = await request(app).get('/api/employees?page=1&limit=10').expect(200);
 
-      expect(employeeService.deleteEmployee).toHaveBeenCalledWith(1, 1);
+      expect(response.body).toEqual(mockResult);
+      expect(employeeService.findAll).toHaveBeenCalledWith(
+        expect.objectContaining({
+          page: 1,
+          limit: 10,
+        })
+      );
+    });
+  });
+
+  describe('GET /api/employees/:id', () => {
+    it('should return employee by ID', async () => {
+      const mockEmployee = { id: 1, first_name: 'John' };
+      (employeeService.findById as jest.Mock).mockResolvedValue(mockEmployee);
+
+      const response = await request(app).get('/api/employees/1').expect(200);
+
+      expect(response.body).toEqual(mockEmployee);
+      expect(employeeService.findById).toHaveBeenCalledWith(1);
     });
 
-    it('should return 404 when employee not found', async () => {
-      (employeeService.deleteEmployee as jest.Mock).mockResolvedValue(false);
+    it('should return 404 if employee not found', async () => {
+      (employeeService.findById as jest.Mock).mockResolvedValue(null);
 
-      const response = await request(app)
-        .delete('/employees/organizations/1/999')
-        .expect(404);
+      await request(app).get('/api/employees/999').expect(404);
+    });
+  });
 
-      expect(response.body.error).toBe('Employee not found');
+  describe('PATCH /api/employees/:id', () => {
+    it('should update employee successfully', async () => {
+      const updateData = { first_name: 'Johnny' };
+      const mockUpdatedEmployee = { id: 1, first_name: 'Johnny' };
+      (employeeService.update as jest.Mock).mockResolvedValue(mockUpdatedEmployee);
+
+      const response = await request(app).patch('/api/employees/1').send(updateData).expect(200);
+
+      expect(response.body).toEqual(mockUpdatedEmployee);
+      expect(employeeService.update).toHaveBeenCalledWith(1, expect.objectContaining(updateData));
+    });
+  });
+
+  describe('DELETE /api/employees/:id', () => {
+    it('should delete employee successfully', async () => {
+      (employeeService.delete as jest.Mock).mockResolvedValue({ id: 1 });
+
+      await request(app).delete('/api/employees/1').expect(204);
+
+      expect(employeeService.delete).toHaveBeenCalledWith(1);
+    });
+
+    it('should return 404 if employee not found', async () => {
+      (employeeService.delete as jest.Mock).mockResolvedValue(null);
+
+      await request(app).delete('/api/employees/999').expect(404);
     });
   });
 });

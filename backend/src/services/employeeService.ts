@@ -1,175 +1,153 @@
-import { Pool } from 'pg';
 import { pool } from '../config/database';
-
-export interface Employee {
-  id: number;
-  organization_id: number;
-  first_name: string;
-  last_name: string;
-  email: string;
-  wallet_address?: string;
-  status: 'active' | 'inactive' | 'pending';
-  position?: string;
-  department?: string;
-  phone?: string;
-  job_title?: string;
-  hire_date?: string;
-  date_of_birth?: string;
-  address_line1?: string;
-  address_line2?: string;
-  city?: string;
-  state_province?: string;
-  postal_code?: string;
-  country?: string;
-  emergency_contact_name?: string;
-  emergency_contact_phone?: string;
-  withdrawal_preference: 'bank' | 'mobile_money' | 'crypto';
-  bank_name?: string;
-  bank_account_number?: string;
-  bank_routing_number?: string;
-  mobile_money_provider?: string;
-  mobile_money_account?: string;
-  notes?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface CreateEmployeeInput {
-  organization_id: number;
-  first_name: string;
-  last_name: string;
-  email: string;
-  wallet_address?: string;
-  status?: 'active' | 'inactive' | 'pending';
-  position?: string;
-  department?: string;
-  phone?: string;
-  job_title?: string;
-  hire_date?: string;
-  date_of_birth?: string;
-  address_line1?: string;
-  address_line2?: string;
-  city?: string;
-  state_province?: string;
-  postal_code?: string;
-  country?: string;
-  emergency_contact_name?: string;
-  emergency_contact_phone?: string;
-  withdrawal_preference?: 'bank' | 'mobile_money' | 'crypto';
-  bank_name?: string;
-  bank_account_number?: string;
-  bank_routing_number?: string;
-  mobile_money_provider?: string;
-  mobile_money_account?: string;
-  notes?: string;
-}
-
-export interface UpdateEmployeeInput {
-  first_name?: string;
-  last_name?: string;
-  email?: string;
-  wallet_address?: string;
-  status?: 'active' | 'inactive' | 'pending';
-  position?: string;
-  department?: string;
-  phone?: string;
-  job_title?: string;
-  hire_date?: string;
-  date_of_birth?: string;
-  address_line1?: string;
-  address_line2?: string;
-  city?: string;
-  state_province?: string;
-  postal_code?: string;
-  country?: string;
-  emergency_contact_name?: string;
-  emergency_contact_phone?: string;
-  withdrawal_preference?: 'bank' | 'mobile_money' | 'crypto';
-  bank_name?: string;
-  bank_account_number?: string;
-  bank_routing_number?: string;
-  mobile_money_provider?: string;
-  mobile_money_account?: string;
-  notes?: string;
-}
+import {
+  CreateEmployeeInput,
+  UpdateEmployeeInput,
+  EmployeeQueryInput,
+} from '../schemas/employeeSchema';
 
 export class EmployeeService {
-  private pool: Pool;
-
-  constructor(dbPool: Pool) {
-    this.pool = dbPool;
-  }
-
-  async createEmployee(data: CreateEmployeeInput): Promise<Employee> {
-    const fields = Object.keys(data).join(', ');
-    const values = Object.values(data);
-    const placeholders = values.map((_, i) => `$${i + 1}`).join(', ');
+  async create(data: CreateEmployeeInput) {
+    const {
+      organization_id,
+      first_name,
+      last_name,
+      email,
+      wallet_address,
+      position,
+      department,
+      status,
+    } = data;
 
     const query = `
-      INSERT INTO employees (${fields})
-      VALUES (${placeholders})
-      RETURNING *
+      INSERT INTO employees (
+        organization_id, first_name, last_name, email, wallet_address, position, department, status
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      RETURNING *;
     `;
 
-    const result = await this.pool.query(query, values);
+    const values = [
+      organization_id,
+      first_name,
+      last_name,
+      email,
+      wallet_address || null,
+      position || null,
+      department || null,
+      status || 'active',
+    ];
+
+    const result = await pool.query(query, values);
     return result.rows[0];
   }
 
-  async getEmployeeById(id: number, organizationId: number): Promise<Employee | null> {
-    const query = `
-      SELECT * FROM employees
-      WHERE id = $1 AND organization_id = $2
+  async findAll(params: EmployeeQueryInput) {
+    const { page = 1, limit = 10, search, status, department, organization_id } = params;
+    const offset = (page - 1) * limit;
+
+    let query = `
+      SELECT *, count(*) OVER() as total_count
+      FROM employees
+      WHERE deleted_at IS NULL
     `;
+    const values: (string | number)[] = [];
+    let paramIndex = 1;
 
-    const result = await this.pool.query(query, [id, organizationId]);
-    return result.rows[0] || null;
-  }
-
-  async getAllEmployees(organizationId: number): Promise<Employee[]> {
-    const query = `
-      SELECT * FROM employees
-      WHERE organization_id = $1
-      ORDER BY created_at DESC
-    `;
-
-    const result = await this.pool.query(query, [organizationId]);
-    return result.rows;
-  }
-
-  async updateEmployee(
-    id: number,
-    organizationId: number,
-    data: UpdateEmployeeInput
-  ): Promise<Employee | null> {
-    const fields = Object.keys(data);
-    if (fields.length === 0) {
-      return this.getEmployeeById(id, organizationId);
+    if (organization_id) {
+      query += ` AND organization_id = $${paramIndex++}`;
+      values.push(organization_id);
     }
 
-    const setClause = fields.map((field, i) => `${field} = $${i + 3}`).join(', ');
-    const values = Object.values(data);
+    if (status) {
+      query += ` AND status = $${paramIndex++}`;
+      values.push(status);
+    }
 
+    if (department) {
+      query += ` AND department = $${paramIndex++}`;
+      values.push(department);
+    }
+
+    if (search) {
+      // Use full-text search vector if possible, or ILIKE for simplicity
+      query += ` AND (
+        first_name ILIKE $${paramIndex} OR
+        last_name ILIKE $${paramIndex} OR
+        email ILIKE $${paramIndex} OR
+        position ILIKE $${paramIndex}
+      )`;
+      values.push(`%${search}%`);
+      paramIndex++;
+    }
+
+    query += ` ORDER BY created_at DESC LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
+    values.push(limit, offset);
+
+    const result = await pool.query(query, values);
+
+    const total = result.rows.length > 0 ? parseInt(result.rows[0].total_count) : 0;
+    const employees = result.rows.map((row) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { total_count, ...employee } = row;
+      return employee;
+    });
+
+    return {
+      data: employees,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  async findById(id: number) {
     const query = `
-      UPDATE employees
-      SET ${setClause}
-      WHERE id = $1 AND organization_id = $2
-      RETURNING *
+      SELECT * FROM employees
+      WHERE id = $1 AND deleted_at IS NULL
     `;
-
-    const result = await this.pool.query(query, [id, organizationId, ...values]);
+    const result = await pool.query(query, [id]);
     return result.rows[0] || null;
   }
 
-  async deleteEmployee(id: number, organizationId: number): Promise<boolean> {
+  async update(id: number, data: UpdateEmployeeInput) {
+    const fields: string[] = [];
+    const values: (string | number | null)[] = [];
+    let paramIndex = 1;
+
+    Object.entries(data).forEach(([key, value]) => {
+      if (value !== undefined) {
+        fields.push(`${key} = $${paramIndex++}`);
+        values.push(value);
+      }
+    });
+
+    if (fields.length === 0) return null;
+
+    values.push(id);
     const query = `
-      DELETE FROM employees
-      WHERE id = $1 AND organization_id = $2
-      RETURNING id
+      UPDATE employees
+      SET ${fields.join(', ')}, updated_at = NOW()
+      WHERE id = $${paramIndex} AND deleted_at IS NULL
+      RETURNING *;
     `;
 
-    const result = await this.pool.query(query, [id, organizationId]);
-    return result.rowCount !== null && result.rowCount > 0;
+    const result = await pool.query(query, values);
+    return result.rows[0] || null;
+  }
+
+  async delete(id: number) {
+    const query = `
+      UPDATE employees
+      SET deleted_at = NOW(), status = 'inactive'
+      WHERE id = $1 AND deleted_at IS NULL
+      RETURNING *;
+    `;
+    const result = await pool.query(query, [id]);
+    return result.rows[0] || null;
   }
 }
 
-export default new EmployeeService(pool);
+export const employeeService = new EmployeeService();

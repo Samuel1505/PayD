@@ -1,55 +1,42 @@
 import { Router } from 'express';
-import employeeController from '../controllers/employeeController';
-import { requireTenantContext } from '../middleware/tenantContext';
+import { employeeController } from '../controllers/employeeController';
 
 const router = Router();
 
 /**
  * @route POST /api/employees
  * @desc Create a new employee
- * @body CreateEmployeeInput
  */
-router.post('/', employeeController.createEmployee.bind(employeeController));
+router.post('/', employeeController.create.bind(employeeController));
 
 /**
- * @route GET /api/employees/organizations/:organizationId
- * @desc Get all employees for an organization
+ * @route GET /api/employees
+ * @desc Get all employees with pagination and filtering
+ * @query page - Page number (default: 1)
+ * @query limit - Items per page (default: 10)
+ * @query search - Search term
+ * @query status - Filter by status
+ * @query department - Filter by department
+ * @query organization_id - Filter by organization
  */
-router.get(
-  '/organizations/:organizationId',
-  requireTenantContext,
-  employeeController.getAllEmployees.bind(employeeController)
-);
+router.get('/', employeeController.getAll.bind(employeeController));
 
 /**
- * @route GET /api/employees/organizations/:organizationId/:id
- * @desc Get a specific employee by ID
+ * @route GET /api/employees/:id
+ * @desc Get a single employee by ID
  */
-router.get(
-  '/organizations/:organizationId/:id',
-  requireTenantContext,
-  employeeController.getEmployee.bind(employeeController)
-);
+router.get('/:id', employeeController.getOne.bind(employeeController));
 
 /**
- * @route PUT /api/employees/organizations/:organizationId/:id
+ * @route PATCH /api/employees/:id
  * @desc Update an employee
- * @body UpdateEmployeeInput
  */
-router.put(
-  '/organizations/:organizationId/:id',
-  requireTenantContext,
-  employeeController.updateEmployee.bind(employeeController)
-);
+router.patch('/:id', employeeController.update.bind(employeeController));
 
 /**
- * @route DELETE /api/employees/organizations/:organizationId/:id
- * @desc Delete an employee
+ * @route DELETE /api/employees/:id
+ * @desc Soft delete an employee
  */
-router.delete(
-  '/organizations/:organizationId/:id',
-  requireTenantContext,
-  employeeController.deleteEmployee.bind(employeeController)
-);
+router.delete('/:id', employeeController.delete.bind(employeeController));
 
 export default router;

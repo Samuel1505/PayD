@@ -1,182 +1,131 @@
-import { EmployeeService, CreateEmployeeInput, UpdateEmployeeInput } from '../employeeService';
+import { EmployeeService } from '../employeeService';
 import { Pool } from 'pg';
 
-// Mock the config module before importing
+// Mock pg Pool
 jest.mock('../../config/database', () => ({
   pool: {
     query: jest.fn(),
   },
 }));
 
+import { pool } from '../../config/database';
+
 describe('EmployeeService', () => {
-  let service: EmployeeService;
-  let mockPool: any;
+  let employeeService: EmployeeService;
+  const mockPool = pool as unknown as jest.Mocked<Pool>;
 
   beforeEach(() => {
-    mockPool = {
-      query: jest.fn(),
+    jest.clearAllMocks();
+    employeeService = new EmployeeService();
+  });
+
+  describe('create', () => {
+    const mockEmployeeData = {
+      organization_id: 1,
+      first_name: 'John',
+      last_name: 'Doe',
+      email: 'john@example.com',
+      wallet_address: 'GABC123',
+      position: 'Dev',
+      department: 'IT',
+      status: 'active' as const,
     };
-    service = new EmployeeService(mockPool);
-  });
 
-  describe('createEmployee', () => {
-    it('should create an employee with all fields', async () => {
-      const input: CreateEmployeeInput = {
-        organization_id: 1,
-        first_name: 'John',
-        last_name: 'Doe',
-        email: 'john.doe@example.com',
-        phone: '+1234567890',
-        job_title: 'Software Engineer',
-        department: 'Engineering',
-        withdrawal_preference: 'bank',
-        bank_name: 'Test Bank',
-        bank_account_number: '123456789',
-      };
+    it('should create an employee successfully', async () => {
+      const mockCreatedEmployee = { id: 1, ...mockEmployeeData, created_at: new Date() };
+      (mockPool.query as jest.Mock).mockResolvedValueOnce({
+        rows: [mockCreatedEmployee],
+      });
 
-      const mockEmployee = { id: 1, ...input, created_at: new Date(), updated_at: new Date() };
-      mockPool.query.mockResolvedValue({ rows: [mockEmployee] } as any);
+      const result = await employeeService.create(mockEmployeeData);
 
-      const result = await service.createEmployee(input);
-
-      expect(result).toEqual(mockEmployee);
       expect(mockPool.query).toHaveBeenCalledTimes(1);
-    });
-
-    it('should create an employee with minimal required fields', async () => {
-      const input: CreateEmployeeInput = {
-        organization_id: 1,
-        first_name: 'Jane',
-        last_name: 'Smith',
-        email: 'jane.smith@example.com',
-      };
-
-      const mockEmployee = { id: 2, ...input, created_at: new Date(), updated_at: new Date() };
-      mockPool.query.mockResolvedValue({ rows: [mockEmployee] } as any);
-
-      const result = await service.createEmployee(input);
-
-      expect(result).toEqual(mockEmployee);
+      expect(mockPool.query).toHaveBeenCalledWith(
+        expect.stringContaining('INSERT INTO employees'),
+        expect.arrayContaining(['John', 'Doe', 'john@example.com'])
+      );
+      expect(result).toEqual(mockCreatedEmployee);
     });
   });
 
-  describe('getEmployeeById', () => {
-    it('should return an employee when found', async () => {
-      const mockEmployee = {
-        id: 1,
-        organization_id: 1,
-        first_name: 'John',
-        last_name: 'Doe',
-        email: 'john.doe@example.com',
-      };
+  describe('findAll', () => {
+    it('should return paginated employees', async () => {
+      const mockEmployees = [
+        { id: 1, first_name: 'John', total_count: '2' },
+        { id: 2, first_name: 'Jane', total_count: '2' },
+      ];
 
-      mockPool.query.mockResolvedValue({ rows: [mockEmployee] } as any);
+      (mockPool.query as jest.Mock).mockResolvedValueOnce({
+        rows: mockEmployees,
+      });
 
-      const result = await service.getEmployeeById(1, 1);
+      const result = await employeeService.findAll({ page: 1, limit: 10 });
 
-      expect(result).toEqual(mockEmployee);
+      expect(result.data).toHaveLength(2);
+      expect(result.pagination.total).toBe(2);
       expect(mockPool.query).toHaveBeenCalledWith(
-        expect.stringContaining('SELECT * FROM employees'),
-        [1, 1]
+        expect.stringContaining('SELECT *, count(*) OVER() as total_count'),
+        expect.any(Array)
       );
     });
 
-    it('should return null when employee not found', async () => {
-      mockPool.query.mockResolvedValue({ rows: [] } as any);
+    it('should filter by department', async () => {
+      (mockPool.query as jest.Mock).mockResolvedValueOnce({
+        rows: [],
+      });
 
-      const result = await service.getEmployeeById(999, 1);
+      await employeeService.findAll({ department: 'IT', page: 1, limit: 10 });
 
-      expect(result).toBeNull();
+      expect(mockPool.query).toHaveBeenCalledWith(
+        expect.stringContaining('department = $'),
+        expect.arrayContaining(['IT'])
+      );
     });
   });
 
-  describe('getAllEmployees', () => {
-    it('should return all employees for an organization', async () => {
-      const mockEmployees = [
-        { id: 1, organization_id: 1, first_name: 'John', last_name: 'Doe' },
-        { id: 2, organization_id: 1, first_name: 'Jane', last_name: 'Smith' },
-      ];
+  describe('update', () => {
+    it('should update employee successfully', async () => {
+      const updateData = { first_name: 'Johnny' };
+      const mockUpdatedEmployee = { id: 1, first_name: 'Johnny' };
 
-      mockPool.query.mockResolvedValue({ rows: mockEmployees } as any);
+      (mockPool.query as jest.Mock).mockResolvedValueOnce({
+        rows: [mockUpdatedEmployee],
+      });
 
-      const result = await service.getAllEmployees(1);
-
-      expect(result).toEqual(mockEmployees);
-      expect(result).toHaveLength(2);
-    });
-
-    it('should return empty array when no employees found', async () => {
-      mockPool.query.mockResolvedValue({ rows: [] } as any);
-
-      const result = await service.getAllEmployees(1);
-
-      expect(result).toEqual([]);
-    });
-  });
-
-  describe('updateEmployee', () => {
-    it('should update employee fields', async () => {
-      const updateData: UpdateEmployeeInput = {
-        phone: '+9876543210',
-        job_title: 'Senior Engineer',
-      };
-
-      const mockUpdatedEmployee = {
-        id: 1,
-        organization_id: 1,
-        first_name: 'John',
-        last_name: 'Doe',
-        ...updateData,
-      };
-
-      mockPool.query.mockResolvedValue({ rows: [mockUpdatedEmployee] } as any);
-
-      const result = await service.updateEmployee(1, 1, updateData);
+      const result = await employeeService.update(1, updateData);
 
       expect(result).toEqual(mockUpdatedEmployee);
       expect(mockPool.query).toHaveBeenCalledWith(
         expect.stringContaining('UPDATE employees'),
-        expect.arrayContaining([1, 1])
+        expect.arrayContaining(['Johnny', 1])
       );
     });
 
-    it('should return null when employee not found', async () => {
-      mockPool.query.mockResolvedValue({ rows: [] } as any);
+    it('should return null if employee not found', async () => {
+      (mockPool.query as jest.Mock).mockResolvedValueOnce({
+        rows: [],
+      });
 
-      const result = await service.updateEmployee(999, 1, { phone: '123' });
-
+      const result = await employeeService.update(999, { first_name: 'Test' });
       expect(result).toBeNull();
-    });
-
-    it('should return existing employee when no fields to update', async () => {
-      const mockEmployee = { id: 1, organization_id: 1, first_name: 'John' };
-      mockPool.query.mockResolvedValue({ rows: [mockEmployee] } as any);
-
-      const result = await service.updateEmployee(1, 1, {});
-
-      expect(result).toEqual(mockEmployee);
     });
   });
 
-  describe('deleteEmployee', () => {
-    it('should delete an employee and return true', async () => {
-      mockPool.query.mockResolvedValue({ rowCount: 1, rows: [{ id: 1 }] } as any);
+  describe('delete', () => {
+    it('should soft delete employee', async () => {
+      const mockDeletedEmployee = { id: 1, deleted_at: new Date() };
+      (mockPool.query as jest.Mock).mockResolvedValueOnce({
+        rows: [mockDeletedEmployee],
+        rowCount: 1,
+      });
 
-      const result = await service.deleteEmployee(1, 1);
+      const result = await employeeService.delete(1);
 
-      expect(result).toBe(true);
+      expect(result).toEqual(mockDeletedEmployee);
       expect(mockPool.query).toHaveBeenCalledWith(
-        expect.stringContaining('DELETE FROM employees'),
-        [1, 1]
+        expect.stringMatching(/UPDATE employees\s+SET deleted_at = NOW()/),
+        [1]
       );
-    });
-
-    it('should return false when employee not found', async () => {
-      mockPool.query.mockResolvedValue({ rowCount: 0, rows: [] } as any);
-
-      const result = await service.deleteEmployee(999, 1);
-
-      expect(result).toBe(false);
     });
   });
 });
