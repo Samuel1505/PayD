@@ -150,11 +150,11 @@ h6 {
 
 /* ── SDS Component Fixes ── */
 select {
-    appearance: none !important;
-    -webkit-appearance: none !important;
-    -moz-appearance: none !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
 }
 
 .Select__icon {
-    pointer-events: none;
+  pointer-events: none;
 }
