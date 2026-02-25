@@ -1,8 +1,8 @@
-import { Asset, TransactionBuilder, Operation, Keypair } from "@stellar/stellar-sdk";
-import { StellarService } from "./stellarService";
-import { pool } from "../config/database";
+import { Asset, TransactionBuilder, Operation, Keypair } from '@stellar/stellar-sdk';
+import { StellarService } from './stellarService';
+import { pool } from '../config/database';
 
-export type TrustlineStatus = "none" | "pending" | "established";
+export type TrustlineStatus = 'none' | 'pending' | 'established';
 
 interface TrustlineRecord {
   id: number;
@@ -29,9 +29,7 @@ export class TrustlineService {
       const account = await server.loadAccount(walletAddress);
       const trustline = account.balances.find(
         (b: any) =>
-          b.asset_type !== "native" &&
-          b.asset_code === assetCode &&
-          b.asset_issuer === assetIssuer
+          b.asset_type !== 'native' && b.asset_code === assetCode && b.asset_issuer === assetIssuer
       );
 
       if (trustline) {
@@ -54,7 +52,7 @@ export class TrustlineService {
     assetIssuer: string
   ): Promise<TrustlineRecord | null> {
     const empResult = await pool.query(
-      "SELECT wallet_address FROM employees WHERE id = $1 AND deleted_at IS NULL",
+      'SELECT wallet_address FROM employees WHERE id = $1 AND deleted_at IS NULL',
       [employeeId]
     );
 
@@ -63,12 +61,8 @@ export class TrustlineService {
     const walletAddress = empResult.rows[0].wallet_address;
     if (!walletAddress) return null;
 
-    const { exists } = await TrustlineService.checkTrustline(
-      walletAddress,
-      "ORGUSD",
-      assetIssuer
-    );
-    const status: TrustlineStatus = exists ? "established" : "none";
+    const { exists } = await TrustlineService.checkTrustline(walletAddress, 'ORGUSD', assetIssuer);
+    const status: TrustlineStatus = exists ? 'established' : 'none';
 
     const result = await pool.query(
       `INSERT INTO employee_trustlines
@@ -86,13 +80,10 @@ export class TrustlineService {
   /**
    * Get stored trustline status for an employee from the DB.
    */
-  static async getEmployeeTrustline(
-    employeeId: number
-  ): Promise<TrustlineRecord | null> {
-    const result = await pool.query(
-      "SELECT * FROM employee_trustlines WHERE employee_id = $1",
-      [employeeId]
-    );
+  static async getEmployeeTrustline(employeeId: number): Promise<TrustlineRecord | null> {
+    const result = await pool.query('SELECT * FROM employee_trustlines WHERE employee_id = $1', [
+      employeeId,
+    ]);
     return result.rows[0] || null;
   }
 
@@ -112,7 +103,7 @@ export class TrustlineService {
     const account = await server.loadAccount(walletAddress);
 
     const transaction = new TransactionBuilder(account, {
-      fee: "100",
+      fee: '100',
       networkPassphrase,
     })
       .addOperation(

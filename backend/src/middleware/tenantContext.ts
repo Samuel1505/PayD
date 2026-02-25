@@ -110,10 +110,9 @@ export const validateTenant = async (req: Request, res: Response, next: NextFunc
   }
 
   try {
-    const result = await pool.query(
-      'SELECT id, name FROM organizations WHERE id = $1',
-      [req.tenantId]
-    );
+    const result = await pool.query('SELECT id, name FROM organizations WHERE id = $1', [
+      req.tenantId,
+    ]);
 
     if (result.rows.length === 0) {
       return res.status(404).json({
@@ -139,17 +138,10 @@ export const validateTenant = async (req: Request, res: Response, next: NextFunc
  * Combined middleware that handles full tenant context setup
  * Use this for most routes that require tenant isolation
  */
-export const requireTenantContext = [
-  extractTenantId,
-  validateTenant,
-  setTenantContext,
-];
+export const requireTenantContext = [extractTenantId, validateTenant, setTenantContext];
 
 /**
  * Lightweight tenant middleware without RLS setup
  * Use for routes that handle tenant context manually
  */
-export const requireTenantId = [
-  extractTenantId,
-  validateTenant,
-];
+export const requireTenantId = [extractTenantId, validateTenant];

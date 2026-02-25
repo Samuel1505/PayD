@@ -51,7 +51,7 @@ app.post('/api/v1/simulate-transaction-update', (req, res) => {
 
   return res.json({
     success: true,
-    message: `Update emitted for transaction ${transactionId}`
+    message: `Update emitted for transaction ${transactionId}`,
   });
 });
 
@@ -66,7 +66,7 @@ app.post('/api/simulate-transaction-update', (req, res) => {
 
   return res.json({
     success: true,
-    message: `Update emitted for transaction ${transactionId}`
+    message: `Update emitted for transaction ${transactionId}`,
   });
 });
 

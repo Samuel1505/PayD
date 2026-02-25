@@ -1,4 +1,4 @@
-import { StellarService } from "./stellarService";
+import { StellarService } from './stellarService';
 
 export interface PaymentEntry {
   employeeId: string;
@@ -36,15 +36,14 @@ export class BalanceService {
     const server = StellarService.getServer();
     const account = await server.loadAccount(accountPublicKey);
 
-    const entry = account.balances.find(
-      (b: any) =>
-        b.asset_type === "credit_alphanum12" || b.asset_type === "credit_alphanum4"
-          ? b.asset_code === "ORGUSD" && b.asset_issuer === assetIssuer
-          : false
+    const entry = account.balances.find((b: any) =>
+      b.asset_type === 'credit_alphanum12' || b.asset_type === 'credit_alphanum4'
+        ? b.asset_code === 'ORGUSD' && b.asset_issuer === assetIssuer
+        : false
     );
 
     if (!entry) {
-      return { balance: "0", exists: false };
+      return { balance: '0', exists: false };
     }
 
     return { balance: (entry as any).balance, exists: true };
@@ -67,10 +66,7 @@ export class BalanceService {
     );
 
     const available = parseFloat(balance);
-    const totalRequired = payments.reduce(
-      (sum, p) => sum + parseFloat(p.amount),
-      0
-    );
+    const totalRequired = payments.reduce((sum, p) => sum + parseFloat(p.amount), 0);
 
     const shortfall = totalRequired - available;
     const sufficient = exists && available >= totalRequired;
@@ -84,10 +80,10 @@ export class BalanceService {
     return {
       sufficient,
       distributionAccount,
-      assetCode: "ORGUSD",
+      assetCode: 'ORGUSD',
       availableBalance: balance,
       totalRequired: totalRequired.toFixed(7),
-      shortfall: sufficient ? "0" : shortfall.toFixed(7),
+      shortfall: sufficient ? '0' : shortfall.toFixed(7),
       scheduledPayments: payments.length,
       breakdown,
     };

@@ -68,9 +68,9 @@ export class TenantConfigService {
     `;
 
     const result = await this.pool.query(query, [organizationId]);
-    
+
     const configs: Record<string, any> = {};
-    result.rows.forEach(row => {
+    result.rows.forEach((row) => {
       configs[row.config_key] = row.config_value;
     });
 

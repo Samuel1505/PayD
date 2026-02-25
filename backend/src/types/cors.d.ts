@@ -2,7 +2,11 @@ declare module 'cors' {
   import { RequestHandler } from 'express';
 
   interface CorsOptions {
-    origin?: string | string[] | RegExp | ((origin: string, callback: (err: Error | null, allow?: boolean) => void) => void);
+    origin?:
+      | string
+      | string[]
+      | RegExp
+      | ((origin: string, callback: (err: Error | null, allow?: boolean) => void) => void);
     methods?: string | string[];
     allowedHeaders?: string | string[];
     exposedHeaders?: string | string[];

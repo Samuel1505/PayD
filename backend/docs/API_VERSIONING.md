@@ -44,26 +44,27 @@ POST /api/payroll-bonus/runs
 
 All API responses include version-related headers:
 
-| Header | Description |
-|--------|-------------|
-| `X-API-Version` | The API version handling the request |
-| `X-API-Current-Version` | The latest stable API version |
+| Header                     | Description                                |
+| -------------------------- | ------------------------------------------ |
+| `X-API-Version`            | The API version handling the request       |
+| `X-API-Current-Version`    | The latest stable API version              |
 | `X-API-Supported-Versions` | Comma-separated list of supported versions |
 
 ### Deprecation Headers
 
 When using deprecated endpoints or versions, additional headers are included:
 
-| Header | Description |
-|--------|-------------|
-| `Deprecation` | `true` if the endpoint/version is deprecated |
-| `Sunset` | Date when the endpoint will be removed (RFC 1123 format) |
-| `X-API-Deprecation-Message` | Human-readable deprecation notice |
-| `Link` | Link to the successor version endpoint |
+| Header                      | Description                                              |
+| --------------------------- | -------------------------------------------------------- |
+| `Deprecation`               | `true` if the endpoint/version is deprecated             |
+| `Sunset`                    | Date when the endpoint will be removed (RFC 1123 format) |
+| `X-API-Deprecation-Message` | Human-readable deprecation notice                        |
+| `Link`                      | Link to the successor version endpoint                   |
 
 ### Example Response Headers
 
 **Current Version:**
+
 ```
 X-API-Version: v1
 X-API-Current-Version: v1
@@ -71,6 +72,7 @@ X-API-Supported-Versions: v1
 ```
 
 **Deprecated/Legacy Endpoint:**
+
 ```
 X-API-Version: v1
 X-API-Current-Version: v1
@@ -107,12 +109,14 @@ When creating a new API version:
 ## Breaking vs Non-Breaking Changes
 
 ### Breaking Changes (Require New Version)
+
 - Removing endpoints
 - Changing required parameters
 - Changing response structure
 - Changing authentication requirements
 
 ### Non-Breaking Changes (No New Version Needed)
+
 - Adding new endpoints
 - Adding optional parameters
 - Adding new response fields
@@ -144,6 +148,7 @@ GET /api
 ```
 
 Response:
+
 ```json
 {
   "name": "PayD API",

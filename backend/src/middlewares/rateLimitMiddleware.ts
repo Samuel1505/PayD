@@ -10,10 +10,12 @@ export interface RateLimitOptions {
 }
 
 function defaultIdentifier(req: Request): string {
-  return req.ip || 
-         req.headers['x-forwarded-for']?.toString().split(',')[0].trim() ||
-         req.headers['x-real-ip']?.toString() ||
-         'unknown';
+  return (
+    req.ip ||
+    req.headers['x-forwarded-for']?.toString().split(',')[0].trim() ||
+    req.headers['x-real-ip']?.toString() ||
+    'unknown'
+  );
 }
 
 function defaultHandler(_req: Request, res: Response, result: any): void {
@@ -26,12 +28,7 @@ function defaultHandler(_req: Request, res: Response, result: any): void {
 }
 
 export function rateLimitMiddleware(options: RateLimitOptions = {}) {
-  const {
-    tier = 'api',
-    identifier = defaultIdentifier,
-    skip,
-    handler,
-  } = options;
+  const { tier = 'api', identifier = defaultIdentifier, skip, handler } = options;
 
   return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     if (skip && skip(req)) {
@@ -50,7 +47,7 @@ export function rateLimitMiddleware(options: RateLimitOptions = {}) {
 
       if (!result.allowed) {
         res.setHeader('Retry-After', result.retryAfter || 60);
-        
+
         logger.warn('Rate limit exceeded', {
           ip: clientIdentifier,
           tier,

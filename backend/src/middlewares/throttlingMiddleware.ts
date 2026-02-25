@@ -9,7 +9,7 @@ export interface ThrottlingMiddlewareOptions {
 export const throttlingMiddleware = (options: ThrottlingMiddlewareOptions = {}) => {
   const throttlingService = ThrottlingService.getInstance();
   const priorityHeader = options.priorityHeader || 'x-priority';
-  
+
   return async (req: Request, res: Response, next: NextFunction) => {
     if (options.skipCondition && options.skipCondition(req)) {
       return next();
@@ -23,7 +23,7 @@ export const throttlingMiddleware = (options: ThrottlingMiddlewareOptions = {}) 
       res.setHeader('X-RateLimit-Limit', status.tpm.toString());
       res.setHeader('X-RateLimit-Remaining', status.currentTokens.toString());
       res.setHeader('X-RateLimit-QueueSize', status.queueSize.toString());
-      
+
       return res.status(429).json({
         error: 'Too Many Requests',
         message: 'Transaction queue is full. Please try again later.',
@@ -65,11 +65,11 @@ export const requireThrottling = async (
   execute: () => Promise<any>
 ): Promise<any> => {
   const context = (req as any).throttlingContext;
-  
+
   if (!context) {
     throw new Error('Throttling context not found. Ensure throttlingMiddleware is applied.');
   }
-  
+
   return context.submitTransaction(execute);
 };
 

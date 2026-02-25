@@ -8,6 +8,7 @@ import {
   Globe,
   LayoutDashboard,
   Activity,
+  ShieldAlert,
   Menu,
   X,
 } from 'lucide-react';
@@ -126,6 +127,20 @@ const AppNav: React.FC = () => {
       </NavLink>
 
       <div className="w-px h-5 bg-(--border-hi) mx-2" />
+      <NavLink
+        to="/admin"
+        className={({ isActive }) =>
+          `flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-semibold transition ${
+            isActive
+              ? 'text-red-500 bg-red-500/10'
+              : 'text-red-400 hover:bg-red-500/20 hover:text-red-500'
+          }`
+        }
+      >
+        <ShieldAlert className="w-4 h-4" />
+        Admin
+      </NavLink>
+
       <NavLink
         to="/debug"
         className={({ isActive }) =>

@@ -1,11 +1,11 @@
-import { Request, Response } from "express";
-import { WebhookService } from "../services/webhook.service.js";
-import { z } from "zod";
+import { Request, Response } from 'express';
+import { WebhookService } from '../services/webhook.service.js';
+import { z } from 'zod';
 
 const subscribeSchema = z.object({
   url: z.string().url(),
   secret: z.string().min(16),
-  events: z.array(z.string()).default(["*"]),
+  events: z.array(z.string()).default(['*']),
 });
 
 export class WebhookController {
@@ -23,7 +23,7 @@ export class WebhookController {
         res.status(400).json({ error: error.errors });
         return;
       }
-      res.status(500).json({ error: "Internal Server Error" });
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 
@@ -39,13 +39,16 @@ export class WebhookController {
       res.status(204).send();
       return;
     }
-    res.status(404).json({ error: "Subscription not found" });
+    res.status(404).json({ error: 'Subscription not found' });
   }
 
   // Debug endpoint to trigger a mock event
   static async triggerMockEvent(req: Request, res: Response) {
     const { event, payload } = req.body;
-    await WebhookService.dispatch(event || "payment.completed", payload || { id: "test_tx_123", amount: 100 });
-    res.json({ message: "Mock event dispatched" });
+    await WebhookService.dispatch(
+      event || 'payment.completed',
+      payload || { id: 'test_tx_123', amount: 100 }
+    );
+    res.json({ message: 'Mock event dispatched' });
   }
 }

@@ -14,8 +14,11 @@ export class EmployeeController {
       if (!organizationId) {
         return res.status(403).json({ error: 'User is not associated with an organization' });
       }
-      
-      const validatedData = createEmployeeSchema.parse({ ...req.body, organization_id: organizationId });
+
+      const validatedData = createEmployeeSchema.parse({
+        ...req.body,
+        organization_id: organizationId,
+      });
       const employee = await employeeService.create(validatedData);
       res.status(201).json(employee);
     } catch (error) {

@@ -15,7 +15,7 @@ export interface PaginatedResult<T> {
 
 export function parsePaginationParams(
   page?: string | number,
-  limit?: string | number,
+  limit?: string | number
 ): PaginationParams {
   const pageNum = Math.max(1, parseInt(String(page) || '1', 10));
   const limitNum = Math.min(Math.max(1, parseInt(String(limit) || '50', 10)), 500);
@@ -32,7 +32,7 @@ export function createPaginatedResult<T>(
   data: T[],
   total: number,
   page: number,
-  limit: number,
+  limit: number
 ): PaginatedResult<T> {
   const pageCount = Math.ceil(total / limit);
   const hasMore = page < pageCount;

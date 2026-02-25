@@ -33,7 +33,7 @@ const DEFAULT_CONFIG: ThrottlingConfig = {
 
 export class ThrottlingService extends EventEmitter {
   private static instance: ThrottlingService;
-  
+
   private config: ThrottlingConfig;
   private tokens: number;
   private maxTokens: number;
@@ -71,7 +71,7 @@ export class ThrottlingService extends EventEmitter {
     if (this.refillTimer) {
       clearInterval(this.refillTimer);
     }
-    
+
     this.refillTimer = setInterval(() => {
       this.refillTokens();
     }, this.config.refillIntervalMs);
@@ -80,7 +80,7 @@ export class ThrottlingService extends EventEmitter {
   private refillTokens(): void {
     const previousTokens = this.tokens;
     this.tokens = Math.min(this.maxTokens, this.tokens + this.refillRatePerSecond);
-    
+
     if (this.tokens > previousTokens && this.queue.length > 0) {
       this.processQueue();
     }
@@ -117,11 +117,7 @@ export class ThrottlingService extends EventEmitter {
     }
   }
 
-  async submit<T>(
-    id: string,
-    execute: () => Promise<T>,
-    priority: boolean = false
-  ): Promise<T> {
+  async submit<T>(id: string, execute: () => Promise<T>, priority: boolean = false): Promise<T> {
     if (this.queue.length >= this.config.maxQueueSize) {
       this.rejectedCount++;
       this.emit('transaction:rejected', { id, reason: 'queue_full' });
@@ -165,11 +161,11 @@ export class ThrottlingService extends EventEmitter {
       this.refillRatePerSecond = Math.ceil(newConfig.tpm / 60);
       this.tokens = Math.min(this.tokens, this.maxTokens);
     }
-    
+
     if (newConfig.maxQueueSize !== undefined) {
       this.config.maxQueueSize = newConfig.maxQueueSize;
     }
-    
+
     if (newConfig.refillIntervalMs !== undefined) {
       this.config.refillIntervalMs = newConfig.refillIntervalMs;
       this.startRefillTimer();
@@ -197,15 +193,15 @@ export class ThrottlingService extends EventEmitter {
 
   clearQueue(): number {
     const clearedCount = this.queue.length;
-    
-    this.queue.forEach(item => {
+
+    this.queue.forEach((item) => {
       item.reject(new Error('Queue cleared'));
       this.emit('transaction:rejected', { id: item.id, reason: 'queue_cleared' });
     });
-    
+
     this.queue = [];
     this.rejectedCount += clearedCount;
-    
+
     return clearedCount;
   }
 

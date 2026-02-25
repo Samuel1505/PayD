@@ -66,9 +66,14 @@ export function apiVersionMiddleware(req: Request, res: Response, next: NextFunc
   } else if (isLegacyRoute(req.path)) {
     res.setHeader('Deprecation', 'true');
     res.setHeader('Sunset', LEGACY_ROUTES_SUNSET);
-    res.setHeader('X-API-Deprecation-Message',
-      `Legacy API routes are deprecated. Please use /api/${CURRENT_VERSION}/ instead.`);
-    res.setHeader('Link', `</api/${CURRENT_VERSION}${req.path.replace('/api', '')}>; rel="successor-version"`);
+    res.setHeader(
+      'X-API-Deprecation-Message',
+      `Legacy API routes are deprecated. Please use /api/${CURRENT_VERSION}/ instead.`
+    );
+    res.setHeader(
+      'Link',
+      `</api/${CURRENT_VERSION}${req.path.replace('/api', '')}>; rel="successor-version"`
+    );
 
     logger.warn('Legacy API route accessed', {
       path: req.path,

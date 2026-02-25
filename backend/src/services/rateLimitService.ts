@@ -80,7 +80,9 @@ export class RateLimitService {
     this.redis = RedisClient.getInstance();
 
     if (!this.redis) {
-      logger.warn('Redis not configured, using in-memory rate limiting (not recommended for production)');
+      logger.warn(
+        'Redis not configured, using in-memory rate limiting (not recommended for production)'
+      );
       this.useMemoryFallback = true;
     }
 
@@ -125,8 +127,8 @@ export class RateLimitService {
         return this.checkMemoryRateLimit(key, config, now);
       }
 
-      const currentCount = results[1]?.[1] as number || 0;
-      const ttl = results[3]?.[1] as number || config.windowMs;
+      const currentCount = (results[1]?.[1] as number) || 0;
+      const ttl = (results[3]?.[1] as number) || config.windowMs;
 
       if (ttl < 0) {
         await redis.pexpire(key, config.windowMs);
@@ -160,11 +162,7 @@ export class RateLimitService {
     }
   }
 
-  private checkMemoryRateLimit(
-    key: string,
-    config: RateLimitTier,
-    now: number
-  ): RateLimitResult {
+  private checkMemoryRateLimit(key: string, config: RateLimitTier, now: number): RateLimitResult {
     const entry = this.memoryStore.get(key);
     const resetAt = now + config.windowMs;
 

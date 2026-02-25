@@ -44,10 +44,13 @@ export interface PayrollAggregation {
     start: number;
     end: number;
   };
-  byAsset: Record<string, {
-    count: number;
-    totalAmount: string;
-  }>;
+  byAsset: Record<
+    string,
+    {
+      count: number;
+      totalAmount: string;
+    }
+  >;
   byStatus: {
     successful: number;
     failed: number;
@@ -111,7 +114,12 @@ export class PayrollIndexingService {
   enrichTransaction(transaction: SDSTransaction): PayrollTransaction {
     const payrollMemo = this.parsePayrollMemo(transaction.memo);
     const isPayrollRelated = payrollMemo !== null;
-    const itemType = payrollMemo?.type === 'BONUS' ? 'bonus' : payrollMemo?.type === 'PAYROLL' ? 'base' : undefined;
+    const itemType =
+      payrollMemo?.type === 'BONUS'
+        ? 'bonus'
+        : payrollMemo?.type === 'PAYROLL'
+          ? 'base'
+          : undefined;
 
     return {
       ...transaction,
@@ -181,9 +189,7 @@ export class PayrollIndexingService {
     });
   }
 
-  aggregatePayrollTransactions(
-    transactions: PayrollTransaction[]
-  ): PayrollAggregation {
+  aggregatePayrollTransactions(transactions: PayrollTransaction[]): PayrollAggregation {
     const successful = transactions.filter((tx) => tx.successful);
     const failed = transactions.filter((tx) => !tx.successful);
 
@@ -242,13 +248,14 @@ export class PayrollIndexingService {
     };
   }
 
-  generatePayrollBatchReport(
-    transactions: PayrollTransaction[]
-  ): Record<string, {
-    employeeCount: number;
-    transactions: PayrollTransaction[];
-    aggregation: PayrollAggregation;
-  }> {
+  generatePayrollBatchReport(transactions: PayrollTransaction[]): Record<
+    string,
+    {
+      employeeCount: number;
+      transactions: PayrollTransaction[];
+      aggregation: PayrollAggregation;
+    }
+  > {
     const byBatch: Record<string, PayrollTransaction[]> = {};
 
     transactions.forEach((tx) => {

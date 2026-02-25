@@ -11,7 +11,11 @@ import Settings from './pages/Settings';
 import CustomReportBuilder from './pages/CustomReportBuilder';
 import CrossAssetPayment from './pages/CrossAssetPayment';
 import TransactionHistory from './pages/TransactionHistory';
+
+import AdminPanel from './pages/AdminPanel';
+
 import EmployeePortal from './pages/EmployeePortal';
+
 import { useTranslation } from 'react-i18next';
 
 function App() {
@@ -147,6 +151,14 @@ function App() {
           element={
             <ErrorBoundary fallback={<ErrorFallback onReset={() => {}} />}>
               <TransactionHistory />
+            </ErrorBoundary>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <ErrorBoundary fallback={<ErrorFallback onReset={() => {}} />}>
+              <AdminPanel />
             </ErrorBoundary>
           }
         />

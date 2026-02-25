@@ -1,5 +1,5 @@
-import { Router } from "express";
-import { BalanceController } from "../controllers/balanceController";
+import { Router } from 'express';
+import { BalanceController } from '../controllers/balanceController';
 
 const router = Router();
 
@@ -8,7 +8,7 @@ const router = Router();
  * @desc Query ORGUSD balance for a Stellar account
  * @query assetIssuer - The ORGUSD issuer public key
  */
-router.get("/:accountId", BalanceController.checkBalance);
+router.get('/:accountId', BalanceController.checkBalance);
 
 /**
  * @route POST /api/balance/preflight
@@ -17,6 +17,6 @@ router.get("/:accountId", BalanceController.checkBalance);
  *       is insufficient to cover all scheduled payments.
  * @body { distributionAccount, assetIssuer, payments[] }
  */
-router.post("/preflight", BalanceController.preflightPayroll);
+router.post('/preflight', BalanceController.preflightPayroll);
 
 export default router;
