@@ -1,5 +1,5 @@
-import axios from "axios";
-import CryptoJS from "crypto-js";
+import axios from 'axios';
+import CryptoJS from 'crypto-js';
 
 export interface WebhookSubscription {
   id: string;
@@ -37,8 +37,8 @@ export class WebhookService {
   }
 
   static async dispatch(eventType: string, payload: any) {
-    const relevantSubscriptions = subscriptions.filter((s) =>
-      s.events.includes(eventType) || s.events.includes("*")
+    const relevantSubscriptions = subscriptions.filter(
+      (s) => s.events.includes(eventType) || s.events.includes('*')
     );
 
     const dispatchPromises = relevantSubscriptions.map(async (sub) => {
@@ -48,9 +48,9 @@ export class WebhookService {
 
       try {
         await this.sendWithRetry(sub.url, payload, {
-          "X-PayD-Event": eventType,
-          "X-PayD-Signature": signature,
-          "X-PayD-Timestamp": timestamp,
+          'X-PayD-Event': eventType,
+          'X-PayD-Signature': signature,
+          'X-PayD-Timestamp': timestamp,
         });
         console.log(`Webhook dispatched successfully to ${sub.url}`);
       } catch (error) {
@@ -66,7 +66,13 @@ export class WebhookService {
     return CryptoJS.HmacSHA256(message, secret).toString(CryptoJS.enc.Hex);
   }
 
-  private static async sendWithRetry(url: string, data: any, headers: any, retries = 3, delay = 1000) {
+  private static async sendWithRetry(
+    url: string,
+    data: any,
+    headers: any,
+    retries = 3,
+    delay = 1000
+  ) {
     try {
       await axios.post(url, data, { headers, timeout: 5000 });
     } catch (error) {

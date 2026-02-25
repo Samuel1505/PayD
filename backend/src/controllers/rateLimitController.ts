@@ -15,10 +15,7 @@ export class RateLimitController {
     const tierName = (tier as RateLimitTierName) || 'api';
     const tierConfig = rateLimitService.getTierConfig(tierName);
 
-    const result = await rateLimitService.checkRateLimit(
-      identifier as string,
-      tierName
-    );
+    const result = await rateLimitService.checkRateLimit(identifier as string, tierName);
 
     res.json({
       success: true,

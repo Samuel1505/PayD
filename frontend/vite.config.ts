@@ -30,6 +30,10 @@ export default defineConfig(() => {
     envPrefix: 'PUBLIC_',
     server: {
       proxy: {
+        '/api': {
+          target: 'http://localhost:3000',
+          changeOrigin: true,
+        },
         '/friendbot': {
           target: 'http://localhost:8000/friendbot',
           changeOrigin: true,

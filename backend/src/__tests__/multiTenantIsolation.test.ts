@@ -1,6 +1,6 @@
 /**
  * Multi-Tenant Data Isolation Integration Tests
- * 
+ *
  * These tests verify that Row-Level Security (RLS) policies properly isolate
  * data between different organizations/tenants.
  */
@@ -67,7 +67,10 @@ describe('Multi-Tenant Data Isolation', () => {
 
   afterAll(async () => {
     // Clean up test data
-    await pool.query('DELETE FROM transactions WHERE organization_id IN ($1, $2)', [org1Id, org2Id]);
+    await pool.query('DELETE FROM transactions WHERE organization_id IN ($1, $2)', [
+      org1Id,
+      org2Id,
+    ]);
     await pool.query('DELETE FROM employees WHERE organization_id IN ($1, $2)', [org1Id, org2Id]);
     await pool.query('DELETE FROM organizations WHERE id IN ($1, $2)', [org1Id, org2Id]);
     await pool.end();
@@ -144,10 +147,9 @@ describe('Multi-Tenant Data Isolation', () => {
         expect(result.rows.length).toBe(0);
 
         // Verify the employee was not modified
-        const verifyResult = await pool.query(
-          'SELECT first_name FROM employees WHERE id = $1',
-          [employee2Id]
-        );
+        const verifyResult = await pool.query('SELECT first_name FROM employees WHERE id = $1', [
+          employee2Id,
+        ]);
         expect(verifyResult.rows[0].first_name).toBe('Jane');
       } finally {
         client.release();
@@ -161,19 +163,17 @@ describe('Multi-Tenant Data Isolation', () => {
         await client.query('SET LOCAL app.current_tenant_id = $1', [org1Id]);
 
         // Try to delete Org 2 employee
-        const result = await client.query(
-          'DELETE FROM employees WHERE id = $1 RETURNING *',
-          [employee2Id]
-        );
+        const result = await client.query('DELETE FROM employees WHERE id = $1 RETURNING *', [
+          employee2Id,
+        ]);
 
         // Should not delete due to RLS
         expect(result.rows.length).toBe(0);
 
         // Verify the employee still exists
-        const verifyResult = await pool.query(
-          'SELECT id FROM employees WHERE id = $1',
-          [employee2Id]
-        );
+        const verifyResult = await pool.query('SELECT id FROM employees WHERE id = $1', [
+          employee2Id,
+        ]);
         expect(verifyResult.rows.length).toBe(1);
       } finally {
         client.release();
@@ -246,7 +246,9 @@ describe('Multi-Tenant Data Isolation', () => {
         await client.query('SET LOCAL app.current_tenant_id = $1', [org1Id]);
 
         // Try to query Org 2 transaction
-        const result = await client.query('SELECT * FROM transactions WHERE id = $1', [transaction2Id]);
+        const result = await client.query('SELECT * FROM transactions WHERE id = $1', [
+          transaction2Id,
+        ]);
 
         // Should return no results due to RLS
         expect(result.rows.length).toBe(0);

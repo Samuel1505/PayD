@@ -136,7 +136,7 @@ export class PayrollBonusController {
         }
       }
 
-      const formattedItems = items.map(item => ({
+      const formattedItems = items.map((item) => ({
         employee_id: item.employeeId,
         amount: item.amount,
         description: item.description,
@@ -220,10 +220,7 @@ export class PayrollBonusController {
         return;
       }
 
-      const payrollRun = await PayrollBonusService.updatePayrollRunStatus(
-        parseInt(id, 10),
-        status
-      );
+      const payrollRun = await PayrollBonusService.updatePayrollRunStatus(parseInt(id, 10), status);
 
       if (!payrollRun) {
         res.status(404).json({ error: 'Payroll run not found' });

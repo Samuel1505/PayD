@@ -86,18 +86,12 @@ export class PayrollBonusService {
   }
 
   static async getPayrollRunById(id: number): Promise<PayrollRun | null> {
-    const result = await pool.query(
-      'SELECT * FROM payroll_runs WHERE id = $1',
-      [id]
-    );
+    const result = await pool.query('SELECT * FROM payroll_runs WHERE id = $1', [id]);
     return result.rows[0] || null;
   }
 
   static async getPayrollRunByBatchId(batchId: string): Promise<PayrollRun | null> {
-    const result = await pool.query(
-      'SELECT * FROM payroll_runs WHERE batch_id = $1',
-      [batchId]
-    );
+    const result = await pool.query('SELECT * FROM payroll_runs WHERE batch_id = $1', [batchId]);
     return result.rows[0] || null;
   }
 
@@ -216,21 +210,25 @@ export class PayrollBonusService {
 
     const items = await this.getPayrollItems(payrollRunId);
 
-    const uniqueEmployees = new Set(items.map(item => item.employee_id));
-    const baseItems = items.filter(item => item.item_type === 'base');
-    const bonusItems = items.filter(item => item.item_type === 'bonus');
+    const uniqueEmployees = new Set(items.map((item) => item.employee_id));
+    const baseItems = items.filter((item) => item.item_type === 'base');
+    const bonusItems = items.filter((item) => item.item_type === 'bonus');
 
     const summary = {
       total_employees: uniqueEmployees.size,
       total_base_items: baseItems.length,
       total_bonus_items: bonusItems.length,
-      total_base_amount: baseItems.reduce((sum, item) => sum + parseFloat(item.amount), 0).toFixed(7),
-      total_bonus_amount: bonusItems.reduce((sum, item) => sum + parseFloat(item.amount), 0).toFixed(7),
+      total_base_amount: baseItems
+        .reduce((sum, item) => sum + parseFloat(item.amount), 0)
+        .toFixed(7),
+      total_bonus_amount: bonusItems
+        .reduce((sum, item) => sum + parseFloat(item.amount), 0)
+        .toFixed(7),
       total_amount: items.reduce((sum, item) => sum + parseFloat(item.amount), 0).toFixed(7),
       by_status: {
-        pending: items.filter(item => item.status === 'pending').length,
-        completed: items.filter(item => item.status === 'completed').length,
-        failed: items.filter(item => item.status === 'failed').length,
+        pending: items.filter((item) => item.status === 'pending').length,
+        completed: items.filter((item) => item.status === 'completed').length,
+        failed: items.filter((item) => item.status === 'failed').length,
       },
     };
 
@@ -293,7 +291,9 @@ export class PayrollBonusService {
   }
 
   static async deletePayrollItem(itemId: number): Promise<boolean> {
-    const item = await pool.query('SELECT payroll_run_id FROM payroll_items WHERE id = $1', [itemId]);
+    const item = await pool.query('SELECT payroll_run_id FROM payroll_items WHERE id = $1', [
+      itemId,
+    ]);
     if (item.rows.length === 0) return false;
 
     const payrollRunId = item.rows[0].payroll_run_id;

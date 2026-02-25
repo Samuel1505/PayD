@@ -1,13 +1,13 @@
-import { Request, Response } from "express";
-import { z } from "zod";
-import { BalanceService } from "../services/balanceService";
+import { Request, Response } from 'express';
+import { z } from 'zod';
+import { BalanceService } from '../services/balanceService';
 
 const paymentEntrySchema = z.object({
   employeeId: z.string().min(1),
   employeeName: z.string().min(1),
   walletAddress: z.string().length(56),
   amount: z.string().refine((v) => !isNaN(parseFloat(v)) && parseFloat(v) > 0, {
-    message: "Amount must be a positive number.",
+    message: 'Amount must be a positive number.',
   }),
 });
 
@@ -28,30 +28,27 @@ export class BalanceController {
       const { assetIssuer } = req.query;
 
       if (!accountId || accountId.length !== 56) {
-        return res.status(400).json({ error: "Invalid account ID." });
+        return res.status(400).json({ error: 'Invalid account ID.' });
       }
 
       if (!assetIssuer || String(assetIssuer).length !== 56) {
-        return res.status(400).json({ error: "Missing or invalid assetIssuer query param." });
+        return res.status(400).json({ error: 'Missing or invalid assetIssuer query param.' });
       }
 
-      const result = await BalanceService.getOrgUsdBalance(
-        accountId,
-        String(assetIssuer)
-      );
+      const result = await BalanceService.getOrgUsdBalance(accountId, String(assetIssuer));
 
       res.json({
         account: accountId,
-        assetCode: "ORGUSD",
+        assetCode: 'ORGUSD',
         balance: result.balance,
         trustlineExists: result.exists,
       });
     } catch (error: any) {
       if (error?.response?.status === 404) {
-        return res.status(404).json({ error: "Account not found on Horizon." });
+        return res.status(404).json({ error: 'Account not found on Horizon.' });
       }
-      console.error("Check Balance Error:", error);
-      res.status(500).json({ error: "Failed to fetch account balance." });
+      console.error('Check Balance Error:', error);
+      res.status(500).json({ error: 'Failed to fetch account balance.' });
     }
   }
 
@@ -64,8 +61,7 @@ export class BalanceController {
    */
   static async preflightPayroll(req: Request, res: Response) {
     try {
-      const { distributionAccount, assetIssuer, payments } =
-        preflightSchema.parse(req.body);
+      const { distributionAccount, assetIssuer, payments } = preflightSchema.parse(req.body);
 
       const result = await BalanceService.preflightCheck(
         distributionAccount,
@@ -76,18 +72,18 @@ export class BalanceController {
       const status = result.sufficient ? 200 : 422;
 
       res.status(status).json({
-        preflight: result.sufficient ? "passed" : "failed",
+        preflight: result.sufficient ? 'passed' : 'failed',
         ...result,
       });
     } catch (error: any) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ error: "Validation Error", details: error.errors });
+        return res.status(400).json({ error: 'Validation Error', details: error.errors });
       }
       if (error?.response?.status === 404) {
-        return res.status(404).json({ error: "Distribution account not found on Horizon." });
+        return res.status(404).json({ error: 'Distribution account not found on Horizon.' });
       }
-      console.error("Preflight Payroll Error:", error);
-      res.status(500).json({ error: "Failed to run preflight balance check." });
+      console.error('Preflight Payroll Error:', error);
+      res.status(500).json({ error: 'Failed to run preflight balance check.' });
     }
   }
 }

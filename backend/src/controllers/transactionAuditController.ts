@@ -1,6 +1,6 @@
-import { Request, Response } from "express";
-import { z } from "zod";
-import { TransactionAuditService } from "../services/transactionAuditService";
+import { Request, Response } from 'express';
+import { z } from 'zod';
+import { TransactionAuditService } from '../services/transactionAuditService';
 
 const listQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
@@ -17,17 +17,17 @@ export class TransactionAuditController {
     try {
       const { txHash } = req.params;
       if (!txHash || txHash.length !== 64) {
-        return res.status(400).json({ error: "Invalid transaction hash." });
+        return res.status(400).json({ error: 'Invalid transaction hash.' });
       }
 
       const record = await TransactionAuditService.fetchAndStore(txHash);
       res.status(201).json(record);
     } catch (error: any) {
       if (error?.response?.status === 404) {
-        return res.status(404).json({ error: "Transaction not found on Horizon." });
+        return res.status(404).json({ error: 'Transaction not found on Horizon.' });
       }
-      console.error("Create Audit Record Error:", error);
-      res.status(500).json({ error: "Failed to fetch and store transaction." });
+      console.error('Create Audit Record Error:', error);
+      res.status(500).json({ error: 'Failed to fetch and store transaction.' });
     }
   }
 
@@ -41,13 +41,13 @@ export class TransactionAuditController {
       const record = await TransactionAuditService.getByHash(txHash);
 
       if (!record) {
-        return res.status(404).json({ error: "Audit record not found." });
+        return res.status(404).json({ error: 'Audit record not found.' });
       }
 
       res.json(record);
     } catch (error) {
-      console.error("Get Audit Record Error:", error);
-      res.status(500).json({ error: "Internal Server Error" });
+      console.error('Get Audit Record Error:', error);
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 
@@ -68,10 +68,10 @@ export class TransactionAuditController {
       });
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ error: "Validation Error", details: error.errors });
+        return res.status(400).json({ error: 'Validation Error', details: error.errors });
       }
-      console.error("List Audit Records Error:", error);
-      res.status(500).json({ error: "Internal Server Error" });
+      console.error('List Audit Records Error:', error);
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 
@@ -85,16 +85,16 @@ export class TransactionAuditController {
       const { verified, record } = await TransactionAuditService.verify(txHash);
 
       if (!record) {
-        return res.status(404).json({ error: "Audit record not found. Store it first." });
+        return res.status(404).json({ error: 'Audit record not found. Store it first.' });
       }
 
       res.json({ txHash, verified, record });
     } catch (error: any) {
       if (error?.response?.status === 404) {
-        return res.status(404).json({ error: "Transaction not found on Horizon." });
+        return res.status(404).json({ error: 'Transaction not found on Horizon.' });
       }
-      console.error("Verify Audit Record Error:", error);
-      res.status(500).json({ error: "Failed to verify transaction." });
+      console.error('Verify Audit Record Error:', error);
+      res.status(500).json({ error: 'Failed to verify transaction.' });
     }
   }
 }

@@ -1,5 +1,10 @@
 import { Request, Response } from 'express';
-import { PayrollAuditService, AuditLogFilter, PayrollAuditAction, ActorType } from '../services/payrollAuditService';
+import {
+  PayrollAuditService,
+  AuditLogFilter,
+  PayrollAuditAction,
+  ActorType,
+} from '../services/payrollAuditService';
 import logger from '../utils/logger';
 
 export class PayrollAuditController {

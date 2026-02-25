@@ -54,12 +54,12 @@ This document provides comprehensive coverage of the Stellar Data Service (SDS) 
 
 ### Key Components
 
-| Component | Purpose | Key Features |
-|-----------|---------|--------------|
-| **SDSClient** | Primary SDS integration | Connection mgmt, retry logic, pagination, rate limiting |
-| **PayrollIndexingService** | Payroll-specific data enrichment | Memo parsing, filtering, aggregation, sorting |
-| **PayrollQueryService** | High-level query API | Query abstraction, caching, reporting |
-| **Express Routes** | REST API endpoints | Full CRUD + reporting operations |
+| Component                  | Purpose                          | Key Features                                            |
+| -------------------------- | -------------------------------- | ------------------------------------------------------- |
+| **SDSClient**              | Primary SDS integration          | Connection mgmt, retry logic, pagination, rate limiting |
+| **PayrollIndexingService** | Payroll-specific data enrichment | Memo parsing, filtering, aggregation, sorting           |
+| **PayrollQueryService**    | High-level query API             | Query abstraction, caching, reporting                   |
+| **Express Routes**         | REST API endpoints               | Full CRUD + reporting operations                        |
 
 ---
 
@@ -83,13 +83,13 @@ class SDSClient {
 
 ```typescript
 config.sds = {
-  enabled: boolean,           // Enable/disable SDS
-  apiKey: string,            // API authentication
-  endpoint: string,          // SDS API base URL
-  timeout: number,           // Request timeout (ms)
-  retryAttempts: number,     // Max retry attempts
-  retryDelay: number,        // Initial retry delay (ms)
-}
+  enabled: boolean, // Enable/disable SDS
+  apiKey: string, // API authentication
+  endpoint: string, // SDS API base URL
+  timeout: number, // Request timeout (ms)
+  retryAttempts: number, // Max retry attempts
+  retryDelay: number, // Initial retry delay (ms)
+};
 ```
 
 ### Retry Strategy
@@ -99,7 +99,7 @@ The client implements exponential backoff retry logic:
 ```
 Attempt 1: Immediate
 Attempt 2: 1000ms (1s)
-Attempt 3: 2000ms (2s) 
+Attempt 3: 2000ms (2s)
 Attempt 4: 4000ms (4s)
 ...
 Maximum: Configurable retryAttempts
@@ -153,11 +153,11 @@ Each transaction is enriched with:
 
 ```typescript
 interface PayrollTransaction extends SDSTransaction {
-  payrollMemo?: PayrollMemoFormat;    // Parsed memo data
-  isPayrollRelated: boolean;          // Quick filtering flag
-  employeeId?: string;                // Extracted from memo
-  payrollBatchId?: string;            // Extracted from memo
-  period?: string;                    // Extracted from memo
+  payrollMemo?: PayrollMemoFormat; // Parsed memo data
+  isPayrollRelated: boolean; // Quick filtering flag
+  employeeId?: string; // Extracted from memo
+  payrollBatchId?: string; // Extracted from memo
+  period?: string; // Extracted from memo
 }
 ```
 
@@ -165,14 +165,14 @@ interface PayrollTransaction extends SDSTransaction {
 
 The system creates logical indexes on:
 
-| Dimension | Use Case | Performance |
-|-----------|----------|-------------|
-| **Employee ID** | Employee payroll lookup | O(1) with in-memory filtering |
-| **Batch ID** | Batch audit/reconciliation | O(1) with in-memory filtering |
-| **Asset + Issuer** | Multi-currency analysis | Delegated to SDS |
-| **Timestamp Range** | Historical queries | Delegated to SDS |
-| **Memo Pattern** | Complex pattern matching | SDS server-side filtering |
-| **Account** | Organization-wide queries | Primary SDS filter |
+| Dimension           | Use Case                   | Performance                   |
+| ------------------- | -------------------------- | ----------------------------- |
+| **Employee ID**     | Employee payroll lookup    | O(1) with in-memory filtering |
+| **Batch ID**        | Batch audit/reconciliation | O(1) with in-memory filtering |
+| **Asset + Issuer**  | Multi-currency analysis    | Delegated to SDS              |
+| **Timestamp Range** | Historical queries         | Delegated to SDS              |
+| **Memo Pattern**    | Complex pattern matching   | SDS server-side filtering     |
+| **Account**         | Organization-wide queries  | Primary SDS filter            |
 
 ### Aggregation Strategies
 
@@ -337,13 +337,14 @@ All queries implement cursor/offset-based pagination:
 
 ```typescript
 interface PaginationParams {
-  page: number;      // 1-indexed
-  limit: number;     // 1-500, default 50
-  offset: number;    // Calculated as (page-1)*limit
+  page: number; // 1-indexed
+  limit: number; // 1-500, default 50
+  offset: number; // Calculated as (page-1)*limit
 }
 ```
 
 **Benefits**:
+
 - Reduced memory usage
 - Better throughput for large datasets
 - Resource-efficient for clients
@@ -377,9 +378,7 @@ Only enrich transactions that need payroll-specific data:
 const enriched = payrollIndexingService.enrichTransactions(raw);
 
 // Option 2: Conditional enrichment
-const enriched = shouldEnrich 
-  ? enrichTransactions(raw) 
-  : raw;
+const enriched = shouldEnrich ? enrichTransactions(raw) : raw;
 ```
 
 #### 3. Batch Queries
@@ -391,7 +390,7 @@ Group multiple employee queries:
 // Query the batch and filter in-memory:
 const batch = await sdsClient.queryTransactions({
   sourceAccount: orgKey,
-  memoPattern: "PAYROLL:*:BATCH-001:*"
+  memoPattern: 'PAYROLL:*:BATCH-001:*',
 });
 ```
 
@@ -409,12 +408,13 @@ const batch = await sdsClient.queryTransactions({
 ```typescript
 // Bad: Load all 100k records
 const allTxs = await queryAll();
-const filtered = allTxs.filter(x => x.employeeId === id);
+const filtered = allTxs.filter((x) => x.employeeId === id);
 
 // Good: Query with filters, paginate
 const result = await queryPayroll(
   { organizationPublicKey, employeeId },
-  1, 50  // Paginate
+  1,
+  50 // Paginate
 );
 ```
 
@@ -427,10 +427,10 @@ Operation                  Method    Records  Duration  Throughput
 ─────────────────────────────────────────────────────────────────
 Large Transaction Set      Horizon   10,000   8500ms    1.18 rec/s
                           SDS       10,000   1200ms    8.33 rec/s
-                          
+
 Organization Audit        Horizon   5,000    5000ms    1.00 rec/s
                           SDS       5,000    800ms     6.25 rec/s
-                          
+
 Complex Filtering         SDS       2,500    450ms     5.56 rec/s
 
 Aggregation              SDS       5,000    300ms     16.67 rec/s
@@ -725,10 +725,10 @@ LOG_LEVEL=info
 import config from './config';
 
 // Access configuration
-config.port          // Server port
-config.sds.enabled   // SDS enabled flag
-config.sds.endpoint  // SDS API endpoint
-config.cache.ttl     // Cache time-to-live
+config.port; // Server port
+config.sds.enabled; // SDS enabled flag
+config.sds.endpoint; // SDS API endpoint
+config.cache.ttl; // Cache time-to-live
 ```
 
 ---
@@ -738,6 +738,7 @@ config.cache.ttl     // Cache time-to-live
 ### Benchmark Methodology
 
 **Test Environment**:
+
 - Testnet environment
 - 5,000-10,000+ transaction datasets
 - Network latency simulated
@@ -747,54 +748,57 @@ config.cache.ttl     // Cache time-to-live
 
 #### Benchmark #1: Large Transaction Set (10k+ records)
 
-| Metric | Horizon | SDS | Improvement |
-|--------|---------|-----|-------------|
-| Response Time | 8,500ms | 1,200ms | **86% faster** |
-| Memory Usage | 54MB | 18MB | **67% reduction** |
-| Throughput | 1.18 rec/s | 8.33 rec/s | **7x better** |
-| Rate Limit Impact | High | Low | Significant |
+| Metric            | Horizon    | SDS        | Improvement       |
+| ----------------- | ---------- | ---------- | ----------------- |
+| Response Time     | 8,500ms    | 1,200ms    | **86% faster**    |
+| Memory Usage      | 54MB       | 18MB       | **67% reduction** |
+| Throughput        | 1.18 rec/s | 8.33 rec/s | **7x better**     |
+| Rate Limit Impact | High       | Low        | Significant       |
 
 #### Benchmark #2: Organization-wide Historical Audit
 
-| Metric | Horizon | SDS | Improvement |
-|--------|---------|-----|-------------|
-| Response Time | 5,000ms | 800ms | **84% faster** |
-| Multiple Requests | 3+ | 1 | **3x fewer** |
-| Memory Footprint | 32MB | 8MB | **75% reduction** |
-| API Calls | 20+ | 1-2 | **90% fewer** |
+| Metric            | Horizon | SDS   | Improvement       |
+| ----------------- | ------- | ----- | ----------------- |
+| Response Time     | 5,000ms | 800ms | **84% faster**    |
+| Multiple Requests | 3+      | 1     | **3x fewer**      |
+| Memory Footprint  | 32MB    | 8MB   | **75% reduction** |
+| API Calls         | 20+     | 1-2   | **90% fewer**     |
 
 #### Benchmark #3: Complex Filtering (memo + asset + time)
 
-| Metric | Horizon | SDS | Improvement |
-|--------|---------|-----|-------------|
-| Response Time | N/A (client-side) | 450ms | **Enables scenario** |
-| CPU Usage | High | Low | **Offloaded to SDS** |
-| Network Overhead | Very High | Low | **Greatly reduced** |
-| Accuracy | Error-prone | Precise | **Improved** |
+| Metric           | Horizon           | SDS     | Improvement          |
+| ---------------- | ----------------- | ------- | -------------------- |
+| Response Time    | N/A (client-side) | 450ms   | **Enables scenario** |
+| CPU Usage        | High              | Low     | **Offloaded to SDS** |
+| Network Overhead | Very High         | Low     | **Greatly reduced**  |
+| Accuracy         | Error-prone       | Precise | **Improved**         |
 
 #### Benchmark #4: Aggregation Operations
 
-| Metric | Horizon | SDS | Improvement |
-|--------|---------|-----|-------------|
-| Response Time | ~2000ms+ | 300ms | **85% faster** |
-| Calculation | Client-side | Server-side | **Offloaded** |
-| Accuracy | Manual prone | Built-in | **Improved** |
+| Metric        | Horizon      | SDS         | Improvement    |
+| ------------- | ------------ | ----------- | -------------- |
+| Response Time | ~2000ms+     | 300ms       | **85% faster** |
+| Calculation   | Client-side  | Server-side | **Offloaded**  |
+| Accuracy      | Manual prone | Built-in    | **Improved**   |
 
 ### Real-World Scenarios
 
 #### Scenario 1: Monthly Payroll Audit
+
 - **Dataset**: 1,000 employees, 2,000 transactions
 - **Horizon**: 5-7 API calls, ~8-10 seconds
 - **SDS**: 1 API call, ~800ms
 - **Speedup**: 10-12x
 
 #### Scenario 2: Employee History Lookup
+
 - **Dataset**: Single employee, 50 transactions over 1 year
 - **Horizon**: 1+ API calls (pagination), ~2-3 seconds
 - **SDS**: 1 API call, ~200ms (with cache: <10ms)
 - **Speedup**: 10-15x with caching
 
 #### Scenario 3: Transaction Search/Filter
+
 - **Dataset**: Complex multi-parameter search
 - **Horizon**: Load all, filter client-side, ~3-5 seconds
 - **SDS**: Server-side filtering, ~300-500ms
@@ -806,38 +810,43 @@ config.cache.ttl     // Cache time-to-live
 
 ### Advantages of SDS Over Horizon
 
-| Aspect | Horizon | SDS |
-|--------|---------|-----|
-| **Query Speed** | Slow (multiple calls) | Fast (optimized) |
-| **Filtering** | Client-side | Server-side |
-| **Aggregation** | Manual | Built-in |
-| **Rate Limits** | Tight (100 req/min) | Generous |
-| **Indexing** | None | Optimized |
-| **Memory** | High | Low |
-| **Memo Parsing** | Manual | Native |
-| **Large Datasets** | Difficult | Easy |
+| Aspect             | Horizon               | SDS              |
+| ------------------ | --------------------- | ---------------- |
+| **Query Speed**    | Slow (multiple calls) | Fast (optimized) |
+| **Filtering**      | Client-side           | Server-side      |
+| **Aggregation**    | Manual                | Built-in         |
+| **Rate Limits**    | Tight (100 req/min)   | Generous         |
+| **Indexing**       | None                  | Optimized        |
+| **Memory**         | High                  | Low              |
+| **Memo Parsing**   | Manual                | Native           |
+| **Large Datasets** | Difficult             | Easy             |
 
 ### Limitations and Trade-offs
 
 #### 1. SDS Dependency
+
 - **Trade-off**: Reliance on external service
 - **Mitigation**: Health checks, fallback to Horizon, retry logic
 
 #### 2. Memo Format Requirement
+
 - **Trade-off**: All payroll transactions must follow format
 - **Mitigation**: Validation layer, documentation, enforced on creation
 
 #### 3. Custom Indexing Overhead
+
 - **Trade-off**: Initial enrichment adds latency (~50-100ms)
 - **Mitigation**: Selective enrichment, caching, async processing
 
 #### 4. Cached Data Staleness
+
 - **Trade-off**: Cache TTL may return stale data
 - **Mitigation**: Configurable TTL, manual cache clear, real-time option
 
 ### When to Use Each System
 
 #### Use SDS For:
+
 - Large historical queries (1000+ records)
 - Organization-wide audits
 - Complex filtering (memo + assets + dates)
@@ -845,6 +854,7 @@ config.cache.ttl     // Cache time-to-live
 - Real-time dashboards
 
 #### Use Horizon For:
+
 - Single transaction lookups
 - Real-time balance checking
 - Non-payroll transaction queries
@@ -880,10 +890,7 @@ Replace old Horizon-based queries:
 
 ```typescript
 // OLD (Horizon-based)
-const transactions = await horizonServer
-  .transactions()
-  .forAccount(orgKey)
-  .call();
+const transactions = await horizonServer.transactions().forAccount(orgKey).call();
 
 // NEW (SDS-based)
 const response = await fetch(`/api/payroll/transactions?orgPublicKey=${orgKey}`);
@@ -919,7 +926,7 @@ const transaction = new TransactionBuilder(account)
 // Enable caching for repeated queries
 await payrollQueryService.queryPayroll(query, page, limit, {
   useCache: true,
-  cacheTtl: 3600000  // 1 hour
+  cacheTtl: 3600000, // 1 hour
 });
 ```
 

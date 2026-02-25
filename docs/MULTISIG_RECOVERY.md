@@ -8,11 +8,11 @@ The issuer account uses a multi-signature scheme where multiple parties must app
 
 ## Understanding Thresholds
 
-| Threshold Level | Operations | Typical Setting |
-|---|---|---|
-| **Low** | Allow trust, bump sequence | 1 signer |
-| **Medium** | Payments, manage offers, manage data | 2 signers |
-| **High** | Set options, change signers, merge account | 3 signers |
+| Threshold Level | Operations                                 | Typical Setting |
+| --------------- | ------------------------------------------ | --------------- |
+| **Low**         | Allow trust, bump sequence                 | 1 signer        |
+| **Medium**      | Payments, manage offers, manage data       | 2 signers       |
+| **High**        | Set options, change signers, merge account | 3 signers       |
 
 ## Recovery Scenarios
 
@@ -32,6 +32,7 @@ The issuer account uses a multi-signature scheme where multiple parties must app
 ### Scenario 3: Account Lockout Prevention
 
 Before applying any multi-sig configuration, the system automatically validates:
+
 - The total signer weight must be >= the highest threshold.
 - No single signer can meet the high threshold alone (which would defeat the multi-sig purpose).
 - All threshold values must be properly ordered (low <= med <= high).
@@ -43,19 +44,20 @@ If validation fails, the configuration is rejected.
 > **Warning**: If the total weight of available signers falls below the high threshold, the account cannot be reconfigured. This is by design to prevent unauthorized changes.
 
 **Prevention measures:**
+
 - Store encrypted backup keys in a secure offline vault.
 - Use hardware security modules (HSMs) for key storage.
 - Designate a "recovery signer" whose key is stored in a separate, offline location.
 
 ## API Reference
 
-| Endpoint | Method | Description |
-|---|---|---|
-| `/api/v1/multisig/configure` | POST | Full multi-sig setup |
-| `/api/v1/multisig/status/:key` | GET | View current config |
-| `/api/v1/multisig/signers` | POST | Add a signer |
-| `/api/v1/multisig/signers/:key` | DELETE | Remove a signer |
-| `/api/v1/multisig/thresholds` | PUT | Update thresholds |
+| Endpoint                        | Method | Description          |
+| ------------------------------- | ------ | -------------------- |
+| `/api/v1/multisig/configure`    | POST   | Full multi-sig setup |
+| `/api/v1/multisig/status/:key`  | GET    | View current config  |
+| `/api/v1/multisig/signers`      | POST   | Add a signer         |
+| `/api/v1/multisig/signers/:key` | DELETE | Remove a signer      |
+| `/api/v1/multisig/thresholds`   | PUT    | Update thresholds    |
 
 ## Best Practices
 

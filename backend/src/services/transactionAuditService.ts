@@ -1,5 +1,5 @@
-import { StellarService } from "./stellarService";
-import { pool } from "../config/database";
+import { StellarService } from './stellarService';
+import { pool } from '../config/database';
 
 export interface AuditRecord {
   id: number;
@@ -24,10 +24,9 @@ export class TransactionAuditService {
    */
   static async fetchAndStore(txHash: string): Promise<AuditRecord> {
     // Check if already stored
-    const existing = await pool.query(
-      "SELECT * FROM transaction_audit_logs WHERE tx_hash = $1",
-      [txHash]
-    );
+    const existing = await pool.query('SELECT * FROM transaction_audit_logs WHERE tx_hash = $1', [
+      txHash,
+    ]);
     if (existing.rows.length > 0) return existing.rows[0];
 
     // Fetch from Horizon
@@ -62,10 +61,9 @@ export class TransactionAuditService {
    * Get a stored audit record by transaction hash.
    */
   static async getByHash(txHash: string): Promise<AuditRecord | null> {
-    const result = await pool.query(
-      "SELECT * FROM transaction_audit_logs WHERE tx_hash = $1",
-      [txHash]
-    );
+    const result = await pool.query('SELECT * FROM transaction_audit_logs WHERE tx_hash = $1', [
+      txHash,
+    ]);
     return result.rows[0] || null;
   }
 
@@ -81,7 +79,7 @@ export class TransactionAuditService {
     const values: (string | number)[] = [];
     let paramIdx = 1;
 
-    let where = "";
+    let where = '';
     if (sourceAccount) {
       where = `WHERE source_account = $${paramIdx++}`;
       values.push(sourceAccount);
@@ -108,9 +106,7 @@ export class TransactionAuditService {
    * Re-fetch a transaction from Horizon and compare with the stored record
    * to verify integrity. Returns whether the stored XDR still matches.
    */
-  static async verify(
-    txHash: string
-  ): Promise<{ verified: boolean; record: AuditRecord | null }> {
+  static async verify(txHash: string): Promise<{ verified: boolean; record: AuditRecord | null }> {
     const record = await TransactionAuditService.getByHash(txHash);
     if (!record) return { verified: false, record: null };
 

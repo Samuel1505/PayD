@@ -419,12 +419,12 @@ export class PayrollAuditService {
     );
 
     const byAction: Record<string, number> = {};
-    actionResult.rows.forEach(row => {
+    actionResult.rows.forEach((row) => {
       byAction[row.action] = parseInt(row.count, 10);
     });
 
     const byActorType: Record<string, number> = {};
-    actorResult.rows.forEach(row => {
+    actorResult.rows.forEach((row) => {
       byActorType[row.actor_type] = parseInt(row.count, 10);
     });
 
@@ -466,9 +466,10 @@ export class PayrollAuditService {
     const csvRows = [headers.join(',')];
 
     for (const log of data) {
-      const employeeName = log.employee_first_name && log.employee_last_name
-        ? `${log.employee_first_name} ${log.employee_last_name}`
-        : '';
+      const employeeName =
+        log.employee_first_name && log.employee_last_name
+          ? `${log.employee_first_name} ${log.employee_last_name}`
+          : '';
 
       const row = [
         log.id,

@@ -182,10 +182,7 @@ describe('Tenant Context Middleware', () => {
       await setTenantContext(mockRequest as Request, mockResponse as Response, mockNext);
 
       expect(pool.connect).toHaveBeenCalled();
-      expect(mockClient.query).toHaveBeenCalledWith(
-        'SET LOCAL app.current_tenant_id = $1',
-        [123]
-      );
+      expect(mockClient.query).toHaveBeenCalledWith('SET LOCAL app.current_tenant_id = $1', [123]);
       expect((mockRequest as any).dbClient).toBe(mockClient);
       expect(mockNext).toHaveBeenCalled();
       expect(statusMock).not.toHaveBeenCalled();

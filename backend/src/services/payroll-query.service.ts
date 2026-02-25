@@ -77,11 +77,7 @@ export class PayrollQueryService {
 
       // Cache result
       if (options.useCache) {
-        this.setCachedData(
-          cacheKey,
-          result,
-          options.cacheTtl || 3600000
-        );
+        this.setCachedData(cacheKey, result, options.cacheTtl || 3600000);
       }
 
       logger.info(`Payroll query completed: ${result.data.length} transactions`);
@@ -208,7 +204,7 @@ export class PayrollQueryService {
 
       logger.info(
         `Audit report generated: ${aggregation.totalCount} total transactions, ` +
-        `${aggregation.successfulCount} successful, ${aggregation.failedCount} failed`
+          `${aggregation.successfulCount} successful, ${aggregation.failedCount} failed`
       );
 
       return {

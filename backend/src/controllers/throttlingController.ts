@@ -73,17 +73,18 @@ export class ThrottlingController {
     const throttlingService = ThrottlingService.getInstance();
     const status = throttlingService.getStatus();
 
-    const utilizationRate = status.maxTokens > 0
-      ? ((status.maxTokens - status.currentTokens) / status.maxTokens) * 100
-      : 0;
+    const utilizationRate =
+      status.maxTokens > 0
+        ? ((status.maxTokens - status.currentTokens) / status.maxTokens) * 100
+        : 0;
 
-    const queueUtilizationRate = status.maxQueueSize > 0
-      ? (status.queueSize / status.maxQueueSize) * 100
-      : 0;
+    const queueUtilizationRate =
+      status.maxQueueSize > 0 ? (status.queueSize / status.maxQueueSize) * 100 : 0;
 
-    const successRate = (status.processedCount + status.rejectedCount) > 0
-      ? (status.processedCount / (status.processedCount + status.rejectedCount)) * 100
-      : 100;
+    const successRate =
+      status.processedCount + status.rejectedCount > 0
+        ? (status.processedCount / (status.processedCount + status.rejectedCount)) * 100
+        : 100;
 
     res.json({
       success: true,
