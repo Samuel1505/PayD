@@ -42,6 +42,7 @@ const ConnectAccount: React.FC = () => {
         );
     }
 
+  if (address) {
     return (
         <div className="flex items-center gap-3">
             <button
@@ -61,6 +62,28 @@ const ConnectAccount: React.FC = () => {
             </button>
         </div>
     );
+  }
+  return (
+    <button
+      onClick={() => {
+        void connect();
+      }}
+      disabled={isConnecting}
+      className="px-5 py-2 cursor-pointer bg-accent text-xs border border-accent/30 font-bold rounded-xl hover:scale-105 transition-transform shadow-lg shadow-accent/20 uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+    >
+      {isConnecting ? (
+        <span className="flex items-center gap-2">
+          <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+          {t('connectAccount.connecting') || 'Connecting...'}
+        </span>
+      ) : (
+        <>
+          {t('connectAccount.connect')}{' '}
+          <span className="hidden sm:inline">{t('connectAccount.wallet')}</span>
+        </>
+      )}
+    </button>
+  );
 };
 
 export default ConnectAccount;

@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from "react";
-import { Routes, Route, Outlet, NavLink, useLocation } from "react-router-dom";
-import ConnectAccount from "./components/ConnectAccount";
+<<<<<<< OAuth2-Social-Login-Integration
+import { Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
 import Debugger from "./pages/Debugger";
 import PayrollScheduler from "./pages/PayrollScheduler";
 import EmployeeEntry from "./pages/EmployeeEntry";
+import AppLayout from "./components/AppLayout";
+import HelpCenter from "./pages/HelpCenter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import ErrorFallback from "./components/ErrorFallback";
 import { OnboardingTour } from "./components/OnboardingTour";
@@ -202,83 +203,150 @@ const AppLayout: React.FC = () => {
 };
 
 // ── App ────────────────────────────────────────────────────────────────────────
+=======
+import { Routes, Route } from 'react-router-dom';
+import Home from './pages/Home';
+import Debugger from './pages/Debugger';
+import PayrollScheduler from './pages/PayrollScheduler';
+import EmployeeEntry from './pages/EmployeeEntry';
+import AppLayout from './components/AppLayout';
+import HelpCenter from './pages/HelpCenter';
+import ErrorBoundary from './components/ErrorBoundary';
+import ErrorFallback from './components/ErrorFallback';
+import Settings from './pages/Settings';
+import CustomReportBuilder from './pages/CustomReportBuilder';
+import CrossAssetPayment from './pages/CrossAssetPayment';
+import TransactionHistory from './pages/TransactionHistory';
+import EmployeePortal from './pages/EmployeePortal';
+import { useTranslation } from 'react-i18next';
+>>>>>>> main
 
 function App() {
-    return (
-        <Routes>
-            <Route element={<AppLayout />}>
-                <Route
-                    path="/"
+  const { t } = useTranslation();
+
+  return (
+    <Routes>
+      <Route element={<AppLayout />}>
+        <Route
+          path="/"
+          element={
+            <ErrorBoundary
+              fallback={
+                <ErrorFallback
+                  title={t('errorFallback.homeTitle')}
+                  description={t('errorFallback.homeDescription')}
+                />
+              }
+            >
+              <Home />
+            </ErrorBoundary>
+          }
+        />
+        <Route
+          path="/payroll"
+          element={
+            <ErrorBoundary
+              fallback={
+                <ErrorFallback
+                  title={t('errorFallback.payrollTitle')}
+                  description={t('errorFallback.payrollDescription')}
+                />
+              }
+            >
+              <PayrollScheduler />
+            </ErrorBoundary>
+          }
+        />
+        <Route
+          path="/employee"
+          element={
+            <ErrorBoundary
+              fallback={
+                <ErrorFallback
+                  title={t('errorFallback.employeesTitle')}
+                  description={t('errorFallback.employeesDescription')}
+                />
+              }
+            >
+              <EmployeeEntry />
+            </ErrorBoundary>
+          }
+        />
+        <Route
+          path="/portal"
+          element={
+            <ErrorBoundary
+              fallback={
+                <ErrorFallback
+                  title="Employee Portal Error"
+                  description="Something went wrong loading your portal."
+                />
+              }
+            >
+              <EmployeePortal />
+            </ErrorBoundary>
+          }
+        />
+        <Route
+          path="/reports"
+          element={
+            <ErrorBoundary fallback={<ErrorFallback />}>
+              <CustomReportBuilder />
+            </ErrorBoundary>
+          }
+        />
+        <Route
+          path="/debug"
+          element={
+            <ErrorBoundary
+              fallback={
+                <ErrorFallback
+                  title={t('errorFallback.debuggerTitle')}
+                  description={t('errorFallback.debuggerDescription')}
+                />
+              }
+            >
+              <Debugger />
+            </ErrorBoundary>
+          }
+        />
+        <Route
+          path="/debug/:contractName"
+          element={
+            <ErrorBoundary
+              fallback={
+                <ErrorFallback
+                  title={t('errorFallback.debuggerTitle')}
+                  description={t('errorFallback.debuggerDescription')}
+                />
+              }
+            >
+              <Debugger />
+            </ErrorBoundary>
+          }
+        />
+        <Route
+<<<<<<< OAuth2-Social-Login-Integration
+            path="/settings"
                     element={
-                        <ErrorBoundary
-                            fallback={
-                                <ErrorFallback
-                                    title="Home page failed to load"
-                                    description="Reload the page or try again in a few moments."
-                                />
-                            }
-                        >
-                            <Home />
+                        <ErrorBoundary fallback={<ErrorFallback />}>
+                            <Settings />
                         </ErrorBoundary>
                     }
                 />
                 <Route
-                    path="/payroll"
+                    path="/help"
                     element={
-                        <ErrorBoundary
-                            fallback={
-                                <ErrorFallback
-                                    title="Payroll scheduler encountered an error"
-                                    description="Your draft data is safe. Try reloading the scheduler."
-                                />
-                            }
-                        >
-                            <PayrollScheduler />
+                        <ErrorBoundary fallback={<ErrorFallback />}>
+                            <HelpCenter />
                         </ErrorBoundary>
                     }
                 />
                 <Route
-                    path="/employee"
+                    path="/cross-asset-payment"
                     element={
-                        <ErrorBoundary
-                            fallback={
-                                <ErrorFallback
-                                    title="Employee directory failed to load"
-                                    description="Return to the dashboard or retry in a few seconds."
-                                />
-                            }
-                        >
-                            <EmployeeEntry />
-                        </ErrorBoundary>
-                    }
-                />
-                <Route
-                    path="/debug"
-                    element={
-                        <ErrorBoundary
-                            fallback={
-                                <ErrorFallback
-                                    title="Debugger view crashed"
-                                    description="Reset the debugger or navigate back to the main dashboard."
-                                />
-                            }
-                        >
-                            <Debugger />
-                        </ErrorBoundary>
-                    }
-                />
-                <Route
-                    path="/debug/:contractName"
-                    element={
-                        <ErrorBoundary
-                            fallback={
-                                <ErrorFallback
-                                    title="Debugger view crashed"
-                                    description="Reset the debugger or navigate back to the main dashboard."
-                                />
-                            }
-                        >
-                            <Debugger />
+                        <ErrorBoundary fallback={<ErrorFallback />}>
+                            <CrossAssetPayment />
                         </ErrorBoundary>
                     }
                 />
@@ -287,6 +355,42 @@ function App() {
             </Route>
         </Routes>
     );
+=======
+          path="/settings"
+          element={
+            <ErrorBoundary fallback={<ErrorFallback onReset={() => {}} />}>
+              <Settings />
+            </ErrorBoundary>
+          }
+        />
+        <Route
+          path="/help"
+          element={
+            <ErrorBoundary fallback={<ErrorFallback onReset={() => {}} />}>
+              <HelpCenter />
+            </ErrorBoundary>
+          }
+        />
+        <Route
+          path="/cross-asset-payment"
+          element={
+            <ErrorBoundary fallback={<ErrorFallback onReset={() => {}} />}>
+              <CrossAssetPayment />
+            </ErrorBoundary>
+          }
+        />
+        <Route
+          path="/transactions"
+          element={
+            <ErrorBoundary fallback={<ErrorFallback onReset={() => {}} />}>
+              <TransactionHistory />
+            </ErrorBoundary>
+          }
+        />
+      </Route>
+    </Routes>
+  );
+>>>>>>> main
 }
 
 export default App;
