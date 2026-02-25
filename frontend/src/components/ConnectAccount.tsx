@@ -25,7 +25,7 @@ const ConnectAccount: React.FC = () => {
                     <div className="hidden sm:flex flex-col items-end">
                         <span className="text-[10px] uppercase tracking-widest text-muted font-mono leading-none mb-1">Stellar</span>
                         <span className="text-xs text-accent font-mono leading-none">
-                            {address.substring(0, 6)}...{address.substring(address.length - 4)}
+                            {address.slice(0, 6)}...{address.slice(-4)}
                         </span>
                     </div>
                 )}
@@ -45,7 +45,7 @@ const ConnectAccount: React.FC = () => {
     return (
         <div className="flex items-center gap-3">
             <button
-                onClick={() => navigate("/login")}
+                onClick={() => { void navigate("/login"); }}
                 className="px-4 py-2.5 glass border-hi text-white font-bold rounded-xl hover:bg-white/5 transition-all text-xs uppercase tracking-wider"
             >
                 Sign In

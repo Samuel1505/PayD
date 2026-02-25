@@ -1,7 +1,7 @@
 import React from "react";
 
 const Login: React.FC = () => {
-    const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:4000";
+    const backendUrl = (import.meta.env.VITE_BACKEND_URL as string) || "http://localhost:4000";
 
     const handleLogin = (provider: "google" | "github") => {
         window.location.href = `${backendUrl}/auth/${provider}`;

@@ -10,9 +10,9 @@ const AuthCallback: React.FC = () => {
         if (token) {
             localStorage.setItem("payd_auth_token", token);
             // Optional: decode token to get user info or trigger a refresh in a context provider
-            navigate("/");
+            void navigate("/");
         } else {
-            navigate("/login?error=no_token");
+            void navigate("/login?error=no_token");
         }
     }, [searchParams, navigate]);
 
