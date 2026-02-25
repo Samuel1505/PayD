@@ -255,9 +255,7 @@ export default function AdminPanel() {
       <div className="w-full mb-8 flex gap-4 border-b border-hi overflow-x-auto">
         {(Object.keys(TAB_LABELS) as ActiveTab[]).map((tab) => (
           <button key={tab} onClick={() => setActiveTab(tab)} className={tabClass(tab)}>
-            {tab === 'contracts' && (
-              <Code2 className="inline w-3.5 h-3.5 mr-1.5 -mt-0.5" />
-            )}
+            {tab === 'contracts' && <Code2 className="inline w-3.5 h-3.5 mr-1.5 -mt-0.5" />}
             {TAB_LABELS[tab]}
           </button>
         ))}
@@ -519,9 +517,7 @@ export default function AdminPanel() {
         )}
 
         {/* ── Contract Upgrades ────────────────────────────────────── */}
-        {activeTab === 'contracts' && (
-          <ContractUpgradeTab adminAddress={adminAddress ?? ''} />
-        )}
+        {activeTab === 'contracts' && <ContractUpgradeTab adminAddress={adminAddress ?? ''} />}
 
         {/* ── Audit Logs ───────────────────────────────────────────── */}
         {activeTab === 'logs' && (

@@ -29,7 +29,12 @@ import {
   ChevronUp,
   ExternalLink,
 } from 'lucide-react';
-import { type ContractRecord, type UpgradeLog, fetchContracts, fetchUpgradeLogs } from '../services/contractUpgrade';
+import {
+  type ContractRecord,
+  type UpgradeLog,
+  fetchContracts,
+  fetchUpgradeLogs,
+} from '../services/contractUpgrade';
 import UpgradeConfirmModal from './UpgradeConfirmModal';
 import { useNotification } from '../hooks/useNotification';
 
@@ -49,10 +54,7 @@ interface ContractUpgradeTabProps {
 /** Compact hash display: first 8 + last 6 chars with monospace styling */
 function HashBadge({ hash, full = false }: { hash: string; full?: boolean }) {
   return (
-    <code
-      className="font-mono text-xs bg-black/30 px-2 py-0.5 rounded text-accent"
-      title={hash}
-    >
+    <code className="font-mono text-xs bg-black/30 px-2 py-0.5 rounded text-accent" title={hash}>
       {full ? hash : `${hash.slice(0, 8)}…${hash.slice(-6)}`}
     </code>
   );
@@ -77,12 +79,12 @@ function NetworkBadge({ network }: { network: string }) {
 /** Upgrade log status badge */
 function StatusBadge({ status }: { status: UpgradeLog['status'] }) {
   const colorMap: Record<UpgradeLog['status'], string> = {
-    pending:   'bg-yellow-500/10 text-yellow-400 border-yellow-500/30',
+    pending: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30',
     simulated: 'bg-blue-500/10 text-blue-400 border-blue-500/30',
     confirmed: 'bg-accent/10 text-accent border-accent/30',
     executing: 'bg-accent/10 text-accent border-accent/30',
     completed: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30',
-    failed:    'bg-red-500/10 text-red-500 border-red-500/30',
+    failed: 'bg-red-500/10 text-red-500 border-red-500/30',
     cancelled: 'bg-muted/10 text-muted border-muted/30',
   };
   return (
@@ -189,9 +191,7 @@ function ContractCard({ contract, onUpgrade }: ContractCardProps) {
               {contract.last_upgraded_by && (
                 <>
                   {' by '}
-                  <code className="font-mono">
-                    {contract.last_upgraded_by.slice(0, 8)}…
-                  </code>
+                  <code className="font-mono">{contract.last_upgraded_by.slice(0, 8)}…</code>
                 </>
               )}
             </span>
@@ -230,7 +230,10 @@ function ContractCard({ contract, onUpgrade }: ContractCardProps) {
                   </thead>
                   <tbody>
                     {logs.map((log) => (
-                      <tr key={log.id} className="border-b border-hi/40 hover:bg-white/3 transition-colors">
+                      <tr
+                        key={log.id}
+                        className="border-b border-hi/40 hover:bg-white/3 transition-colors"
+                      >
                         <td className="py-2 pr-3 font-mono text-muted">
                           {new Date(log.created_at).toLocaleDateString()}
                         </td>
@@ -279,7 +282,10 @@ export default function ContractUpgradeTab({ adminAddress }: ContractUpgradeTabP
       const data = await fetchContracts();
       setContracts(data);
     } catch (err: unknown) {
-      notifyError('Load Failed', err instanceof Error ? err.message : 'Failed to load contract registry.');
+      notifyError(
+        'Load Failed',
+        err instanceof Error ? err.message : 'Failed to load contract registry.'
+      );
     } finally {
       setLoading(false);
     }

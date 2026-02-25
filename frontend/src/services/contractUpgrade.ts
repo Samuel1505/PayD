@@ -91,7 +91,7 @@ async function apiFetch<T>(url: string, init?: RequestInit): Promise<T> {
     ...init,
   });
 
-  const body = await response.json() as Record<string, unknown>;
+  const body = (await response.json()) as Record<string, unknown>;
 
   if (!response.ok) {
     const message =
@@ -124,7 +124,9 @@ export async function fetchContracts(): Promise<ContractRecord[]> {
  * GET /api/v1/contracts/:registryId
  */
 export async function fetchContract(registryId: number): Promise<ContractRecord> {
-  const data = await apiFetch<{ success: boolean; data: ContractRecord }>(`${API_BASE}/${registryId}`);
+  const data = await apiFetch<{ success: boolean; data: ContractRecord }>(
+    `${API_BASE}/${registryId}`
+  );
   return data.data;
 }
 

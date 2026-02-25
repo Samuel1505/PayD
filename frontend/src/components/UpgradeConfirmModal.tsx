@@ -97,8 +97,8 @@ function StepBreadcrumb({ current }: { current: number }) {
               i + 1 === current
                 ? 'text-accent bg-accent/10'
                 : i + 1 < current
-                ? 'text-emerald-500'
-                : 'text-muted/50'
+                  ? 'text-emerald-500'
+                  : 'text-muted/50'
             }`}
           >
             {i + 1 < current ? '✓' : `${i + 1}.`} {label}
@@ -111,7 +111,15 @@ function StepBreadcrumb({ current }: { current: number }) {
 }
 
 /** Diff row showing old → new WASM hash */
-function HashDiff({ label, oldHash, newHash }: { label: string; oldHash: string; newHash: string }) {
+function HashDiff({
+  label,
+  oldHash,
+  newHash,
+}: {
+  label: string;
+  oldHash: string;
+  newHash: string;
+}) {
   return (
     <div className="grid gap-1 text-xs font-mono">
       <span className="text-muted text-[10px] uppercase tracking-widest">{label}</span>
@@ -150,9 +158,7 @@ function MigrationStepRow({ step }: { step: MigrationStep }) {
       <div className="mt-0.5 shrink-0">{icon}</div>
       <div className="flex-1 min-w-0">
         <p className={`text-sm font-medium ${textColor}`}>{step.name}</p>
-        {step.message && (
-          <p className="text-xs text-muted mt-0.5">{step.message}</p>
-        )}
+        {step.message && <p className="text-xs text-muted mt-0.5">{step.message}</p>}
       </div>
     </div>
   );
@@ -223,35 +229,40 @@ export default function UpgradeConfirmModal({
     const { wasmHash } = modal;
 
     if (!wasmHash.trim()) {
-      setModal((m) => m.step === 'input' ? { ...m, validationError: 'WASM hash is required.' } : m);
+      setModal((m) =>
+        m.step === 'input' ? { ...m, validationError: 'WASM hash is required.' } : m
+      );
       return;
     }
 
     // Client-side format pre-check to avoid unnecessary round-trip
     if (!/^[0-9a-f]{64}$/i.test(wasmHash.trim())) {
-      setModal((m) => m.step === 'input'
-        ? { ...m, validationError: 'WASM hash must be exactly 64 lowercase hex characters.' }
-        : m
+      setModal((m) =>
+        m.step === 'input'
+          ? { ...m, validationError: 'WASM hash must be exactly 64 lowercase hex characters.' }
+          : m
       );
       return;
     }
 
-    setModal((m) => m.step === 'input' ? { ...m, validating: true, validationError: null } : m);
+    setModal((m) => (m.step === 'input' ? { ...m, validating: true, validationError: null } : m));
 
     try {
       // Validate against backend registry + on-chain check
       const { valid, reason } = await validateWasmHash(contract.id, wasmHash.trim());
       if (!valid) {
-        setModal((m) => m.step === 'input'
-          ? { ...m, validating: false, validationError: reason ?? 'Validation failed.' }
-          : m
+        setModal((m) =>
+          m.step === 'input'
+            ? { ...m, validating: false, validationError: reason ?? 'Validation failed.' }
+            : m
         );
         return;
       }
     } catch {
-      setModal((m) => m.step === 'input'
-        ? { ...m, validating: false, validationError: 'Could not reach backend for validation.' }
-        : m
+      setModal((m) =>
+        m.step === 'input'
+          ? { ...m, validating: false, validationError: 'Could not reach backend for validation.' }
+          : m
       );
       return;
     }
@@ -297,7 +308,10 @@ export default function UpgradeConfirmModal({
     const { upgradeLogId, wasmHash, adminSecret } = modal;
 
     if (!adminSecret.trim()) {
-      notifyError('Missing secret', 'Admin secret key is required to sign the upgrade transaction.');
+      notifyError(
+        'Missing secret',
+        'Admin secret key is required to sign the upgrade transaction.'
+      );
       return;
     }
 
@@ -314,31 +328,36 @@ export default function UpgradeConfirmModal({
 
       // Poll migration progress every 3 seconds
       pollRef.current = setInterval(() => {
-        void (async () => { try {
-          const log = await fetchUpgradeStatus(upgradeLogId);
+        void (async () => {
+          try {
+            const log = await fetchUpgradeStatus(upgradeLogId);
 
-          setModal({
-            step: 'executing',
-            upgradeLogId,
-            txHash: log.tx_hash,
-            migrationSteps: log.migration_steps,
-            overallStatus: log.status,
-          });
+            setModal({
+              step: 'executing',
+              upgradeLogId,
+              txHash: log.tx_hash,
+              migrationSteps: log.migration_steps,
+              overallStatus: log.status,
+            });
 
-          // Reached terminal state — stop polling
-          if (log.status === 'completed') {
-            clearPoll();
-            notifySuccess('Upgrade Complete', 'Contract upgraded and migration finished successfully.');
-            setModal({ step: 'done', txHash: log.tx_hash ?? result.txHash, wasmHash });
-            onUpgradeComplete(wasmHash);
-          } else if (log.status === 'failed') {
-            clearPoll();
-            notifyError('Upgrade Failed', log.error_message ?? 'Upgrade or migration failed.');
-            setModal({ step: 'failed', error: log.error_message ?? 'Upgrade failed.' });
+            // Reached terminal state — stop polling
+            if (log.status === 'completed') {
+              clearPoll();
+              notifySuccess(
+                'Upgrade Complete',
+                'Contract upgraded and migration finished successfully.'
+              );
+              setModal({ step: 'done', txHash: log.tx_hash ?? result.txHash, wasmHash });
+              onUpgradeComplete(wasmHash);
+            } else if (log.status === 'failed') {
+              clearPoll();
+              notifyError('Upgrade Failed', log.error_message ?? 'Upgrade or migration failed.');
+              setModal({ step: 'failed', error: log.error_message ?? 'Upgrade failed.' });
+            }
+          } catch {
+            // Network blip — keep polling silently
           }
-        } catch {
-          // Network blip — keep polling silently
-        } })();
+        })();
       }, 3_000);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Execution failed';
@@ -391,9 +410,7 @@ export default function UpgradeConfirmModal({
         {/* Modal header */}
         <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-hi">
           <div>
-            <h2 className="text-lg font-black tracking-tight">
-              Upgrade Contract
-            </h2>
+            <h2 className="text-lg font-black tracking-tight">Upgrade Contract</h2>
             <p className="text-xs text-muted font-mono mt-0.5">{contract.name}</p>
           </div>
           {!['executing', 'simulating'].includes(modal.step) && (
@@ -414,7 +431,6 @@ export default function UpgradeConfirmModal({
 
         {/* Step content */}
         <div className="px-6 pb-6 max-h-[70vh] overflow-y-auto">
-
           {/* ── Step 1: INPUT ─────────────────────────────────────────── */}
           {modal.step === 'input' && (
             <div className="flex flex-col gap-5">
@@ -425,9 +441,13 @@ export default function UpgradeConfirmModal({
                   {contract.current_wasm_hash}
                 </p>
                 <div className="flex items-center gap-3 mt-3 text-xs text-muted">
-                  <span>Version: <span className="text-text font-bold">{contract.version}</span></span>
+                  <span>
+                    Version: <span className="text-text font-bold">{contract.version}</span>
+                  </span>
                   <span>·</span>
-                  <span>Network: <span className="text-text font-bold">{contract.network}</span></span>
+                  <span>
+                    Network: <span className="text-text font-bold">{contract.network}</span>
+                  </span>
                   {contract.last_upgraded_at && (
                     <>
                       <span>·</span>
@@ -451,7 +471,11 @@ export default function UpgradeConfirmModal({
                   onChange={(e) =>
                     setModal((m) =>
                       m.step === 'input'
-                        ? { ...m, wasmHash: e.target.value.toLowerCase().trim(), validationError: null }
+                        ? {
+                            ...m,
+                            wasmHash: e.target.value.toLowerCase().trim(),
+                            validationError: null,
+                          }
                         : m
                     )
                   }
@@ -469,8 +493,10 @@ export default function UpgradeConfirmModal({
                 )}
                 <p className="mt-2 text-xs text-muted">
                   Upload the WASM bytecode first via{' '}
-                  <code className="font-mono bg-black/30 px-1 rounded">stellar contract upload</code>
-                  {' '}to obtain the hash.
+                  <code className="font-mono bg-black/30 px-1 rounded">
+                    stellar contract upload
+                  </code>{' '}
+                  to obtain the hash.
                 </p>
               </div>
 
@@ -480,9 +506,13 @@ export default function UpgradeConfirmModal({
                 className="flex items-center justify-center gap-2 py-3.5 bg-accent/20 text-accent border border-accent/40 font-black rounded-xl hover:bg-accent hover:text-black transition-all uppercase tracking-widest text-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {modal.validating ? (
-                  <><Loader2 className="w-4 h-4 animate-spin" /> Validating…</>
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" /> Validating…
+                  </>
                 ) : (
-                  <><ShieldCheck className="w-4 h-4" /> Validate & Simulate</>
+                  <>
+                    <ShieldCheck className="w-4 h-4" /> Validate & Simulate
+                  </>
                 )}
               </button>
             </div>
@@ -522,7 +552,9 @@ export default function UpgradeConfirmModal({
                   <XCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
                 )}
                 <div>
-                  <p className={`font-bold text-sm ${modal.simulation.success ? 'text-emerald-400' : 'text-red-400'}`}>
+                  <p
+                    className={`font-bold text-sm ${modal.simulation.success ? 'text-emerald-400' : 'text-red-400'}`}
+                  >
                     {modal.simulation.success ? 'Simulation Passed' : 'Simulation Failed'}
                   </p>
                   {modal.simulation.error && (
@@ -535,7 +567,10 @@ export default function UpgradeConfirmModal({
               {modal.simulation.warnings.length > 0 && (
                 <div className="flex flex-col gap-2">
                   {modal.simulation.warnings.map((w) => (
-                    <div key={w} className="flex items-start gap-2 p-3 bg-yellow-500/5 border border-yellow-500/30 rounded-xl text-xs text-yellow-400">
+                    <div
+                      key={w}
+                      className="flex items-start gap-2 p-3 bg-yellow-500/5 border border-yellow-500/30 rounded-xl text-xs text-yellow-400"
+                    >
                       <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
                       {w}
                     </div>
@@ -557,7 +592,9 @@ export default function UpgradeConfirmModal({
                   <dl className="grid grid-cols-2 gap-3 mt-3 text-sm">
                     <div>
                       <dt className="text-muted text-xs">Network Fee</dt>
-                      <dd className="font-bold font-mono">{modal.simulation.estimatedFeeXlm} XLM</dd>
+                      <dd className="font-bold font-mono">
+                        {modal.simulation.estimatedFeeXlm} XLM
+                      </dd>
                     </div>
                     <div>
                       <dt className="text-muted text-xs">CPU Instructions</dt>
@@ -578,7 +615,9 @@ export default function UpgradeConfirmModal({
                     {modal.simulation.latestLedger > 0 && (
                       <div>
                         <dt className="text-muted text-xs">Ledger</dt>
-                        <dd className="font-bold font-mono">#{modal.simulation.latestLedger.toLocaleString()}</dd>
+                        <dd className="font-bold font-mono">
+                          #{modal.simulation.latestLedger.toLocaleString()}
+                        </dd>
                       </div>
                     )}
                   </dl>
@@ -614,8 +653,8 @@ export default function UpgradeConfirmModal({
                 <div className="text-sm">
                   <p className="font-bold text-red-400">This action is irreversible</p>
                   <p className="text-red-400/80 text-xs mt-1">
-                    The contract will be upgraded on-chain immediately after signing.
-                    Ensure you have thoroughly reviewed the new WASM and simulation results.
+                    The contract will be upgraded on-chain immediately after signing. Ensure you
+                    have thoroughly reviewed the new WASM and simulation results.
                   </p>
                 </div>
               </div>
@@ -626,11 +665,15 @@ export default function UpgradeConfirmModal({
                 <div className="flex flex-col gap-2 mt-2 text-xs font-mono">
                   <div className="flex gap-2">
                     <span className="text-muted w-12 shrink-0">From</span>
-                    <span className="text-red-400 break-all">{contract.current_wasm_hash.slice(0, 24)}…</span>
+                    <span className="text-red-400 break-all">
+                      {contract.current_wasm_hash.slice(0, 24)}…
+                    </span>
                   </div>
                   <div className="flex gap-2">
                     <span className="text-muted w-12 shrink-0">To</span>
-                    <span className="text-emerald-400 break-all">{modal.wasmHash.slice(0, 24)}…</span>
+                    <span className="text-emerald-400 break-all">
+                      {modal.wasmHash.slice(0, 24)}…
+                    </span>
                   </div>
                 </div>
               </div>
@@ -698,14 +741,16 @@ export default function UpgradeConfirmModal({
 
               {/* Overall status badge */}
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold uppercase tracking-widest text-muted">Status:</span>
+                <span className="text-xs font-bold uppercase tracking-widest text-muted">
+                  Status:
+                </span>
                 <span
                   className={`px-3 py-1 rounded text-xs font-black uppercase tracking-widest border ${
                     modal.overallStatus === 'completed'
                       ? 'bg-emerald-500/20 text-emerald-500 border-emerald-500/30'
                       : modal.overallStatus === 'failed'
-                      ? 'bg-red-500/20 text-red-500 border-red-500/30'
-                      : 'bg-accent/20 text-accent border-accent/30'
+                        ? 'bg-red-500/20 text-red-500 border-red-500/30'
+                        : 'bg-accent/20 text-accent border-accent/30'
                   }`}
                 >
                   {modal.overallStatus}
@@ -793,7 +838,12 @@ export default function UpgradeConfirmModal({
                 </button>
                 <button
                   onClick={() =>
-                    setModal({ step: 'input', wasmHash: '', validating: false, validationError: null })
+                    setModal({
+                      step: 'input',
+                      wasmHash: '',
+                      validating: false,
+                      validationError: null,
+                    })
                   }
                   className="flex-1 flex items-center justify-center gap-2 py-3 bg-black/20 border border-hi rounded-xl text-sm font-bold hover:bg-white/5 transition-all uppercase tracking-widest"
                 >
