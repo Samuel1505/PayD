@@ -17,7 +17,7 @@ class ContractService {
   private cache: ContractRegistry | null = null;
   private lastFetch: number | null = null;
   private readonly CACHE_TTL = 3600000; // 1 hour in milliseconds
-  private readonly API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+  private readonly API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined) || 'http://localhost:3000';
   private readonly MAX_RETRIES = 3;
 
   /**
