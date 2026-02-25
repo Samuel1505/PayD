@@ -17,7 +17,7 @@ socket.on('connect', () => {
   // Listen for update
   socket.on('transaction:update', (data) => {
     console.log('Received transaction update:', data);
-    
+
     if (data.transactionId === transactionId && data.status === 'confirmed') {
       console.log('Test Passed: Update received correctly');
       socket.disconnect();
@@ -35,8 +35,8 @@ socket.on('connect', () => {
         body: JSON.stringify({
           transactionId,
           status: 'confirmed',
-          data: { amount: 100 }
-        })
+          data: { amount: 100 },
+        }),
       });
       const result = await response.json();
       console.log('API response:', result);

@@ -19,7 +19,7 @@ const AppLayout: React.FC = () => (
             <NavLink
               to="/payroll"
               className={({ isActive }: { isActive: boolean }) =>
-                `text-sm font-medium ${isActive ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`
+                `text-sm font-medium ${isActive ? "text-blue-600" : "text-gray-500 hover:text-gray-700"}`
               }
             >
               Payroll
@@ -27,7 +27,7 @@ const AppLayout: React.FC = () => (
             <NavLink
               to="/employee"
               className={({ isActive }: { isActive: boolean }) =>
-                `text-sm font-medium ${isActive ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`
+                `text-sm font-medium ${isActive ? "text-blue-600" : "text-gray-500 hover:text-gray-700"}`
               }
             >
               Employees
@@ -35,7 +35,7 @@ const AppLayout: React.FC = () => (
             <NavLink
               to="/reports"
               className={({ isActive }: { isActive: boolean }) =>
-                `text-sm font-medium ${isActive ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`
+                `text-sm font-medium ${isActive ? "text-blue-600" : "text-gray-500 hover:text-gray-700"}`
               }
             >
               Reports

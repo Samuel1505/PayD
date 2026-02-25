@@ -1,30 +1,26 @@
-import React, { createContext, useContext } from "react";
+import React, { useCallback } from 'react';
+import { toast } from 'sonner';
+import { NotificationContext } from '../hooks/useNotification';
 
-interface NotificationContextType {
-  notify: (message: string) => void;
-}
+export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const notify = useCallback((message: string) => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
+    (toast as any)(message);
+  }, []);
 
-const NotificationContext = createContext<NotificationContextType | undefined>(
-  undefined,
-);
+  const notifySuccess = useCallback((message: string, description?: string) => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
+    (toast as any).success(message, { description });
+  }, []);
 
-export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
-  const notify = (message: string) => {
-    alert(message); // Placeholder for better UI notification
-  };
+  const notifyError = useCallback((message: string, description?: string) => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
+    (toast as any).error(message, { description });
+  }, []);
 
   return (
-    <NotificationContext.Provider value={{ notify }}>
+    <NotificationContext value={{ notify, notifySuccess, notifyError }}>
       {children}
-    </NotificationContext.Provider>
+    </NotificationContext>
   );
-};
-
-export const useNotification = () => {
-  const context = useContext(NotificationContext);
-  if (!context)
-    throw new Error("useNotification must be used within NotificationProvider");
-  return context;
 };

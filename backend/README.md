@@ -11,7 +11,7 @@ TypeScript/Node.js backend service for PayD payroll platform with Stellar Data S
 ✅ **Retry Logic** - Exponential backoff for resilience  
 ✅ **Aggregate Reporting** - Organization-wide audit reports  
 ✅ **Performance Benchmarking** - SDS vs Horizon comparison  
-✅ **REST API** - Comprehensive endpoints for all operations  
+✅ **REST API** - Comprehensive endpoints for all operations
 
 ## Quick Start
 
@@ -23,6 +23,7 @@ TypeScript/Node.js backend service for PayD payroll platform with Stellar Data S
 - Stellar account keys (for testing)
 
 ### Installation
+
 # PayD Backend - Advanced Search & Filtering
 
 This backend implements a powerful search and filtering engine for employee lists and transaction history using PostgreSQL full-text search.
@@ -63,22 +64,26 @@ STELLAR_HORIZON_URL=https://horizon-testnet.stellar.org
 ### Running
 
 **Development**:
+
 ```bash
 npm run dev
 ```
 
 **Production**:
+
 ```bash
 npm run build
 npm start
 ```
 
 **Tests**:
+
 ```bash
 npm test
 ```
 
 **Benchmarks**:
+
 ```bash
 npm run test:benchmark
 ```
@@ -110,31 +115,32 @@ Services (Business Logic)
 ## API Endpoints
 
 ### Base URL
+
 ```
 http://localhost:3001/api/payroll
 ```
 
 ### Payroll Queries
 
-| Endpoint | Method | Purpose |
-|----------|--------|---------|
-| `/transactions` | GET | Query payroll transactions with filters |
-| `/employees/:id` | GET | Get payroll for specific employee |
-| `/employees/:id/summary` | GET | Employee payroll summary |
-| `/batches/:id` | GET | Get payroll batch details |
-| `/aggregation` | GET | Aggregated statistics |
-| `/audit` | GET | Organization-wide audit report |
-| `/search/memo` | GET | Search by memo pattern |
-| `/transactions/:hash` | GET | Get transaction details |
+| Endpoint                 | Method | Purpose                                 |
+| ------------------------ | ------ | --------------------------------------- |
+| `/transactions`          | GET    | Query payroll transactions with filters |
+| `/employees/:id`         | GET    | Get payroll for specific employee       |
+| `/employees/:id/summary` | GET    | Employee payroll summary                |
+| `/batches/:id`           | GET    | Get payroll batch details               |
+| `/aggregation`           | GET    | Aggregated statistics                   |
+| `/audit`                 | GET    | Organization-wide audit report          |
+| `/search/memo`           | GET    | Search by memo pattern                  |
+| `/transactions/:hash`    | GET    | Get transaction details                 |
 
 ### Status Endpoints
 
-| Endpoint | Method | Purpose |
-|----------|--------|---------|
-| `/status/health` | GET | SDS health check |
-| `/status/rate-limit` | GET | Rate limit info |
-| `/cache/stats` | GET | Cache statistics |
-| `/cache/clear` | POST | Clear cache |
+| Endpoint             | Method | Purpose          |
+| -------------------- | ------ | ---------------- |
+| `/status/health`     | GET    | SDS health check |
+| `/status/rate-limit` | GET    | Rate limit info  |
+| `/cache/stats`       | GET    | Cache statistics |
+| `/cache/clear`       | POST   | Clear cache      |
 
 ## Query Examples
 
@@ -145,6 +151,7 @@ curl "http://localhost:3001/api/payroll/employees/EMP-001?orgPublicKey=GBXXX&sta
 ```
 
 Response:
+
 ```json
 {
   "success": true,
@@ -179,6 +186,7 @@ curl "http://localhost:3001/api/payroll/audit?orgPublicKey=GBXXX&startDate=2024-
 ```
 
 Response:
+
 ```json
 {
   "success": true,
@@ -252,12 +260,12 @@ interface PayrollMemoFormat {
 
 Benchmarked against Horizon:
 
-| Operation | Horizon | SDS | Improvement |
-|-----------|---------|-----|-------------|
-| Large dataset (10k) | 8500ms | 1200ms | **86% faster** |
-| Org audit | 5000ms | 800ms | **84% faster** |
-| Memory usage | 54MB | 18MB | **67% less** |
-| API calls | 20+ | 1-2 | **90% reduction** |
+| Operation           | Horizon | SDS    | Improvement       |
+| ------------------- | ------- | ------ | ----------------- |
+| Large dataset (10k) | 8500ms  | 1200ms | **86% faster**    |
+| Org audit           | 5000ms  | 800ms  | **84% faster**    |
+| Memory usage        | 54MB    | 18MB   | **67% less**      |
+| API calls           | 20+     | 1-2    | **90% reduction** |
 
 See [BENCHMARKS.md](./docs/BENCHMARKS.md) for detailed results.
 
@@ -269,7 +277,7 @@ Automatic result caching with configurable TTL:
 // Enable caching
 await payrollQueryService.queryPayroll(query, page, limit, {
   useCache: true,
-  cacheTtl: 3600000  // 1 hour
+  cacheTtl: 3600000, // 1 hour
 });
 
 // Clear cache
@@ -291,6 +299,7 @@ All errors return consistent format:
 ```
 
 Standard HTTP status codes:
+
 - **400**: Bad request (missing parameters)
 - **404**: Not found (transaction/resource)
 - **500**: Server error
@@ -413,6 +422,7 @@ Memos must be 28 characters or less (Stellar limit).
 ## Support
 
 Issues and questions:
+
 - Submit GitHub issues
 - Check inline code documentation
 - Review SDS Integration Guide
@@ -432,12 +442,14 @@ MIT - See LICENSE file
 ## Changelog
 
 ### v1.0.0 (Current)
+
 - ✨ Initial SDS integration
 - 🎯 Payroll indexing service
 - 📊 Performance benchmarking
 - 🚀 REST API endpoints
 - 💾 Query caching
 - 🔄 Retry logic with exponential backoff
+
 2. Create a `.env` file:
 
 ```bash

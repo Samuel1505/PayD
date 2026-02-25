@@ -1,74 +1,88 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from 'react';
 import {
   StellarWalletsKit,
   WalletNetwork,
-  AlbedoModule,
   FreighterModule,
-  RabetModule,
   xBullModule,
-} from "@creit.tech/stellar-wallets-kit";
-import { useTranslation } from "react-i18next";
+  LobstrModule,
+} from '@creit.tech/stellar-wallets-kit';
+import { useTranslation } from 'react-i18next';
+import { useNotification } from '../hooks/useNotification';
+import { WalletContext } from '../hooks/useWallet';
 
-interface WalletContextType {
-  address: string | null;
-  connect: () => Promise<void>;
-  disconnect: () => void;
-}
-
-const WalletContext = createContext<WalletContextType | undefined>(undefined);
-
-export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
+export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [address, setAddress] = useState<string | null>(null);
-  const [kit, setKit] = useState<StellarWalletsKit | null>(null);
+  const [walletName, setWalletName] = useState<string | null>(null);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const kitRef = useRef<StellarWalletsKit | null>(null);
   const { t } = useTranslation();
+  const { notify, notifySuccess, notifyError } = useNotification();
 
   useEffect(() => {
     const newKit = new StellarWalletsKit({
       network: WalletNetwork.TESTNET,
-      modules: [
-        new AlbedoModule(),
-        new FreighterModule(),
-        new RabetModule(),
-        new xBullModule(),
-      ],
+      modules: [new FreighterModule(), new xBullModule(), new LobstrModule()],
     });
-    setKit(newKit);
+    kitRef.current = newKit;
   }, []);
 
   const connect = async () => {
+    const kit = kitRef.current;
     if (!kit) return;
+
+    setIsConnecting(true);
     try {
       await kit.openModal({
-        modalTitle: t("wallet.modalTitle"),
+        modalTitle: t('wallet.modalTitle'),
         onWalletSelected: (option) => {
           void (async () => {
             const { address } = await kit.getAddress();
             setAddress(address);
-            console.log("Connected with:", option.id);
+            setWalletName(option.id);
+            notifySuccess(
+              'Wallet connected',
+              `${address.slice(0, 6)}...${address.slice(-4)} via ${option.id}`
+            );
           })();
         },
-        onClosed: () => console.log("Modal closed"),
+        onClosed: () => {
+          setIsConnecting(false);
+        },
       });
     } catch (error) {
-      console.error("Failed to connect wallet:", error);
+      console.error('Failed to connect wallet:', error);
+      notifyError(
+        'Wallet connection failed',
+        error instanceof Error ? error.message : 'Please try again.'
+      );
     }
   };
 
   const disconnect = () => {
     setAddress(null);
+    setWalletName(null);
+    notify('Wallet disconnected');
+  };
+
+  const signTransaction = async (xdr: string) => {
+    const kit = kitRef.current;
+    if (!kit) throw new Error('Wallet kit not initialized');
+    const result = await kit.signTransaction(xdr);
+    return result.signedTxXdr;
   };
 
   return (
-    <WalletContext.Provider value={{ address, connect, disconnect }}>
+    <WalletContext
+      value={{
+        address,
+        walletName,
+        isConnecting,
+        connect,
+        disconnect,
+        signTransaction,
+      }}
+    >
       {children}
-    </WalletContext.Provider>
+    </WalletContext>
   );
-};
-
-export const useWallet = () => {
-  const context = useContext(WalletContext);
-  if (!context) throw new Error("useWallet must be used within WalletProvider");
-  return context;
 };

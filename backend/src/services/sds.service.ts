@@ -56,7 +56,7 @@ export class SDSClient {
       baseURL: config.sds.endpoint,
       timeout: config.sds.timeout,
       headers: {
-        'Authorization': `Bearer ${config.sds.apiKey}`,
+        Authorization: `Bearer ${config.sds.apiKey}`,
         'Content-Type': 'application/json',
       },
     });
@@ -119,9 +119,7 @@ export class SDSClient {
 
   async getTransaction(txHash: string): Promise<SDSTransaction | null> {
     try {
-      const response = await this.withRetry(() =>
-        this.client.get(`/transactions/${txHash}`)
-      );
+      const response = await this.withRetry(() => this.client.get(`/transactions/${txHash}`));
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 404) {
@@ -236,14 +234,15 @@ export class SDSClient {
         total: response.data.total || 0,
       };
     } catch (error) {
-      logger.error(`Failed to query transactions for ledger range ${minLedger}-${maxLedger}`, error);
+      logger.error(
+        `Failed to query transactions for ledger range ${minLedger}-${maxLedger}`,
+        error
+      );
       throw error;
     }
   }
 
-  async aggregateTransactions(
-    filter: SDSTransactionFilter
-  ): Promise<{
+  async aggregateTransactions(filter: SDSTransactionFilter): Promise<{
     totalCount: number;
     successfulCount: number;
     failedCount: number;
@@ -272,16 +271,15 @@ export class SDSClient {
     return this.rateLimitInfo ? this.rateLimitInfo.remaining < 10 : false;
   }
 
-  private async withRetry<T>(
-    fn: () => Promise<T>,
-    attempt: number = 0
-  ): Promise<T> {
+  private async withRetry<T>(fn: () => Promise<T>, attempt: number = 0): Promise<T> {
     try {
       return await fn();
     } catch (error) {
       if (attempt < this.retryAttempts) {
         const backoffDelay = this.retryDelay * Math.pow(2, attempt);
-        logger.warn(`Retrying request (attempt ${attempt + 1}/${this.retryAttempts}) after ${backoffDelay}ms`);
+        logger.warn(
+          `Retrying request (attempt ${attempt + 1}/${this.retryAttempts}) after ${backoffDelay}ms`
+        );
         await new Promise((resolve) => setTimeout(resolve, backoffDelay));
         return this.withRetry(fn, attempt + 1);
       }

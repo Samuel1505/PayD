@@ -16,6 +16,7 @@ cp .env.example .env
 ```
 
 Edit `.env`:
+
 ```
 SDS_ENABLE=true
 SDS_API_KEY=your-sds-api-key
@@ -52,17 +53,11 @@ const employeeId = 'EMP-001';
 const startDate = new Date('2024-01-01');
 const endDate = new Date('2024-01-31');
 
-const result = await payrollQueryService.getEmployeePayroll(
-  orgKey,
-  employeeId,
-  startDate,
-  endDate
-);
+const result = await payrollQueryService.getEmployeePayroll(orgKey, employeeId, startDate, endDate);
 
 console.log(`Employee: ${employeeId}`);
 console.log(`Transactions: ${result.total}`);
-console.log(`Total: ${result.data.reduce((sum, tx) => 
-  sum + parseFloat(tx.amount || '0'), 0)}`);
+console.log(`Total: ${result.data.reduce((sum, tx) => sum + parseFloat(tx.amount || '0'), 0)}`);
 ```
 
 ### Generate Audit Report
@@ -77,10 +72,12 @@ const auditReport = await payrollQueryService.getOrganizationAuditReport(
 console.log('Audit Report:');
 console.log(`Total transactions: ${auditReport.aggregation.totalCount}`);
 console.log(`Total disbursed: ${auditReport.aggregation.totalDisbursed}`);
-console.log(`Success rate: ${(
-  auditReport.aggregation.successfulCount / 
-  auditReport.aggregation.totalCount * 100
-).toFixed(2)}%`);
+console.log(
+  `Success rate: ${(
+    (auditReport.aggregation.successfulCount / auditReport.aggregation.totalCount) *
+    100
+  ).toFixed(2)}%`
+);
 
 // Batch-level summaries
 Object.entries(auditReport.batchReports).forEach(([batchId, batch]) => {
@@ -125,18 +122,19 @@ PAYROLL:<employee_id>:<batch_id>:<period>
 ```
 
 Examples:
+
 - `PAYROLL:EMP-001:BATCH-2024-01:2024-01`
 - `PAYROLL:EMP-002:BATCH-2024-01:2024-01`
 
 ### Query Types
 
-| Type | Method | Use Case |
-|------|--------|----------|
-| Simple | `queryPayroll()` | Any filtered query |
-| Employee | `getEmployeePayroll()` | Single employee payroll |
-| Batch | `getPayrollBatch()` | Batch audit |
-| Org Audit | `getOrganizationAuditReport()` | Full org report |
-| Summary | `getEmployeeSummary()` | Employee statistics |
+| Type      | Method                         | Use Case                |
+| --------- | ------------------------------ | ----------------------- |
+| Simple    | `queryPayroll()`               | Any filtered query      |
+| Employee  | `getEmployeePayroll()`         | Single employee payroll |
+| Batch     | `getPayrollBatch()`            | Batch audit             |
+| Org Audit | `getOrganizationAuditReport()` | Full org report         |
+| Summary   | `getEmployeeSummary()`         | Employee statistics     |
 
 ### Caching
 
@@ -227,15 +225,19 @@ This generates a `benchmark-results-*.json` file with detailed metrics.
 ## Troubleshooting
 
 ### "SDS is not enabled"
+
 Check `SDS_ENABLE=true` in `.env`
 
 ### "Invalid memo format"
+
 Ensure memo: `PAYROLL:<emp_id>:<batch_id>:<period>`
 
 ### "Rate limited"
+
 Check `SDS_API_KEY` and reduce request frequency
 
 ### "No results"
+
 Verify `orgPublicKey` and date ranges are correct
 
 ## Next Steps

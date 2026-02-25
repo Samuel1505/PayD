@@ -7,6 +7,7 @@ export interface PayrollMemoFormat {
   employeeId?: string;
   payrollBatchId?: string;
   period?: string;
+  description?: string;
   rawMemo: string;
 }
 
@@ -16,6 +17,8 @@ export interface PayrollTransaction extends SDSTransaction {
   employeeId?: string;
   payrollBatchId?: string;
   period?: string;
+  itemType?: 'base' | 'bonus';
+  description?: string;
 }
 
 export interface PayrollIndexQuery {
@@ -41,13 +44,26 @@ export interface PayrollAggregation {
     start: number;
     end: number;
   };
-  byAsset: Record<string, {
-    count: number;
-    totalAmount: string;
-  }>;
+  byAsset: Record<
+    string,
+    {
+      count: number;
+      totalAmount: string;
+    }
+  >;
   byStatus: {
     successful: number;
     failed: number;
+  };
+  byItemType?: {
+    base: {
+      count: number;
+      totalAmount: string;
+    };
+    bonus: {
+      count: number;
+      totalAmount: string;
+    };
   };
 }
 
@@ -71,12 +87,13 @@ export class PayrollIndexingService {
       };
     }
 
-    // Check BONUS format: BONUS:<employee_id>:<description>
+    // Check BONUS format: BONUS:<employee_id>:<description> or BONUS:<employee_id>:<batch_id>:<description>
     const bonusMatch = memo.match(this.bonusMemoRegex);
     if (bonusMatch) {
       return {
         type: 'BONUS',
         employeeId: bonusMatch[1],
+        description: bonusMatch[2],
         rawMemo: memo,
       };
     }
@@ -97,6 +114,12 @@ export class PayrollIndexingService {
   enrichTransaction(transaction: SDSTransaction): PayrollTransaction {
     const payrollMemo = this.parsePayrollMemo(transaction.memo);
     const isPayrollRelated = payrollMemo !== null;
+    const itemType =
+      payrollMemo?.type === 'BONUS'
+        ? 'bonus'
+        : payrollMemo?.type === 'PAYROLL'
+          ? 'base'
+          : undefined;
 
     return {
       ...transaction,
@@ -105,6 +128,8 @@ export class PayrollIndexingService {
       employeeId: payrollMemo?.employeeId,
       payrollBatchId: payrollMemo?.payrollBatchId,
       period: payrollMemo?.period,
+      itemType,
+      description: payrollMemo?.description,
     };
   }
 
@@ -164,9 +189,7 @@ export class PayrollIndexingService {
     });
   }
 
-  aggregatePayrollTransactions(
-    transactions: PayrollTransaction[]
-  ): PayrollAggregation {
+  aggregatePayrollTransactions(transactions: PayrollTransaction[]): PayrollAggregation {
     const successful = transactions.filter((tx) => tx.successful);
     const failed = transactions.filter((tx) => !tx.successful);
 
@@ -191,6 +214,12 @@ export class PayrollIndexingService {
     const minTimestamp = Math.min(...timestamps);
     const maxTimestamp = Math.max(...timestamps);
 
+    const baseItems = successful.filter((tx) => tx.itemType === 'base');
+    const bonusItems = successful.filter((tx) => tx.itemType === 'bonus');
+
+    const baseTotal = baseItems.reduce((sum, tx) => sum + parseFloat(tx.amount || '0'), 0);
+    const bonusTotal = bonusItems.reduce((sum, tx) => sum + parseFloat(tx.amount || '0'), 0);
+
     return {
       totalCount: transactions.length,
       successfulCount: successful.length,
@@ -206,16 +235,27 @@ export class PayrollIndexingService {
         successful: successful.length,
         failed: failed.length,
       },
+      byItemType: {
+        base: {
+          count: baseItems.length,
+          totalAmount: baseTotal.toString(),
+        },
+        bonus: {
+          count: bonusItems.length,
+          totalAmount: bonusTotal.toString(),
+        },
+      },
     };
   }
 
-  generatePayrollBatchReport(
-    transactions: PayrollTransaction[]
-  ): Record<string, {
-    employeeCount: number;
-    transactions: PayrollTransaction[];
-    aggregation: PayrollAggregation;
-  }> {
+  generatePayrollBatchReport(transactions: PayrollTransaction[]): Record<
+    string,
+    {
+      employeeCount: number;
+      transactions: PayrollTransaction[];
+      aggregation: PayrollAggregation;
+    }
+  > {
     const byBatch: Record<string, PayrollTransaction[]> = {};
 
     transactions.forEach((tx) => {
@@ -250,6 +290,10 @@ export class PayrollIndexingService {
     successfulPayments: number;
     failedPayments: number;
     byAsset: Record<string, string>;
+    byItemType: {
+      base: { count: number; totalAmount: string };
+      bonus: { count: number; totalAmount: string };
+    };
     dateRange: {
       first: number;
       last: number;
@@ -276,6 +320,11 @@ export class PayrollIndexingService {
       byAsset[key] = (parseFloat(byAsset[key]) + parseFloat(tx.amount || '0')).toString();
     });
 
+    const baseItems = successful.filter((tx) => tx.itemType === 'base');
+    const bonusItems = successful.filter((tx) => tx.itemType === 'bonus');
+    const baseTotal = baseItems.reduce((sum, tx) => sum + parseFloat(tx.amount || '0'), 0);
+    const bonusTotal = bonusItems.reduce((sum, tx) => sum + parseFloat(tx.amount || '0'), 0);
+
     const timestamps = employeeTransactions.map((tx) => tx.timestamp);
 
     return {
@@ -285,6 +334,10 @@ export class PayrollIndexingService {
       successfulPayments: successful.length,
       failedPayments: failed.length,
       byAsset,
+      byItemType: {
+        base: { count: baseItems.length, totalAmount: baseTotal.toString() },
+        bonus: { count: bonusItems.length, totalAmount: bonusTotal.toString() },
+      },
       dateRange: {
         first: Math.min(...timestamps),
         last: Math.max(...timestamps),

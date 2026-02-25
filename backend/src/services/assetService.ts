@@ -1,13 +1,13 @@
-  import {
+import {
   Asset,
   Keypair,
   Operation,
   TransactionBuilder,
   AuthClawbackEnabledFlag,
   AuthRevocableFlag,
-} from "@stellar/stellar-sdk";
-import { StellarService } from "./stellarService";
-import { pool } from "../config/database";
+} from '@stellar/stellar-sdk';
+import { StellarService } from './stellarService';
+import { pool } from '../config/database';
 
 export class AssetService {
   /**
@@ -19,7 +19,7 @@ export class AssetService {
     distributorKeypair: Keypair,
     amount: string
   ): Promise<Asset> {
-    const orgUsdAsset = new Asset("ORGUSD", issuerKeypair.publicKey());
+    const orgUsdAsset = new Asset('ORGUSD', issuerKeypair.publicKey());
     const server = StellarService.getServer();
     const networkPassphrase = StellarService.getNetworkPassphrase();
 
@@ -48,14 +48,14 @@ export class AssetService {
 
     // Load issuer account for sequence number
     const issuerAccount = await server.loadAccount(issuerKeypair.publicKey());
-    
+
     // Build transaction
     const transaction = new TransactionBuilder(issuerAccount, {
-      fee: "100",
+      fee: '100',
       networkPassphrase,
     })
       .addOperation(setOptionsOp)
-      .addOperation(changeTrustOp) 
+      .addOperation(changeTrustOp)
       .addOperation(paymentOp)
       .setTimeout(30)
       .build();
@@ -68,7 +68,7 @@ export class AssetService {
       console.log(`Successfully issued ${amount} ORGUSD to ${distributorKeypair.publicKey()}`);
       return orgUsdAsset;
     } catch (error) {
-      console.error("Failed to issue ORGUSD asset:", error);
+      console.error('Failed to issue ORGUSD asset:', error);
       throw error;
     }
   }
@@ -83,7 +83,7 @@ export class AssetService {
     amount: string,
     reason?: string
   ): Promise<string> {
-    const orgUsdAsset = new Asset("ORGUSD", issuerKeypair.publicKey());
+    const orgUsdAsset = new Asset('ORGUSD', issuerKeypair.publicKey());
     const server = StellarService.getServer();
     const networkPassphrase = StellarService.getNetworkPassphrase();
 
@@ -99,7 +99,7 @@ export class AssetService {
     });
 
     const transaction = new TransactionBuilder(issuerAccount, {
-      fee: "100",
+      fee: '100',
       networkPassphrase,
     })
       .addOperation(clawbackOp)
@@ -110,20 +110,13 @@ export class AssetService {
 
     try {
       const result = await server.submitTransaction(transaction);
-      
+
       // Audit trail
       await pool.query(
         `INSERT INTO clawback_audit_logs 
         (transaction_hash, asset_code, amount, from_account, issuer_account, reason) 
         VALUES ($1, $2, $3, $4, $5, $6)`,
-        [
-          result.hash,
-          "ORGUSD",
-          amount,
-          fromAccount,
-          issuerKeypair.publicKey(),
-          reason || null
-        ]
+        [result.hash, 'ORGUSD', amount, fromAccount, issuerKeypair.publicKey(), reason || null]
       );
 
       console.log(`Successfully clawed back ${amount} ORGUSD from ${fromAccount}`);
@@ -151,7 +144,7 @@ export class AssetService {
     });
 
     const transaction = new TransactionBuilder(issuerAccount, {
-      fee: "100",
+      fee: '100',
       networkPassphrase,
     })
       .addOperation(clawbackCbOp)

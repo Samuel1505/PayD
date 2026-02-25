@@ -127,17 +127,17 @@ Meaning: Invoice INV-2024-0001 for consulting services
 
 ```typescript
 function isValidMemo(memo: string): boolean {
-  const maxLength = 28;  // Stellar memo text limit
-  
+  const maxLength = 28; // Stellar memo text limit
+
   if (memo.length > maxLength) return false;
-  
+
   const patterns = [
     /^PAYROLL:[^:]+:[^:]+(?::.+)?$/,
     /^BONUS:[^:]+(?::.+)?$/,
-    /^INVOICE:[^:]+(?::.+)?$/
+    /^INVOICE:[^:]+(?::.+)?$/,
   ];
-  
-  return patterns.some(p => p.test(memo));
+
+  return patterns.some((p) => p.test(memo));
 }
 ```
 
@@ -151,7 +151,7 @@ function isValidMemo(memo: string): boolean {
 function parsePayrollMemo(memo: string): PayrollMemoFormat | null {
   // Time Complexity: O(1) - regex matching
   // Space Complexity: O(1) - fixed object creation
-  
+
   // Match patterns in order of priority
   const payrollMatch = memo.match(/^PAYROLL:([^:]+):([^:]+)(?::(.+))?$/);
   if (payrollMatch) {
@@ -160,30 +160,29 @@ function parsePayrollMemo(memo: string): PayrollMemoFormat | null {
       employeeId: payrollMatch[1],
       payrollBatchId: payrollMatch[2],
       period: payrollMatch[3],
-      rawMemo: memo
+      rawMemo: memo,
     };
   }
-  
+
   // Similar for BONUS, INVOICE...
-  
+
   return null;
 }
 ```
 
 **Performance**:
+
 - Parse Time: <1ms per transaction
 - Throughput: 10,000+ memos/second on single thread
 
 ### Operation: Enrich Transactions
 
 ```typescript
-function enrichTransactions(
-  transactions: SDSTransaction[]
-): PayrollTransaction[] {
+function enrichTransactions(transactions: SDSTransaction[]): PayrollTransaction[] {
   // Time Complexity: O(n) where n = transaction count
   // Space Complexity: O(n) for output array
-  
-  return transactions.map(tx => ({
+
+  return transactions.map((tx) => ({
     ...tx,
     payrollMemo: parsePayrollMemo(tx.memo),
     isPayrollRelated: payrollMemo !== null,
@@ -194,6 +193,7 @@ function enrichTransactions(
 ```
 
 **Optimization**:
+
 - Batch process with streaming for large datasets
 - Parallel processing on multi-core systems
 - Lazy enrichment (only on demand)
@@ -207,23 +207,23 @@ function filterPayrollTransactions(
 ): PayrollTransaction[] {
   // Time Complexity: O(n) where n = transaction count
   // Space Complexity: O(m) where m = filtered results
-  
-  return transactions.filter(tx => {
+
+  return transactions.filter((tx) => {
     // Employee ID filter
     if (query.employeeId && tx.employeeId !== query.employeeId) {
       return false;
     }
-    
+
     // Batch ID filter
     if (query.payrollBatchId && tx.payrollBatchId !== query.payrollBatchId) {
       return false;
     }
-    
+
     // Asset filter
     if (query.assetCode && tx.assetCode !== query.assetCode) {
       return false;
     }
-    
+
     // Time range filter
     const txTime = tx.timestamp;
     if (query.startDate && txTime < query.startDate.getTime() / 1000) {
@@ -232,7 +232,7 @@ function filterPayrollTransactions(
     if (query.endDate && txTime > query.endDate.getTime() / 1000) {
       return false;
     }
-    
+
     // Amount range filter
     const amount = parseFloat(tx.amount || '0');
     if (query.minAmount && amount < parseFloat(query.minAmount)) {
@@ -241,18 +241,19 @@ function filterPayrollTransactions(
     if (query.maxAmount && amount > parseFloat(query.maxAmount)) {
       return false;
     }
-    
+
     // Success filter
     if (query.includeFailedPayments === false && !tx.successful) {
       return false;
     }
-    
+
     return true;
   });
 }
 ```
 
 **Optimization**:
+
 - Early exit on failed checks
 - Cache frequently used filters
 - Index hot filters first
@@ -260,23 +261,21 @@ function filterPayrollTransactions(
 ### Operation: Aggregate Transactions
 
 ```typescript
-function aggregatePayrollTransactions(
-  transactions: PayrollTransaction[]
-): PayrollAggregation {
+function aggregatePayrollTransactions(transactions: PayrollTransaction[]): PayrollAggregation {
   // Time Complexity: O(n) single pass
   // Space Complexity: O(k) where k = unique assets
-  
+
   const successful = [];
   const failed = [];
   const byAsset = {};
   let totalAmount = 0;
-  
+
   // Single pass through transactions
   for (const tx of transactions) {
     if (tx.successful) {
       successful.push(tx);
       totalAmount += parseFloat(tx.amount || '0');
-      
+
       // Update asset metrics
       const assetKey = `${tx.assetCode}:${tx.assetIssuer || 'native'}`;
       if (!byAsset[assetKey]) {
@@ -284,14 +283,13 @@ function aggregatePayrollTransactions(
       }
       byAsset[assetKey].count += 1;
       byAsset[assetKey].totalAmount = (
-        parseFloat(byAsset[assetKey].totalAmount) + 
-        parseFloat(tx.amount || '0')
+        parseFloat(byAsset[assetKey].totalAmount) + parseFloat(tx.amount || '0')
       ).toString();
     } else {
       failed.push(tx);
     }
   }
-  
+
   return {
     totalCount: transactions.length,
     successfulCount: successful.length,
@@ -315,10 +313,10 @@ function sortTransactions(
 ): PayrollTransaction[] {
   // Time Complexity: O(n log n) - inherent with sorting
   // Space Complexity: O(n) - for sorted copy
-  
+
   const sorted = [...transactions].sort((a, b) => {
     let aVal, bVal;
-    
+
     switch (sortBy) {
       case 'timestamp':
         aVal = a.timestamp;
@@ -336,16 +334,17 @@ function sortTransactions(
         aVal = a.timestamp;
         bVal = b.timestamp;
     }
-    
+
     const comparison = aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
     return order === 'asc' ? comparison : -comparison;
   });
-  
+
   return sorted;
 }
 ```
 
 **Optimization**:
+
 - Avoid sorting until necessary
 - Use SDS server-side sorting when available
 - Cache sorted results
@@ -361,16 +360,16 @@ Query Intent → Optimal Execution Path
 
 1. Get all transactions for employee
    → SDS Filter by memo pattern + In-memory enrichment
-   
+
 2. Get all transactions for batch
    → SDS Filter by memo pattern + Aggregation
-   
+
 3. Get transactions by date range
    → SDS Filter by time range (native support)
-   
+
 4. Get transactions by asset
    → SDS Filter by asset (native support)
-   
+
 5. Combined filters (employee + date + asset)
    → SDS filter (asset, date) → In-memory filter (employee)
 ```
@@ -386,14 +385,14 @@ const sdsFilter = {
   assetCode: 'USDC',
   startTime: startDate,
   endTime: endDate,
-  memoPattern: 'PAYROLL:*'
+  memoPattern: 'PAYROLL:*',
 };
 // Remaining filters: employeeId (in-memory)
 
 // Strategy 2: Batch multiple employees
 const sdsFilter = {
   sourceAccount: orgKey,
-  memoPattern: 'PAYROLL:*:BATCH-001:*'
+  memoPattern: 'PAYROLL:*:BATCH-001:*',
 };
 // Remaining filters: specific employees (in-memory)
 
@@ -401,7 +400,7 @@ const sdsFilter = {
 const sdsFilter = {
   sourceAccount: orgKey,
   startTime: Math.floor(startDate / 1000),
-  endTime: Math.floor(endDate / 1000)
+  endTime: Math.floor(endDate / 1000),
 };
 // Remaining filters: payroll-specific (in-memory)
 ```
@@ -525,53 +524,45 @@ Return Comprehensive Report
 ```typescript
 import { payrollQueryService } from './services/payroll-query.service';
 
-async function getEmployeePayroll(
-  orgPublicKey: string,
-  employeeId: string,
-  year: number
-) {
+async function getEmployeePayroll(orgPublicKey: string, employeeId: string, year: number) {
   const startDate = new Date(`${year}-01-01`);
   const endDate = new Date(`${year}-12-31`);
-  
+
   const result = await payrollQueryService.getEmployeePayroll(
     orgPublicKey,
     employeeId,
     startDate,
     endDate,
-    1,  // page
+    1, // page
     100 // limit
   );
-  
+
   console.log(`Employee: ${employeeId}`);
   console.log(`Total transactions: ${result.total}`);
-  console.log(`Successful: ${result.data.filter(t => t.successful).length}`);
-  console.log(`Total amount: ${result.data.reduce((sum, t) => 
-    sum + parseFloat(t.amount || '0'), 0
-  )}`);
+  console.log(`Successful: ${result.data.filter((t) => t.successful).length}`);
+  console.log(
+    `Total amount: ${result.data.reduce((sum, t) => sum + parseFloat(t.amount || '0'), 0)}`
+  );
 }
 ```
 
 ### Example 2: Generate Organization Audit Report
 
 ```typescript
-async function generateAuditReport(
-  orgPublicKey: string,
-  startDate: Date,
-  endDate: Date
-) {
+async function generateAuditReport(orgPublicKey: string, startDate: Date, endDate: Date) {
   const report = await payrollQueryService.getOrganizationAuditReport(
     orgPublicKey,
     startDate,
     endDate
   );
-  
+
   // Organization-level statistics
   console.log('Organization Summary:');
   console.log(`Total transactions: ${report.aggregation.totalCount}`);
   console.log(`Successful: ${report.aggregation.successfulCount}`);
   console.log(`Failed: ${report.aggregation.failedCount}`);
   console.log(`Total disbursed: ${report.aggregation.totalDisbursed}`);
-  
+
   // Batch-level summaries
   Object.entries(report.batchReports).forEach(([batchId, batch]) => {
     console.log(`\nBatch: ${batchId}`);
@@ -587,27 +578,25 @@ async function generateAuditReport(
 ```typescript
 async function findPayrollsByPeriod(
   orgPublicKey: string,
-  period: string,  // e.g., "2024-01"
+  period: string, // e.g., "2024-01"
   assetCode: string = 'USDC'
 ) {
   const result = await payrollQueryService.searchByMemoPattern(
     orgPublicKey,
-    `PAYROLL:*:*:${period}`,  // Wildcard pattern
-    1,   // page
+    `PAYROLL:*:*:${period}`, // Wildcard pattern
+    1, // page
     1000 // limit
   );
-  
+
   // Filter by asset (additional filtering)
-  const filtered = result.data.filter(t => t.assetCode === assetCode);
-  
+  const filtered = result.data.filter((t) => t.assetCode === assetCode);
+
   return {
     period,
     assetCode,
     count: filtered.length,
-    total: filtered.reduce((sum, t) => 
-      sum + parseFloat(t.amount || '0'), 0
-    ),
-    transactions: filtered
+    total: filtered.reduce((sum, t) => sum + parseFloat(t.amount || '0'), 0),
+    transactions: filtered,
   };
 }
 ```

@@ -1,23 +1,15 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { useNotification } from './NotificationProvider';
-
-interface SocketContextType {
-  socket: Socket | null;
-  connected: boolean;
-  subscribeToTransaction: (transactionId: string) => void;
-  unsubscribeFromTransaction: (transactionId: string) => void;
-}
-
-const SocketContext = createContext<SocketContextType | undefined>(undefined);
+import { useNotification } from '../hooks/useNotification';
+import { SocketContext } from '../hooks/useSocket';
 
 // Assuming backend is running on port 3000
-const SOCKET_URL: string = (import.meta.env.VITE_API_URL as string | undefined) || 'http://localhost:3000';
+const SOCKET_URL = (import.meta.env.VITE_API_URL as string) || 'http://localhost:3000';
 
 export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [connected, setConnected] = useState(false);
-  const { notify } = useNotification();
+  const { notifySuccess, notifyError } = useNotification();
 
   useEffect(() => {
     const newSocket: Socket = io(SOCKET_URL, {
@@ -31,13 +23,13 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     newSocket.on('connect', () => {
       console.log('Socket connected:', newSocket.id);
       setConnected(true);
-      notify('Real-time updates connected');
+      notifySuccess('Real-time updates connected');
     });
 
     newSocket.on('disconnect', () => {
       console.log('Socket disconnected');
       setConnected(false);
-      notify('Real-time updates disconnected');
+      notifyError('Real-time updates disconnected');
     });
 
     newSocket.on('connect_error', (err: Error) => {
@@ -48,7 +40,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return () => {
       newSocket.disconnect();
     };
-  }, [notify]);
+  }, [notifySuccess, notifyError]);
 
   const subscribeToTransaction = (transactionId: string) => {
     if (socket && connected) {
@@ -63,7 +55,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   return (
-    <SocketContext.Provider
+    <SocketContext
       value={{
         socket,
         connected,
@@ -72,14 +64,6 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       }}
     >
       {children}
-    </SocketContext.Provider>
+    </SocketContext>
   );
-};
-
-export const useSocket = () => {
-  const context = useContext(SocketContext);
-  if (context === undefined) {
-    throw new Error('useSocket must be used within a SocketProvider');
-  }
-  return context;
 };
