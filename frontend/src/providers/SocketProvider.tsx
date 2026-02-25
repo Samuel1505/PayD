@@ -12,7 +12,7 @@ interface SocketContextType {
 const SocketContext = createContext<SocketContextType | undefined>(undefined);
 
 // Assuming backend is running on port 3000
-const SOCKET_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const SOCKET_URL: string = (import.meta.env.VITE_API_URL as string | undefined) || 'http://localhost:3000';
 
 export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [socket, setSocket] = useState<Socket | null>(null);
@@ -20,7 +20,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const { notify } = useNotification();
 
   useEffect(() => {
-    const newSocket = io(SOCKET_URL, {
+    const newSocket: Socket = io(SOCKET_URL, {
       withCredentials: true,
       transports: ['websocket', 'polling'], // Allow fallback to polling
       reconnectionAttempts: 5,
@@ -40,7 +40,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       notify('Real-time updates disconnected');
     });
 
-    newSocket.on('connect_error', (err) => {
+    newSocket.on('connect_error', (err: Error) => {
       console.error('Socket connection error:', err);
       setConnected(false);
     });
@@ -48,7 +48,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return () => {
       newSocket.disconnect();
     };
-  }, []);
+  }, [notify]);
 
   const subscribeToTransaction = (transactionId: string) => {
     if (socket && connected) {

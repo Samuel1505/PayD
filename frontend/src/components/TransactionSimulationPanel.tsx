@@ -170,8 +170,8 @@ export const TransactionSimulationPanel: React.FC<Props> = ({
       {/* Error Diagnostics List */}
       {result.errors.length > 0 && (
         <div className={styles.errorList}>
-          {result.errors.map((err, idx) => (
-            <div key={`${err.code}-${idx}`} className={styles.errorItem}>
+          {result.errors.map((err) => (
+            <div key={`${err.code}-${err.operationIndex ?? 'tx'}-${err.message.slice(0, 20)}`} className={styles.errorItem}>
               <span className={styles.errorCode}>{err.code}</span>
               <span className={styles.errorLabel}>{err.message}</span>
               {err.operationIndex !== undefined && (

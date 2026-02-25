@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { anchorService } from "../services/anchor";
 import { Loader2, ArrowRightLeft, ShieldCheck, Info, CheckCircle2 } from "lucide-react";
 
@@ -9,27 +9,34 @@ export default function CrossAssetPayment() {
     const [amount, setAmount] = useState("");
     const [receiver, setReceiver] = useState("");
     const [isLoading, setIsLoading] = useState(false);
-    const [quote, setQuote] = useState<any>(null);
-    const [transaction, setTransaction] = useState<any>(null);
+    
+    interface Quote {
+        rate: number;
+        fee: number;
+        total_out: number;
+    }
+    
+    interface Transaction {
+        id: string;
+        status: string;
+    }
+    
+    const [quote, setQuote] = useState<Quote | null>(null);
+    const [transaction, setTransaction] = useState<Transaction | null>(null);
     const [status, setStatus] = useState<string>("idle");
 
-    const fetchQuote = async () => {
+    const fetchQuote = () => {
         if (!amount || Number(amount) <= 0) return;
         setIsLoading(true);
-        try {
-            // Simulation of quote fetching from anchor
-            setTimeout(() => {
-                setQuote({
-                    rate: 1550.25,
-                    fee: 2.50,
-                    total_out: (Number(amount) * 1550.25) - 2.50
-                });
-                setIsLoading(false);
-            }, 1000);
-        } catch (error) {
-            console.error(error);
+        // Simulation of quote fetching from anchor
+        setTimeout(() => {
+            setQuote({
+                rate: 1550.25,
+                fee: 2.50,
+                total_out: (Number(amount) * 1550.25) - 2.50
+            });
             setIsLoading(false);
-        }
+        }, 1000);
     };
 
     const handleInitiate = async () => {
@@ -42,20 +49,27 @@ export default function CrossAssetPayment() {
                 asset_code: assetOut,
                 receiver_id: receiver
             });
-            setTransaction(result);
+            setTransaction(result as Transaction);
             setStatus("pending");
 
             // Start polling for status
-            const interval = setInterval(async () => {
-                const statusUpdate = await anchorService.getTransactionStatus(domain, result.id, "S...MOCKED");
-                setTransaction(statusUpdate);
-                if (statusUpdate.status === "completed") {
-                    setStatus("completed");
-                    clearInterval(interval);
-                }
+            const interval = setInterval(() => {
+                void (async () => {
+                    try {
+                        const statusUpdate = await anchorService.getTransactionStatus(domain, result.id, "S...MOCKED");
+                        setTransaction(statusUpdate as Transaction);
+                        if (statusUpdate.status === "completed") {
+                            setStatus("completed");
+                            clearInterval(interval);
+                        }
+                    } catch {
+                        setStatus("error");
+                        clearInterval(interval);
+                    }
+                })();
             }, 3000);
 
-        } catch (error) {
+        } catch {
             setStatus("error");
         }
     };
@@ -121,7 +135,7 @@ export default function CrossAssetPayment() {
                                         type="number"
                                         value={amount}
                                         onChange={(e) => setAmount(e.target.value)}
-                                        onBlur={fetchQuote}
+                                        onBlur={() => { fetchQuote(); }}
                                         placeholder="0.00"
                                         className="w-full bg-[#0a0a0c] border border-zinc-800 rounded-xl px-4 py-3 text-2xl font-bold focus:ring-2 focus:ring-blue-500 outline-none"
                                     />
@@ -141,7 +155,7 @@ export default function CrossAssetPayment() {
                             </div>
 
                             <button
-                                onClick={handleInitiate}
+                                onClick={() => { void handleInitiate(); }}
                                 disabled={status !== "idle" || !quote}
                                 className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 py-4 rounded-xl font-bold text-lg hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                             >
@@ -162,16 +176,16 @@ export default function CrossAssetPayment() {
                                 <div className="space-y-4">
                                     <div className="flex justify-between text-zinc-400">
                                         <span>Rate</span>
-                                        <span className="text-white font-mono">1 {assetIn} = {quote.rate} {assetOut}</span>
+                                        <span className="text-white font-mono">1 {assetIn} = {quote?.rate ?? 0} {assetOut}</span>
                                     </div>
                                     <div className="flex justify-between text-zinc-400">
                                         <span>Anchor Fee</span>
-                                        <span className="text-white font-mono">{quote.fee} {assetOut}</span>
+                                        <span className="text-white font-mono">{quote?.fee ?? 0} {assetOut}</span>
                                     </div>
                                     <div className="pt-4 border-t border-zinc-800 flex justify-between">
                                         <span className="text-zinc-400 font-bold">Receiver Gets</span>
                                         <span className="text-2xl font-bold text-emerald-400 font-mono">
-                                            {quote.total_out.toLocaleString()} {assetOut}
+                                            {quote?.total_out.toLocaleString() ?? 0} {assetOut}
                                         </span>
                                     </div>
                                 </div>
@@ -223,7 +237,7 @@ export default function CrossAssetPayment() {
                                 {transaction && (
                                     <div className="mt-8 pt-6 border-t border-zinc-800">
                                         <p className="text-xs text-zinc-500 uppercase font-bold mb-2">Transaction ID</p>
-                                        <p className="text-xs font-mono break-all text-blue-400">{transaction.id}</p>
+                                        <p className="text-xs font-mono break-all text-blue-400">{transaction?.id ?? ""}</p>
                                     </div>
                                 )}
                             </div>

@@ -28,6 +28,19 @@ interface PendingClaim {
   status: string;
 }
 
+interface SchedulingConfig {
+  frequency: "weekly" | "biweekly" | "monthly";
+  dayOfWeek?: number;
+  dayOfMonth?: number;
+  timeOfDay: string;
+  preferences: Array<{
+    id: string;
+    name: string;
+    amount: string;
+    currency: string;
+  }>;
+}
+
 const initialFormState: PayrollFormState = {
   employeeName: "",
   amount: "",
@@ -43,7 +56,7 @@ export default function PayrollScheduler() {
   const [formData, setFormData] = useState<PayrollFormState>(initialFormState);
   const [isBroadcasting, setIsBroadcasting] = useState(false);
   const [isWizardOpen, setIsWizardOpen] = useState(false);
-  const [activeSchedule, setActiveSchedule] = useState<any>(null);
+  const [activeSchedule, setActiveSchedule] = useState<SchedulingConfig | null>(null);
   const [nextRunDate, setNextRunDate] = useState<Date | null>(null);
 
   const [pendingClaims, setPendingClaims] = useState<PendingClaim[]>(() => {
@@ -79,7 +92,7 @@ export default function PayrollScheduler() {
     }
   }, [loadSavedData]);
 
-  const handleScheduleComplete = (config: any) => {
+  const handleScheduleComplete = (config: SchedulingConfig) => {
     setActiveSchedule(config);
     setIsWizardOpen(false);
     notify("Payroll schedule successfully configured!");
@@ -106,7 +119,12 @@ export default function PayrollScheduler() {
   useEffect(() => {
     if (!socket) return;
 
-    const handleTransactionUpdate = (data: any) => {
+    interface TransactionUpdate {
+      transactionId: string;
+      status: string;
+    }
+
+    const handleTransactionUpdate = (data: TransactionUpdate) => {
       console.log("Received transaction update:", data);
       setPendingClaims((prev) =>
         prev.map((claim) =>
@@ -219,7 +237,7 @@ export default function PayrollScheduler() {
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
               Automation Active
             </h3>
-            <p className="text-muted text-sm">Scheduled to run <span className="font-bold text-text capitalize">{activeSchedule.frequency}</span> at <span className="font-mono text-text">{activeSchedule.timeOfDay}</span></p>
+            <p className="text-muted text-sm">Scheduled to run <span className="font-bold text-text capitalize">{activeSchedule?.frequency ?? ""}</span> at <span className="font-mono text-text">{activeSchedule?.timeOfDay ?? ""}</span></p>
           </div>
           <div className="bg-bg border border-hi rounded-xl p-4 shadow-inner">
             <span className="block text-[10px] uppercase font-bold text-muted mb-2 tracking-widest text-center">Next Scheduled Run</span>
