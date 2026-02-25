@@ -15,6 +15,7 @@ import trustlineRoutes from '../trustlineRoutes';
 import payrollRoutes from '../payroll.routes';
 import exportRoutes from '../exportRoutes';
 import taxRoutes from '../taxRoutes';
+import multiSigRoutes from '../multiSigRoutes';
 import rateLimitRoutes from '../rateLimitRoutes';
 
 const router = Router();
@@ -33,6 +34,7 @@ router.use('/balance', dataRateLimit(), balanceRoutes);
 router.use('/trustline', dataRateLimit(), trustlineRoutes);
 router.use('/exports', dataRateLimit(), exportRoutes);
 router.use('/taxes', dataRateLimit(), taxRoutes);
+router.use('/multisig', apiRateLimit(), multiSigRoutes);
 router.use('/rate-limit', apiRateLimit(), rateLimitRoutes);
 
 export default router;

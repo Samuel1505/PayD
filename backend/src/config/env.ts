@@ -18,6 +18,8 @@ const envSchema = z.object({
   RATE_LIMIT_API_MAX: z.string().default('100'),
   RATE_LIMIT_DATA_WINDOW_MS: z.string().default('60000'),
   RATE_LIMIT_DATA_MAX: z.string().default('200'),
+  JWT_SECRET: z.string().default('dev-jwt-secret'),
+  JWT_REFRESH_SECRET: z.string().default('dev-jwt-refresh-secret'),
 });
 
 export const config = envSchema.parse(process.env);

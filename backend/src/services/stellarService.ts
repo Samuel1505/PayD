@@ -29,6 +29,10 @@ export interface MultiSigConfig {
         weight: number;
     }>;
     threshold: number;
+    lowThreshold?: number;
+    medThreshold?: number;
+    highThreshold?: number;
+    masterWeight?: number;
 }
 
 export class StellarService {
@@ -154,14 +158,19 @@ export class StellarService {
             timeout?: number;
         } = {}
     ): Promise<Transaction> {
+        const lowT = config.lowThreshold ?? config.threshold;
+        const medT = config.medThreshold ?? config.threshold;
+        const highT = config.highThreshold ?? config.threshold;
+        const mw = config.masterWeight ?? config.signers.find(s => s.publicKey === sourceKeypair.publicKey())?.weight ?? 1;
+
         const builder = await this.buildTransaction(
             sourceKeypair.publicKey(),
             [
                 Operation.setOptions({
-                    masterWeight: config.signers.find(s => s.publicKey === sourceKeypair.publicKey())?.weight || 1,
-                    lowThreshold: config.threshold,
-                    medThreshold: config.threshold,
-                    highThreshold: config.threshold,
+                    masterWeight: mw,
+                    lowThreshold: lowT,
+                    medThreshold: medT,
+                    highThreshold: highT,
                     signer: undefined,
                 }),
                 ...config.signers
@@ -179,6 +188,33 @@ export class StellarService {
         );
 
         return builder.build();
+    }
+
+    static async removeSigner(
+        sourceKeypair: Keypair,
+        signerPublicKey: string,
+        options: {
+            fee?: string;
+            timeout?: number;
+        } = {}
+    ): Promise<Transaction> {
+        return this.addSigner(sourceKeypair, signerPublicKey, 0, options);
+    }
+
+    static async getAccountThresholds(publicKey: string): Promise<{
+        lowThreshold: number;
+        medThreshold: number;
+        highThreshold: number;
+        masterWeight: number;
+    }> {
+        const account = await this.loadAccount(publicKey);
+        const masterSigner = account.signers.find((s: any) => s.key === publicKey);
+        return {
+            lowThreshold: account.thresholds.low_threshold,
+            medThreshold: account.thresholds.med_threshold,
+            highThreshold: account.thresholds.high_threshold,
+            masterWeight: masterSigner?.weight ?? 0,
+        };
     }
 
     static async addSigner(

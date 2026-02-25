@@ -49,7 +49,6 @@ class RedisClient {
     if (!this.instance && config.REDIS_URL) {
       this.instance = new Redis(config.REDIS_URL, {
         maxRetriesPerRequest: 3,
-        retryDelayOnFailover: 100,
         lazyConnect: true,
       });
 
@@ -79,7 +78,7 @@ export class RateLimitService {
 
   constructor() {
     this.redis = RedisClient.getInstance();
-    
+
     if (!this.redis) {
       logger.warn('Redis not configured, using in-memory rate limiting (not recommended for production)');
       this.useMemoryFallback = true;
@@ -113,7 +112,7 @@ export class RateLimitService {
   ): Promise<RateLimitResult> {
     try {
       const redis = this.redis!;
-      
+
       const results = await redis
         .multi()
         .zremrangebyscore(key, '-inf', now - config.windowMs)
@@ -139,7 +138,7 @@ export class RateLimitService {
 
       if (currentCount >= limit) {
         const retryAfter = Math.ceil((ttl > 0 ? ttl : config.windowMs) / 1000);
-        
+
         return {
           allowed: false,
           limit,
