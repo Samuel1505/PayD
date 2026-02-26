@@ -3,6 +3,7 @@ import {
   BASE_FEE,
   Contract,
   Networks,
+  StrKey,
   rpc,
   TransactionBuilder,
   nativeToScVal,
@@ -73,6 +74,27 @@ function getResultValue(response: rpc.Api.GetTransactionResponse): unknown {
   return scValToNative(returnValue);
 }
 
+function assertValidContractId(contractId: string): void {
+  if (!StrKey.isValidContract(contractId)) {
+    throw new Error('Invalid Soroban contract ID provided to useSorobanContract.');
+  }
+}
+
+function parseTypedResult<TResult>(
+  raw: unknown,
+  parser?: (value: unknown) => TResult
+): TResult | null {
+  if (raw == null) return null;
+  if (!parser) return raw as TResult;
+
+  try {
+    return parser(raw);
+  } catch (error) {
+    const parserMessage = error instanceof Error ? error.message : 'Unknown parser error';
+    throw new Error(`Unable to decode contract result: ${parserMessage}`);
+  }
+}
+
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
@@ -99,6 +121,8 @@ export function useSorobanContract<TResult = unknown>(
         if (!address) {
           throw new Error('Connect your wallet before invoking a Soroban contract.');
         }
+
+        assertValidContractId(contractId);
 
         const rpcUrl = getRpcUrl(options.rpcUrl);
         const rpcServer = new rpc.Server(rpcUrl, { allowHttp: rpcUrl.startsWith('http://') });
@@ -153,7 +177,7 @@ export function useSorobanContract<TResult = unknown>(
         }
 
         const raw = getResultValue(txResponse);
-        const typedValue = options.parseResult ? options.parseResult(raw) : (raw as TResult | null);
+        const typedValue = parseTypedResult(raw, options.parseResult);
         const nextResult: SorobanInvokeResult<TResult> = {
           txHash: sendResponse.hash,
           value: typedValue,
@@ -166,7 +190,7 @@ export function useSorobanContract<TResult = unknown>(
         const message =
           invokeError instanceof Error ? invokeError.message : 'Contract invocation failed';
         setError(message);
-        notifyError('Contract invocation failed', message);
+        notifyError(`Contract invocation failed: ${options.method}`, message);
         throw invokeError;
       } finally {
         setLoading(false);
