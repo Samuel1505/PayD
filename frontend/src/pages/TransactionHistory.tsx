@@ -74,7 +74,9 @@ export default function TransactionHistory() {
         setItems(result.items);
         setHasMore(result.hasMore);
       } catch (loadError) {
-        setError(loadError instanceof Error ? loadError.message : 'Failed to load transaction history');
+        setError(
+          loadError instanceof Error ? loadError.message : 'Failed to load transaction history'
+        );
       } finally {
         setIsLoading(false);
       }
@@ -144,9 +146,7 @@ export default function TransactionHistory() {
 
             <select
               value={filters.status}
-              onChange={(event) =>
-                setFilters((prev) => ({ ...prev, status: event.target.value }))
-              }
+              onChange={(event) => setFilters((prev) => ({ ...prev, status: event.target.value }))}
               className="bg-[#0a0a0c] border border-zinc-800 rounded-lg px-3 py-2.5 text-sm"
             >
               <option value="">All Statuses</option>
@@ -166,9 +166,7 @@ export default function TransactionHistory() {
 
             <input
               value={filters.asset}
-              onChange={(event) =>
-                setFilters((prev) => ({ ...prev, asset: event.target.value }))
-              }
+              onChange={(event) => setFilters((prev) => ({ ...prev, asset: event.target.value }))}
               placeholder="Asset (USDC, XLM...)"
               className="bg-[#0a0a0c] border border-zinc-800 rounded-lg px-3 py-2.5 text-sm"
             />
@@ -222,7 +220,9 @@ export default function TransactionHistory() {
                   <span className="px-2 py-0.5 rounded-md text-[11px] border border-zinc-700 text-zinc-300">
                     {item.badge}
                   </span>
-                  <span className={`px-2.5 py-1 rounded-md text-[11px] font-bold uppercase ${getStatusClass(item.status)}`}>
+                  <span
+                    className={`px-2.5 py-1 rounded-md text-[11px] font-bold uppercase ${getStatusClass(item.status)}`}
+                  >
                     {item.status}
                   </span>
                   <span className="text-xs text-zinc-500">

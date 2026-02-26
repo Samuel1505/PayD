@@ -1,6 +1,7 @@
 import { contractService } from './contracts';
 
-const API_BASE_URL = (import.meta.env.VITE_API_URL as string | undefined) || 'http://localhost:3000';
+const API_BASE_URL =
+  (import.meta.env.VITE_API_URL as string | undefined) || 'http://localhost:3000';
 
 export interface HistoryFilters {
   search: string;
@@ -61,10 +62,7 @@ function normalizeClassicItem(row: Record<string, unknown>): TimelineItem {
   };
 }
 
-function normalizeContractItem(
-  contractId: string,
-  row: Record<string, unknown>
-): TimelineItem {
+function normalizeContractItem(contractId: string, row: Record<string, unknown>): TimelineItem {
   return {
     id: `contract-${asString(row.event_id, asString(row.id, 'unknown'))}`,
     kind: 'contract',
