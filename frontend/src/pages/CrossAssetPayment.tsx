@@ -1,89 +1,85 @@
-import { useState } from 'react';
-import { anchorService } from '../services/anchor';
-import { Loader2, ArrowRightLeft, ShieldCheck, Info, CheckCircle2 } from 'lucide-react';
-import { useNotification } from '../hooks/useNotification';
-
-interface Quote {
-  rate: number;
-  fee: number;
-  total_out: number;
-}
-
-interface SEP31Transaction {
-  id: string;
-  status: string;
-}
-
-interface InitiationResult {
-  id: string;
-}
+import { useState } from "react";
+import { anchorService } from "../services/anchor";
+import {
+  Loader2,
+  ArrowRightLeft,
+  ShieldCheck,
+  Info,
+  CheckCircle2,
+} from "lucide-react";
 
 export default function CrossAssetPayment() {
-  const { notifySuccess, notifyError } = useNotification();
-  const [domain, setDomain] = useState('testanchor.stellar.org');
-  const [assetIn, setAssetIn] = useState('USDC');
-  const [assetOut, setAssetOut] = useState('NGN');
-  const [amount, setAmount] = useState('');
-  const [receiver, setReceiver] = useState('');
+  const [domain, setDomain] = useState("testanchor.stellar.org");
+  const [assetIn, setAssetIn] = useState("USDC");
+  const [assetOut, setAssetOut] = useState("NGN");
+  const [amount, setAmount] = useState("");
+  const [receiver, setReceiver] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [quote, setQuote] = useState<Quote | null>(null);
-  const [transaction, setTransaction] = useState<InitiationResult | SEP31Transaction | null>(null);
-  const [status, setStatus] = useState<string>('idle');
 
-  const fetchQuote = async () => {
+  interface Quote {
+    rate: number;
+    fee: number;
+    total_out: number;
+  }
+
+  interface Transaction {
+    id: string;
+    status: string;
+  }
+
+  const [quote, setQuote] = useState<Quote | null>(null);
+  const [transaction, setTransaction] = useState<Transaction | null>(null);
+  const [status, setStatus] = useState<string>("idle");
+
+  const fetchQuote = () => {
     if (!amount || Number(amount) <= 0) return;
     setIsLoading(true);
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+    // Simulation of quote fetching from anchor
+    setTimeout(() => {
       setQuote({
         rate: 1550.25,
         fee: 2.5,
         total_out: Number(amount) * 1550.25 - 2.5,
       });
-    } catch (error) {
-      console.error(error);
-      notifyError('Quote fetch failed', 'Could not retrieve conversion rate from anchor.');
-    } finally {
       setIsLoading(false);
-    }
+    }, 1000);
   };
 
   const handleInitiate = async () => {
-    setStatus('initiating');
+    setStatus("initiating");
     try {
       // In a real app, we'd get the secretKey from a secure store or wallet integration
       // For this demo/task, we use a placeholder logic
-      const result = await anchorService.initiatePayment(domain, 'S...MOCKED', {
+      const result = await anchorService.initiatePayment(domain, "S...MOCKED", {
         amount,
         asset_code: assetOut,
         receiver_id: receiver,
       });
-      setTransaction(result);
-      setStatus('pending');
-      notifySuccess('Payment initiated', `Transaction ID: ${result.id}`);
+      setTransaction(result as Transaction);
+      setStatus("pending");
 
       // Start polling for status
       const interval = setInterval(() => {
         void (async () => {
-          const statusUpdate = await anchorService.getTransactionStatus(
-            domain,
-            result.id,
-            'S...MOCKED'
-          );
-          setTransaction(statusUpdate);
-          if (statusUpdate.status === 'completed') {
-            setStatus('completed');
-            notifySuccess('Payment completed!', `${amount} ${assetIn} sent successfully.`);
+          try {
+            const statusUpdate = await anchorService.getTransactionStatus(
+              domain,
+              result.id,
+              "S...MOCKED",
+            );
+            setTransaction(statusUpdate as Transaction);
+            if (statusUpdate.status === "completed") {
+              setStatus("completed");
+              clearInterval(interval);
+            }
+          } catch {
+            setStatus("error");
             clearInterval(interval);
           }
         })();
       }, 3000);
-    } catch (error) {
-      setStatus('error');
-      notifyError(
-        'Payment failed',
-        error instanceof Error ? error.message : 'An unexpected error occurred.'
-      );
+    } catch {
+      setStatus("error");
     }
   };
 
@@ -159,7 +155,7 @@ export default function CrossAssetPayment() {
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
                     onBlur={() => {
-                      void fetchQuote();
+                      fetchQuote();
                     }}
                     placeholder="0.00"
                     className="w-full bg-[#0a0a0c] border border-zinc-800 rounded-xl px-4 py-3 text-2xl font-bold focus:ring-2 focus:ring-blue-500 outline-none"
@@ -187,13 +183,13 @@ export default function CrossAssetPayment() {
                 onClick={() => {
                   void handleInitiate();
                 }}
-                disabled={status !== 'idle' || !quote}
+                disabled={status !== "idle" || !quote}
                 className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 py-4 rounded-xl font-bold text-lg hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                {status === 'initiating' ? (
+                {status === "initiating" ? (
                   <Loader2 className="animate-spin" />
                 ) : (
-                  'Initiate Payment'
+                  "Initiate Payment"
                 )}
               </button>
             </div>
@@ -212,19 +208,21 @@ export default function CrossAssetPayment() {
                   <div className="flex justify-between text-zinc-400">
                     <span>Rate</span>
                     <span className="text-white font-mono">
-                      1 {assetIn} = {quote.rate} {assetOut}
+                      1 {assetIn} = {quote?.rate ?? 0} {assetOut}
                     </span>
                   </div>
                   <div className="flex justify-between text-zinc-400">
                     <span>Anchor Fee</span>
                     <span className="text-white font-mono">
-                      {quote.fee} {assetOut}
+                      {quote?.fee ?? 0} {assetOut}
                     </span>
                   </div>
                   <div className="pt-4 border-t border-zinc-800 flex justify-between">
-                    <span className="text-zinc-400 font-bold">Receiver Gets</span>
+                    <span className="text-zinc-400 font-bold">
+                      Receiver Gets
+                    </span>
                     <span className="text-2xl font-bold text-emerald-400 font-mono">
-                      {quote.total_out.toLocaleString()} {assetOut}
+                      {quote?.total_out.toLocaleString() ?? 0} {assetOut}
                     </span>
                   </div>
                 </div>
@@ -232,11 +230,11 @@ export default function CrossAssetPayment() {
             )}
 
             {/* Status Panel */}
-            {status !== 'idle' && (
+            {status !== "idle" && (
               <div className="bg-[#16161a] border border-blue-900/30 rounded-2xl p-8 shadow-xl relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-4">
                   <div
-                    className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest ${status === 'completed' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-blue-500/20 text-blue-400'}`}
+                    className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest ${status === "completed" ? "bg-emerald-500/20 text-emerald-400" : "bg-blue-500/20 text-blue-400"}`}
                   >
                     {status}
                   </div>
@@ -246,21 +244,23 @@ export default function CrossAssetPayment() {
                 <div className="space-y-6">
                   <div className="flex items-center gap-4">
                     <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center ${status !== 'error' ? 'bg-emerald-500' : 'bg-zinc-800'}`}
+                      className={`w-8 h-8 rounded-full flex items-center justify-center ${status !== "error" ? "bg-emerald-500" : "bg-zinc-800"}`}
                     >
                       <CheckCircle2 className="h-5 w-5 text-white" />
                     </div>
                     <div>
                       <p className="font-bold">Authentication</p>
-                      <p className="text-xs text-zinc-500">SEP-10 WebAuth Success</p>
+                      <p className="text-xs text-zinc-500">
+                        SEP-10 WebAuth Success
+                      </p>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-4">
                     <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center ${status === 'pending' || status === 'completed' ? 'bg-emerald-500' : 'bg-zinc-800'}`}
+                      className={`w-8 h-8 rounded-full flex items-center justify-center ${status === "pending" || status === "completed" ? "bg-emerald-500" : "bg-zinc-800"}`}
                     >
-                      {status === 'pending' ? (
+                      {status === "pending" ? (
                         <Loader2 className="h-5 w-5 animate-spin" />
                       ) : (
                         <CheckCircle2 className="h-5 w-5 text-white" />
@@ -268,27 +268,35 @@ export default function CrossAssetPayment() {
                     </div>
                     <div>
                       <p className="font-bold">Initiation</p>
-                      <p className="text-xs text-zinc-500">SEP-31 Transaction Registered</p>
+                      <p className="text-xs text-zinc-500">
+                        SEP-31 Transaction Registered
+                      </p>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-4 opacity-50">
                     <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center ${status === 'completed' ? 'bg-emerald-500' : 'bg-zinc-800'}`}
+                      className={`w-8 h-8 rounded-full flex items-center justify-center ${status === "completed" ? "bg-emerald-500" : "bg-zinc-800"}`}
                     >
                       <CheckCircle2 className="h-5 w-5 text-white" />
                     </div>
                     <div>
                       <p className="font-bold">Settlement</p>
-                      <p className="text-xs text-zinc-500">Funds Converted & Sent</p>
+                      <p className="text-xs text-zinc-500">
+                        Funds Converted & Sent
+                      </p>
                     </div>
                   </div>
                 </div>
 
                 {transaction && (
                   <div className="mt-8 pt-6 border-t border-zinc-800">
-                    <p className="text-xs text-zinc-500 uppercase font-bold mb-2">Transaction ID</p>
-                    <p className="text-xs font-mono break-all text-blue-400">{transaction.id}</p>
+                    <p className="text-xs text-zinc-500 uppercase font-bold mb-2">
+                      Transaction ID
+                    </p>
+                    <p className="text-xs font-mono break-all text-blue-400">
+                      {transaction?.id ?? ""}
+                    </p>
                   </div>
                 )}
               </div>
@@ -298,7 +306,8 @@ export default function CrossAssetPayment() {
               <div className="bg-blue-900/10 border border-blue-900/30 rounded-2xl p-6 flex gap-4">
                 <Info className="text-blue-400 shrink-0" />
                 <p className="text-sm text-blue-300">
-                  Enter an amount to see live conversion rates and anchor fees for this route.
+                  Enter an amount to see live conversion rates and anchor fees
+                  for this route.
                 </p>
               </div>
             )}

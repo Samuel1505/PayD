@@ -19,9 +19,13 @@ interface OrganizationData {
   balanceAsset: string;
 }
 
+type WalletContext = {
+  address: string | null;
+};
+
 // Mock organization data - replace with actual API call
 const useOrganizationData = (): OrganizationData => {
-  const { address } = useWallet();
+  const { address } = (useWallet as () => WalletContext)();
   const [orgData, setOrgData] = useState<OrganizationData>({
     name: "Acme Corporation",
     balance: "0.00",
