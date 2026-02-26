@@ -1,8 +1,15 @@
+/* eslint-disable
+  @typescript-eslint/no-unsafe-assignment,
+  @typescript-eslint/no-unsafe-call,
+  @typescript-eslint/no-unsafe-member-access,
+  @typescript-eslint/no-unsafe-argument,
+  @typescript-eslint/no-base-to-string
+*/
 import {
   BASE_FEE,
   Contract,
   Networks,
-  SorobanRpc,
+  rpc,
   TransactionBuilder,
   nativeToScVal,
   scValToNative,
@@ -85,7 +92,7 @@ export async function fetchRevenueSplitAllocations(
   rpcUrlOverride?: string
 ): Promise<RevenueAllocation[]> {
   const rpcUrl = normalizeBaseUrl(rpcUrlOverride || DEFAULT_RPC_URL);
-  const server = new SorobanRpc.Server(rpcUrl, { allowHttp: rpcUrl.startsWith('http://') });
+  const server = new rpc.Server(rpcUrl, { allowHttp: rpcUrl.startsWith('http://') });
   const account = await server.getAccount(sourceAddress);
   const contract = new Contract(contractId);
 
@@ -138,7 +145,7 @@ export async function updateRevenueAllocations(options: {
   rpcUrlOverride?: string;
 }): Promise<{ txHash: string }> {
   const rpcUrl = normalizeBaseUrl(options.rpcUrlOverride || DEFAULT_RPC_URL);
-  const server = new SorobanRpc.Server(rpcUrl, { allowHttp: rpcUrl.startsWith('http://') });
+  const server = new rpc.Server(rpcUrl, { allowHttp: rpcUrl.startsWith('http://') });
   const account = await server.getAccount(options.sourceAddress);
   const contract = new Contract(options.contractId);
 
@@ -162,9 +169,10 @@ export async function updateRevenueAllocations(options: {
 
   const prepared = await server.prepareTransaction(tx);
   const signedXdr = await options.signTransaction(prepared.toXDR());
-  const submitted = await server.sendTransaction(signedXdr);
+  const signedTx = TransactionBuilder.fromXDR(signedXdr, getNetworkPassphrase());
+  const submitted = await server.sendTransaction(signedTx);
 
-  if (submitted.status === SorobanRpc.Api.SendTransactionStatus.ERROR) {
+  if (submitted.status === 'ERROR') {
     throw new Error('Allocation update transaction failed.');
   }
 

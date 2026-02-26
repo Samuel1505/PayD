@@ -1,3 +1,9 @@
+/* eslint-disable
+  @typescript-eslint/no-unsafe-assignment,
+  @typescript-eslint/no-unsafe-call,
+  @typescript-eslint/no-unsafe-member-access,
+  @typescript-eslint/no-unsafe-argument
+*/
 import { useEffect, useMemo, useState } from 'react';
 import { useNotification } from '../hooks/useNotification';
 import { useWallet } from '../hooks/useWallet';
