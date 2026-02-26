@@ -1,15 +1,16 @@
-import React, { useEffect, useState } from "react";
-import { AutosaveIndicator } from "../components/AutosaveIndicator";
-import { useAutosave } from "../hooks/useAutosave";
-import { useTransactionSimulation } from "../hooks/useTransactionSimulation";
-import { TransactionSimulationPanel } from "../components/TransactionSimulationPanel";
-import { useNotification } from "../providers/NotificationProvider";
-import { useSocket } from "../providers/SocketProvider";
-import { generateWallet } from "../services/stellar";
-import { useTranslation } from "react-i18next";
-import { Card } from "@stellar/design-system";
-import { SchedulingWizard } from "../components/SchedulingWizard";
-import { CountdownTimer } from "../components/CountdownTimer";
+import React, { useEffect, useState } from 'react';
+import { AutosaveIndicator } from '../components/AutosaveIndicator';
+import { useAutosave } from '../hooks/useAutosave';
+import { useTransactionSimulation } from '../hooks/useTransactionSimulation';
+import { TransactionSimulationPanel } from '../components/TransactionSimulationPanel';
+import { useNotification } from '../hooks/useNotification';
+import { useSocket } from '../hooks/useSocket';
+import { createClaimableBalanceTransaction, generateWallet } from '../services/stellar';
+import { useTranslation } from 'react-i18next';
+import { Card, Heading, Text, Button, Input, Select } from '@stellar/design-system';
+import { SchedulingWizard } from '../components/SchedulingWizard';
+import { CountdownTimer } from '../components/CountdownTimer';
+import { BulkPaymentStatusTracker } from '../components/BulkPaymentStatusTracker';
 
 interface PayrollFormState {
   employeeName: string;
@@ -477,6 +478,10 @@ export default function PayrollScheduler() {
             </ul>
           )}
         </Card>
+      </div>
+
+      <div className="w-full">
+        <BulkPaymentStatusTracker organizationId={1} />
       </div>
     </div>
   );
