@@ -30,6 +30,12 @@ interface AuditResponse {
   page: number;
 }
 
+function asString(value: unknown, fallback = ''): string {
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  return fallback;
+}
+
 function toQuery(params: Record<string, string | number | undefined>): string {
   const query = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => {
@@ -40,15 +46,15 @@ function toQuery(params: Record<string, string | number | undefined>): string {
 }
 
 function normalizeClassicItem(row: Record<string, unknown>): TimelineItem {
-  const txHash = (row.tx_hash as string | undefined) || null;
+  const txHash = asString(row.tx_hash, '') || null;
   return {
-    id: `audit-${String(row.id ?? txHash ?? Math.random())}`,
+    id: `audit-${asString(row.id, txHash ?? 'unknown')}`,
     kind: 'classic',
-    createdAt: String(row.created_at || row.stellar_created_at || new Date().toISOString()),
+    createdAt: asString(row.created_at, asString(row.stellar_created_at, new Date().toISOString())),
     status: (row.successful as boolean) === false ? 'failed' : 'confirmed',
-    amount: String(row.fee_charged ?? '0'),
+    amount: asString(row.fee_charged, '0'),
     asset: 'XLM',
-    actor: String(row.source_account ?? 'Unknown'),
+    actor: asString(row.source_account, 'Unknown'),
     txHash,
     label: 'Classic Stellar Transaction',
     badge: 'Classic',
@@ -60,15 +66,15 @@ function normalizeContractItem(
   row: Record<string, unknown>
 ): TimelineItem {
   return {
-    id: `contract-${String(row.event_id ?? row.id ?? Math.random())}`,
+    id: `contract-${asString(row.event_id, asString(row.id, 'unknown'))}`,
     kind: 'contract',
-    createdAt: String(row.created_at || new Date().toISOString()),
+    createdAt: asString(row.created_at, new Date().toISOString()),
     status: 'indexed',
-    amount: String((row.payload as Record<string, unknown> | undefined)?.amount ?? '0'),
-    asset: String((row.payload as Record<string, unknown> | undefined)?.asset_code ?? 'N/A'),
+    amount: asString((row.payload as Record<string, unknown> | undefined)?.amount, '0'),
+    asset: asString((row.payload as Record<string, unknown> | undefined)?.asset_code, 'N/A'),
     actor: contractId,
-    txHash: (row.tx_hash as string | undefined) || null,
-    label: String(row.event_type || 'contract_event'),
+    txHash: asString(row.tx_hash, '') || null,
+    label: asString(row.event_type, 'contract_event'),
     badge: 'Contract Event',
   };
 }

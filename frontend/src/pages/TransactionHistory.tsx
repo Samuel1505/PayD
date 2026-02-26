@@ -84,7 +84,7 @@ export default function TransactionHistory() {
   }, [debouncedFilters]);
 
   const activeFilterCount = useMemo(
-    () => Object.values(filters).filter((value) => value.trim().length > 0).length,
+    () => (Object.values(filters) as string[]).filter((value) => value.trim().length > 0).length,
     [filters]
   );
 
