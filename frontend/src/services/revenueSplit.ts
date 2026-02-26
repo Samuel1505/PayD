@@ -17,12 +17,15 @@ import {
 } from '@stellar/stellar-sdk';
 import { simulateTransaction } from './transactionSimulation';
 
-const API_BASE_URL = (import.meta.env.VITE_API_URL as string | undefined) || 'http://localhost:3000';
+const API_BASE_URL =
+  (import.meta.env.VITE_API_URL as string | undefined) || 'http://localhost:3000';
 const DEFAULT_RPC_URL =
-  (import.meta.env.PUBLIC_STELLAR_RPC_URL as string | undefined) || 'https://soroban-testnet.stellar.org';
+  (import.meta.env.PUBLIC_STELLAR_RPC_URL as string | undefined) ||
+  'https://soroban-testnet.stellar.org';
 
 const GET_ALLOCATIONS_METHOD =
-  (import.meta.env.VITE_REVENUE_SPLIT_GET_ALLOCATIONS_METHOD as string | undefined) || 'get_allocations';
+  (import.meta.env.VITE_REVENUE_SPLIT_GET_ALLOCATIONS_METHOD as string | undefined) ||
+  'get_allocations';
 const UPDATE_ALLOCATIONS_METHOD =
   (import.meta.env.VITE_REVENUE_SPLIT_UPDATE_ALLOCATIONS_METHOD as string | undefined) ||
   'set_allocations';

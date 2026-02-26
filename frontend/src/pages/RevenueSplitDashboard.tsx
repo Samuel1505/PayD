@@ -51,11 +51,18 @@ export default function RevenueSplitDashboard() {
   const { sign } = useWalletSigning();
   const { notifyError, notifySuccess } = useNotification();
 
-  const preferredStablecoin =
-    (localStorage.getItem('preferredStablecoin') || import.meta.env.VITE_PREFERRED_STABLECOIN || 'USDC').toUpperCase();
+  const preferredStablecoin = (
+    localStorage.getItem('preferredStablecoin') ||
+    import.meta.env.VITE_PREFERRED_STABLECOIN ||
+    'USDC'
+  ).toUpperCase();
 
   const totalAllocation = useMemo(
-    () => allocations.reduce((sum, entry) => sum + (Number.isFinite(entry.percentage) ? entry.percentage : 0), 0),
+    () =>
+      allocations.reduce(
+        (sum, entry) => sum + (Number.isFinite(entry.percentage) ? entry.percentage : 0),
+        0
+      ),
     [allocations]
   );
 
@@ -63,13 +70,17 @@ export default function RevenueSplitDashboard() {
     const byRecipient = new Map<string, number>();
     events.forEach((event) => {
       if (!Number.isFinite(event.amount)) return;
-      byRecipient.set(event.recipientLabel, (byRecipient.get(event.recipientLabel) || 0) + event.amount);
+      byRecipient.set(
+        event.recipientLabel,
+        (byRecipient.get(event.recipientLabel) || 0) + event.amount
+      );
     });
     return [...byRecipient.entries()].map(([recipient, amount]) => ({ recipient, amount }));
   }, [events]);
 
   const totalDistributed = useMemo(
-    () => events.reduce((sum, event) => sum + (Number.isFinite(event.amount) ? event.amount : 0), 0),
+    () =>
+      events.reduce((sum, event) => sum + (Number.isFinite(event.amount) ? event.amount : 0), 0),
     [events]
   );
 
@@ -137,12 +148,18 @@ export default function RevenueSplitDashboard() {
 
     const hasInvalidAddress = allocations.some((entry) => !isLikelyStellarAddress(entry.recipient));
     if (hasInvalidAddress) {
-      notifyError('Invalid recipient', 'Each allocation recipient must be a valid Stellar address.');
+      notifyError(
+        'Invalid recipient',
+        'Each allocation recipient must be a valid Stellar address.'
+      );
       return;
     }
 
     if (Math.abs(totalAllocation - 100) > 0.0001) {
-      notifyError('Invalid allocation total', `Allocation total must equal 100%. Current total: ${totalAllocation.toFixed(2)}%.`);
+      notifyError(
+        'Invalid allocation total',
+        `Allocation total must equal 100%. Current total: ${totalAllocation.toFixed(2)}%.`
+      );
       return;
     }
 
@@ -165,7 +182,8 @@ export default function RevenueSplitDashboard() {
 
       notifySuccess('Allocations updated', `Submitted on-chain update transaction: ${txHash}`);
     } catch (saveError) {
-      const message = saveError instanceof Error ? saveError.message : 'Failed to update allocations';
+      const message =
+        saveError instanceof Error ? saveError.message : 'Failed to update allocations';
       notifyError('Allocation update failed', message);
     } finally {
       setIsSaving(false);
@@ -200,7 +218,9 @@ export default function RevenueSplitDashboard() {
         )}
       </div>
 
-      {isLoading ? <p className="text-sm text-zinc-400 mb-6">Loading revenue split dashboard...</p> : null}
+      {isLoading ? (
+        <p className="text-sm text-zinc-400 mb-6">Loading revenue split dashboard...</p>
+      ) : null}
       {error ? <p className="text-sm text-red-400 mb-6">{error}</p> : null}
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
@@ -222,7 +242,9 @@ export default function RevenueSplitDashboard() {
                   </p>
                 ))
               )}
-              <p className={`text-sm font-bold ${Math.abs(totalAllocation - 100) <= 0.0001 ? 'text-green-400' : 'text-red-400'}`}>
+              <p
+                className={`text-sm font-bold ${Math.abs(totalAllocation - 100) <= 0.0001 ? 'text-green-400' : 'text-red-400'}`}
+              >
                 Total: {totalAllocation.toFixed(2)}%
               </p>
             </div>
@@ -243,7 +265,10 @@ export default function RevenueSplitDashboard() {
 
           <div className="space-y-3">
             {allocations.map((entry, index) => (
-              <div key={`${entry.recipient}-${index}`} className="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
+              <div
+                key={`${entry.recipient}-${index}`}
+                className="grid grid-cols-1 md:grid-cols-12 gap-3 items-center"
+              >
                 <input
                   type="text"
                   value={entry.recipient}
@@ -273,9 +298,7 @@ export default function RevenueSplitDashboard() {
           </div>
 
           <div className="mt-5 flex items-center justify-between">
-            <p className="text-xs text-zinc-400">
-              Total allocation must be exactly 100%.
-            </p>
+            <p className="text-xs text-zinc-400">Total allocation must be exactly 100%.</p>
             <button
               type="button"
               onClick={() => {
@@ -298,15 +321,23 @@ export default function RevenueSplitDashboard() {
           ) : (
             <div className="space-y-2">
               {recipientBalances.map((row) => (
-                <div key={row.recipient} className="flex items-center justify-between border-b border-zinc-800 pb-2">
-                  <span className="text-xs text-zinc-300 truncate max-w-[180px]">{row.recipient}</span>
-                  <span className="text-xs font-bold text-white">{formatAmount(row.amount, preferredStablecoin)}</span>
+                <div
+                  key={row.recipient}
+                  className="flex items-center justify-between border-b border-zinc-800 pb-2"
+                >
+                  <span className="text-xs text-zinc-300 truncate max-w-[180px]">
+                    {row.recipient}
+                  </span>
+                  <span className="text-xs font-bold text-white">
+                    {formatAmount(row.amount, preferredStablecoin)}
+                  </span>
                 </div>
               ))}
             </div>
           )}
           <p className="mt-4 text-sm text-zinc-200">
-            Total Distributed: <span className="font-bold">{formatAmount(totalDistributed, preferredStablecoin)}</span>
+            Total Distributed:{' '}
+            <span className="font-bold">{formatAmount(totalDistributed, preferredStablecoin)}</span>
           </p>
         </section>
 
@@ -329,10 +360,14 @@ export default function RevenueSplitDashboard() {
                 <tbody>
                   {events.map((event) => (
                     <tr key={event.id} className="border-b border-zinc-800/50">
-                      <td className="py-2 pr-4 text-xs">{new Date(event.createdAt).toLocaleString()}</td>
+                      <td className="py-2 pr-4 text-xs">
+                        {new Date(event.createdAt).toLocaleString()}
+                      </td>
                       <td className="py-2 pr-4 text-xs">{event.recipientLabel}</td>
                       <td className="py-2 pr-4 text-xs">{event.action}</td>
-                      <td className="py-2 pr-4 text-xs">{formatAmount(event.amount, event.assetCode || preferredStablecoin)}</td>
+                      <td className="py-2 pr-4 text-xs">
+                        {formatAmount(event.amount, event.assetCode || preferredStablecoin)}
+                      </td>
                       <td className="py-2 pr-4 text-xs">
                         {event.txHash ? (
                           <a
