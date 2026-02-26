@@ -7,7 +7,7 @@
 
 import { useEffect, useState } from 'react';
 import { contractService } from './contracts';
-import { ContractType, NetworkType } from './contracts.types';
+import { ContractType, NetworkType, ContractEntry } from './contracts.types';
 
 /**
  * Example 1: Get a specific contract ID in a component
@@ -37,7 +37,7 @@ export function PaymentComponent() {
  * Example 2: Get all contracts and display them
  */
 export function ContractListComponent() {
-  const [contracts, setContracts] = useState<any[]>([]);
+  const [contracts, setContracts] = useState<ContractEntry[]>([]);
 
   useEffect(() => {
     const registry = contractService.getAllContracts();
@@ -50,8 +50,8 @@ export function ContractListComponent() {
     <div>
       <h2>All Contracts</h2>
       <ul>
-        {contracts.map((contract, index) => (
-          <li key={index}>
+        {contracts.map((contract) => (
+          <li key={`${contract.contractType}-${contract.network}`}>
             {contract.contractType} ({contract.network}): {contract.contractId}
           </li>
         ))}
@@ -66,16 +66,19 @@ export function ContractListComponent() {
 export function RefreshButton() {
   const [loading, setLoading] = useState(false);
 
-  const handleRefresh = async () => {
+  const handleRefresh = () => {
     setLoading(true);
-    try {
-      await contractService.refreshRegistry();
-      alert('Contract registry refreshed successfully!');
-    } catch (error) {
-      alert('Failed to refresh contract registry');
-    } finally {
-      setLoading(false);
-    }
+    contractService
+      .refreshRegistry()
+      .then(() => {
+        alert('Contract registry refreshed successfully!');
+      })
+      .catch(() => {
+        alert('Failed to refresh contract registry');
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   };
 
   return (
