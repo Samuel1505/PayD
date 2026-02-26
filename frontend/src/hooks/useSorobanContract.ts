@@ -3,7 +3,7 @@ import {
   BASE_FEE,
   Contract,
   Networks,
-  SorobanRpc,
+  rpc,
   TransactionBuilder,
   nativeToScVal,
   scValToNative,
@@ -66,8 +66,8 @@ function toScVal(arg: SorobanArg): xdr.ScVal {
   return nativeToScVal(arg);
 }
 
-function getResultValue(response: SorobanRpc.Api.GetTransactionResponse): unknown {
-  if (response.status !== SorobanRpc.Api.GetTransactionStatus.SUCCESS) return null;
+function getResultValue(response: rpc.Api.GetTransactionResponse): unknown {
+  if (response.status !== rpc.Api.GetTransactionStatus.SUCCESS) return null;
   const returnValue = response.returnValue;
   if (!returnValue) return null;
   return scValToNative(returnValue);
@@ -101,7 +101,7 @@ export function useSorobanContract<TResult = unknown>(
         }
 
         const rpcUrl = getRpcUrl(options.rpcUrl);
-        const rpcServer = new SorobanRpc.Server(rpcUrl, { allowHttp: rpcUrl.startsWith('http://') });
+        const rpcServer = new rpc.Server(rpcUrl, { allowHttp: rpcUrl.startsWith('http://') });
         const account = await rpcServer.getAccount(address);
         const contract = new Contract(contractId);
 
@@ -124,16 +124,20 @@ export function useSorobanContract<TResult = unknown>(
 
         const preparedTx = await rpcServer.prepareTransaction(transaction);
         const signedXdr = await sign(preparedTx.toXDR());
-        const sendResponse = await rpcServer.sendTransaction(signedXdr);
+        const signedTx = TransactionBuilder.fromXDR(
+          signedXdr,
+          getNetworkPassphrase(options.networkPassphrase)
+        );
+        const sendResponse = await rpcServer.sendTransaction(signedTx);
 
-        if (sendResponse.status === SorobanRpc.Api.SendTransactionStatus.ERROR) {
+        if (sendResponse.status === 'ERROR') {
           throw new Error('Soroban contract submission failed.');
         }
 
-        let txResponse: SorobanRpc.Api.GetTransactionResponse | null = null;
+        let txResponse: rpc.Api.GetTransactionResponse | null = null;
         for (let attempt = 0; attempt < DEFAULT_MAX_POLL_ATTEMPTS; attempt += 1) {
           const current = await rpcServer.getTransaction(sendResponse.hash);
-          if (current.status !== SorobanRpc.Api.GetTransactionStatus.NOT_FOUND) {
+          if (current.status !== rpc.Api.GetTransactionStatus.NOT_FOUND) {
             txResponse = current;
             break;
           }
@@ -144,7 +148,7 @@ export function useSorobanContract<TResult = unknown>(
           throw new Error('Transaction submission timed out before confirmation.');
         }
 
-        if (txResponse.status !== SorobanRpc.Api.GetTransactionStatus.SUCCESS) {
+        if (txResponse.status !== rpc.Api.GetTransactionStatus.SUCCESS) {
           throw new Error(`Transaction failed with status: ${txResponse.status}`);
         }
 
