@@ -295,7 +295,8 @@ export default function CrossAssetPayment() {
                           <span className="text-xs text-zinc-400">{path.rate.toFixed(4)} rate</span>
                         </div>
                         <div className="mt-2 text-xs text-zinc-400">
-                          Fee: {path.fee.toFixed(4)} {assetOut} | Slippage: {path.slippage.toFixed(2)}%
+                          Fee: {path.fee.toFixed(4)} {assetOut} | Slippage:{' '}
+                          {path.slippage.toFixed(2)}%
                         </div>
                       </button>
                     ))}
@@ -316,7 +317,9 @@ export default function CrossAssetPayment() {
                   </div>
                   <div className="flex justify-between text-zinc-400">
                     <span>Fee</span>
-                    <span className="text-white">{selectedPath.fee.toFixed(4)} {assetOut}</span>
+                    <span className="text-white">
+                      {selectedPath.fee.toFixed(4)} {assetOut}
+                    </span>
                   </div>
                   <div className="flex justify-between text-zinc-400">
                     <span>Slippage</span>
@@ -382,7 +385,9 @@ export default function CrossAssetPayment() {
 
                 {submissionTxHash && (
                   <div className="mt-8 pt-6 border-t border-zinc-800">
-                    <p className="text-xs text-zinc-500 uppercase font-bold mb-2">Transaction Hash</p>
+                    <p className="text-xs text-zinc-500 uppercase font-bold mb-2">
+                      Transaction Hash
+                    </p>
                     <p className="text-xs font-mono break-all text-blue-400">{submissionTxHash}</p>
                   </div>
                 )}
