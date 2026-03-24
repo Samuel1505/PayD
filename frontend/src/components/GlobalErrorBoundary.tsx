@@ -1,8 +1,10 @@
 import React from 'react';
 import * as Sentry from '@sentry/react';
 
+type FallbackProps = { resetError?: () => void; error?: Error | null };
+
 type GlobalErrorBoundaryProps = {
-  fallback: React.ComponentType<{ resetError?: () => void; error?: Error | null }>;
+  fallback: React.ComponentType<FallbackProps> | React.ReactElement<FallbackProps>;
   children: React.ReactNode;
 };
 
@@ -38,8 +40,15 @@ export default class GlobalErrorBoundary extends React.Component<
 
   render() {
     if (this.state.hasError) {
-      const FallbackComponent = this.props.fallback;
-      return <FallbackComponent resetError={this.resetError} error={this.state.error} />;
+      const { fallback } = this.props;
+      const props: FallbackProps = { resetError: this.resetError, error: this.state.error };
+
+      if (React.isValidElement(fallback)) {
+        return React.cloneElement(fallback as React.ReactElement<FallbackProps>, props);
+      }
+
+      const FallbackComponent = fallback as React.ComponentType<FallbackProps>;
+      return <FallbackComponent {...props} />;
     }
 
     return this.props.children;

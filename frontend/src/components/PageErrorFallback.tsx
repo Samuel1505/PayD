@@ -1,4 +1,3 @@
-import React from 'react';
 import { Button, Icon } from '@stellar/design-system';
 import { useTranslation } from 'react-i18next';
 
@@ -58,7 +57,7 @@ export default function PageErrorFallback({
               </p>
               <div className="flex items-center justify-center gap-4">
                 {showRetry && resetError && (
-                  <Button variant="primary" onClick={resetError}>
+                  <Button variant="primary" size="sm" onClick={resetError}>
                     {t('errorFallback.tryAgain')}
                   </Button>
                 )}
