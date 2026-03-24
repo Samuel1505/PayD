@@ -10,13 +10,17 @@ use soroban_sdk::{
 // Soroban host panics with "HostError: Error(Contract, #N)" — variant names
 // are NOT in the panic string. Match on the numeric code instead:
 //
-//   AlreadyInitialized = 1  → Error(Contract, #1)
-//   NotInitialized     = 2  → Error(Contract, #2)
-//   EmptyBatch         = 4  → Error(Contract, #4)
-//   BatchTooLarge      = 5  → Error(Contract, #5)
-//   InvalidAmount      = 6  → Error(Contract, #6)
-//   SequenceMismatch   = 8  → Error(Contract, #8)
-//   BatchNotFound      = 9  → Error(Contract, #9)
+//   AlreadyInitialized   = 1  → Error(Contract, #1)
+//   NotInitialized       = 2  → Error(Contract, #2)
+//   EmptyBatch           = 4  → Error(Contract, #4)
+//   BatchTooLarge        = 5  → Error(Contract, #5)
+//   InvalidAmount        = 6  → Error(Contract, #6)
+//   SequenceMismatch     = 8  → Error(Contract, #8)
+//   BatchNotFound        = 9  → Error(Contract, #9)
+//   DailyLimitExceeded   = 10 → Error(Contract, #10)
+//   WeeklyLimitExceeded  = 11 → Error(Contract, #11)
+//   MonthlyLimitExceeded = 12 → Error(Contract, #12)
+//   InvalidLimitConfig   = 13 → Error(Contract, #13)
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -145,56 +149,6 @@ fn test_batch_count_increments() {
 #[test]
 fn test_partial_batch_skips_insufficient_funds() {
     let (env, sender, token, client) = setup();
-    // sender has 1_000_000 total minted.
-    // Pull = 500_000 + 600_000 = 1_100_000 which would exceed balance.
-    // Use amounts whose SUM fits within 1_000_000 but where the second
-    // payment exceeds what's left after the first succeeds.
-    //   first:  500_000  → succeeds, remaining = 500_000
-    //   second: 600_000  → skipped  (600_000 > 500_000 remaining)
-    //   refund: 500_000 back to sender
-    // Total pulled = 500_000 + 600_000 = 1_100_000 — still too much.
-    //
-    // Correct approach: pull only positive amounts into total, so
-    // total pulled = 500_000 + 600_000.  Still > 1_000_000.
-    //
-    // We must keep total ≤ 1_000_000.  Use:
-    //   first:  700_000  → succeeds, remaining = 300_000
-    //   second: 400_000  → skipped  (400_000 > 300_000 remaining)
-    //   total pulled = 700_000 + 400_000 = 1_100_000  — still over.
-    //
-    // The contract sums ALL positive amounts before the first transfer,
-    // so both amounts count toward the pull. The only way to have a
-    // "skip due to insufficient remaining" is when the FIRST payment
-    // consumes most of the balance and the second can't fit — but the
-    // total of both must still be ≤ the sender's balance so the pull
-    // itself succeeds.
-    //
-    // Use:  first = 600_000, second = 300_000, total pull = 900_000 ≤ 1_000_000
-    // After first:  remaining = 900_000 - 600_000 = 300_000
-    // Second needs 300_000 → exactly fits, both succeed.  Not what we want.
-    //
-    // Use:  first = 600_000, second = 350_000, total = 950_000 ≤ 1_000_000
-    // After first:  remaining = 950_000 - 600_000 = 350_000 → second fits.
-    //
-    // Use:  first = 700_000, second = 200_000, total = 900_000 ≤ 1_000_000
-    // After first:  remaining = 900_000 - 700_000 = 200_000 → second fits.
-    //
-    // We need remaining < second_amount after first succeeds:
-    //   remaining = total - first = (first + second) - first = second
-    //   → remaining always equals second, so second always fits!
-    //
-    // To force a skip we need a THIRD payment that won't fit:
-    //   first = 500_000, second = 300_000, third = 250_000
-    //   total pull = 1_050_000 > 1_000_000  — over.
-    //
-    // Only workable pattern: make second amount > total - first
-    //   i.e. second > total - first  → impossible since total = first + second.
-    //
-    // Conclusion: with two positive payments the second can NEVER be skipped
-    // for "insufficient remaining" because the contract pre-pulls the full sum.
-    // We must mint MORE tokens or use a negative/zero amount to force a skip.
-    //
-    // Simplest fix: push a zero-amount op (skipped because amount <= 0).
 
     let r1 = Address::generate(&env);
     let r2 = Address::generate(&env); // will be skipped (amount = 0)
@@ -245,4 +199,291 @@ fn test_partial_batch_empty_panics() {
 fn test_get_batch_not_found_panics() {
     let (_, _, _, client) = setup();
     client.get_batch(&999);
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ── ACCOUNT-LEVEL TRANSACTION LIMITS TESTS ────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+
+// ── set_default_limits & get_account_limits ────────────────────────────────────
+
+#[test]
+fn test_set_default_limits_and_read_back() {
+    let (env, _, _, client) = setup();
+    client.set_default_limits(&500_000, &2_000_000, &5_000_000);
+
+    let account = Address::generate(&env);
+    let limits = client.get_account_limits(&account);
+    assert_eq!(limits.daily_limit, 500_000);
+    assert_eq!(limits.weekly_limit, 2_000_000);
+    assert_eq!(limits.monthly_limit, 5_000_000);
+}
+
+#[test]
+fn test_no_limits_configured_returns_unlimited() {
+    let (env, _, _, client) = setup();
+    let account = Address::generate(&env);
+    let limits = client.get_account_limits(&account);
+    // 0 means unlimited
+    assert_eq!(limits.daily_limit, 0);
+    assert_eq!(limits.weekly_limit, 0);
+    assert_eq!(limits.monthly_limit, 0);
+}
+
+// ── set_account_limits (per-account overrides) ────────────────────────────────
+
+#[test]
+fn test_set_account_limits_overrides_defaults() {
+    let (env, _, _, client) = setup();
+    // Set restrictive defaults
+    client.set_default_limits(&100_000, &500_000, &1_000_000);
+
+    // Override for a specific trusted account with higher limits
+    let trusted = Address::generate(&env);
+    client.set_account_limits(&trusted, &900_000, &5_000_000, &20_000_000);
+
+    let limits = client.get_account_limits(&trusted);
+    assert_eq!(limits.daily_limit, 900_000);
+    assert_eq!(limits.weekly_limit, 5_000_000);
+    assert_eq!(limits.monthly_limit, 20_000_000);
+
+    // Another account still has defaults
+    let regular = Address::generate(&env);
+    let limits = client.get_account_limits(&regular);
+    assert_eq!(limits.daily_limit, 100_000);
+}
+
+#[test]
+fn test_remove_account_limits_reverts_to_defaults() {
+    let (env, _, _, client) = setup();
+    client.set_default_limits(&100_000, &500_000, &1_000_000);
+
+    let account = Address::generate(&env);
+    client.set_account_limits(&account, &900_000, &5_000_000, &20_000_000);
+    assert_eq!(client.get_account_limits(&account).daily_limit, 900_000);
+
+    client.remove_account_limits(&account);
+    assert_eq!(client.get_account_limits(&account).daily_limit, 100_000);
+}
+
+// ── Invalid limit config ──────────────────────────────────────────────────────
+
+#[test]
+#[should_panic(expected = "Error(Contract, #13)")]
+fn test_set_default_limits_negative_daily_panics() {
+    let (_, _, _, client) = setup();
+    client.set_default_limits(&-1, &0, &0);
+}
+
+#[test]
+#[should_panic(expected = "Error(Contract, #13)")]
+fn test_set_account_limits_negative_weekly_panics() {
+    let (env, _, _, client) = setup();
+    let account = Address::generate(&env);
+    client.set_account_limits(&account, &0, &-1, &0);
+}
+
+// ── check_limits enforcement on execute_batch ─────────────────────────────────
+
+#[test]
+#[should_panic(expected = "Error(Contract, #10)")]
+fn test_daily_limit_blocks_batch() {
+    let (env, sender, token, client) = setup();
+    // Set daily limit = 500
+    client.set_default_limits(&500, &0, &0);
+
+    let mut payments: Vec<PaymentOp> = Vec::new(&env);
+    payments.push_back(PaymentOp { recipient: Address::generate(&env), amount: 600 });
+
+    // Total = 600 > daily limit 500 → should panic
+    client.execute_batch(&sender, &token, &payments, &0);
+}
+
+#[test]
+#[should_panic(expected = "Error(Contract, #11)")]
+fn test_weekly_limit_blocks_batch() {
+    let (env, sender, token, client) = setup();
+    // Set weekly limit = 500
+    client.set_default_limits(&0, &500, &0);
+
+    let mut payments: Vec<PaymentOp> = Vec::new(&env);
+    payments.push_back(PaymentOp { recipient: Address::generate(&env), amount: 600 });
+
+    client.execute_batch(&sender, &token, &payments, &0);
+}
+
+#[test]
+#[should_panic(expected = "Error(Contract, #12)")]
+fn test_monthly_limit_blocks_batch() {
+    let (env, sender, token, client) = setup();
+    // Set monthly limit = 500
+    client.set_default_limits(&0, &0, &500);
+
+    let mut payments: Vec<PaymentOp> = Vec::new(&env);
+    payments.push_back(PaymentOp { recipient: Address::generate(&env), amount: 600 });
+
+    client.execute_batch(&sender, &token, &payments, &0);
+}
+
+#[test]
+fn test_batch_within_limits_succeeds() {
+    let (env, sender, token, client) = setup();
+    client.set_default_limits(&1_000, &5_000, &20_000);
+
+    let mut payments: Vec<PaymentOp> = Vec::new(&env);
+    payments.push_back(PaymentOp { recipient: Address::generate(&env), amount: 500 });
+
+    // 500 < 1_000 daily limit → should succeed
+    let batch_id = client.execute_batch(&sender, &token, &payments, &0);
+    let record = client.get_batch(&batch_id);
+    assert_eq!(record.total_sent, 500);
+}
+
+#[test]
+#[should_panic(expected = "Error(Contract, #10)")]
+fn test_cumulative_daily_usage_exceeds_limit() {
+    let (env, sender, token, client) = setup();
+    client.set_default_limits(&1_000, &0, &0);
+
+    // First batch: 600 (within 1_000 daily limit)
+    let mut payments: Vec<PaymentOp> = Vec::new(&env);
+    payments.push_back(PaymentOp { recipient: Address::generate(&env), amount: 600 });
+    client.execute_batch(&sender, &token, &payments, &0);
+
+    // Second batch: 500 → cumulative = 1_100 > 1_000 → should panic
+    let mut payments2: Vec<PaymentOp> = Vec::new(&env);
+    payments2.push_back(PaymentOp { recipient: Address::generate(&env), amount: 500 });
+    client.execute_batch(&sender, &token, &payments2, &1);
+}
+
+// ── check_limits enforcement on execute_batch_partial ─────────────────────────
+
+#[test]
+#[should_panic(expected = "Error(Contract, #10)")]
+fn test_daily_limit_blocks_partial_batch() {
+    let (env, sender, token, client) = setup();
+    client.set_default_limits(&500, &0, &0);
+
+    let mut payments: Vec<PaymentOp> = Vec::new(&env);
+    payments.push_back(PaymentOp { recipient: Address::generate(&env), amount: 600 });
+
+    client.execute_batch_partial(&sender, &token, &payments, &0);
+}
+
+// ── Usage tracking ────────────────────────────────────────────────────────────
+
+#[test]
+fn test_usage_tracked_after_batch() {
+    let (env, sender, token, client) = setup();
+    client.set_default_limits(&10_000, &50_000, &200_000);
+
+    let mut payments: Vec<PaymentOp> = Vec::new(&env);
+    payments.push_back(PaymentOp { recipient: Address::generate(&env), amount: 300 });
+    client.execute_batch(&sender, &token, &payments, &0);
+
+    let usage = client.get_account_usage(&sender);
+    assert_eq!(usage.daily_spent, 300);
+    assert_eq!(usage.weekly_spent, 300);
+    assert_eq!(usage.monthly_spent, 300);
+}
+
+#[test]
+fn test_usage_accumulates_across_batches() {
+    let (env, sender, token, client) = setup();
+    client.set_default_limits(&10_000, &50_000, &200_000);
+
+    let mut p1: Vec<PaymentOp> = Vec::new(&env);
+    p1.push_back(PaymentOp { recipient: Address::generate(&env), amount: 100 });
+    client.execute_batch(&sender, &token, &p1, &0);
+
+    let mut p2: Vec<PaymentOp> = Vec::new(&env);
+    p2.push_back(PaymentOp { recipient: Address::generate(&env), amount: 200 });
+    client.execute_batch(&sender, &token, &p2, &1);
+
+    let usage = client.get_account_usage(&sender);
+    assert_eq!(usage.daily_spent, 300);
+    assert_eq!(usage.weekly_spent, 300);
+    assert_eq!(usage.monthly_spent, 300);
+}
+
+// ── Per-account overrides allow higher limits ─────────────────────────────────
+
+#[test]
+fn test_trusted_account_override_allows_higher_batch() {
+    let (env, sender, token, client) = setup();
+    // Default: daily 500
+    client.set_default_limits(&500, &0, &0);
+    // Override for sender: daily 5_000
+    client.set_account_limits(&sender, &5_000, &0, &0);
+
+    let mut payments: Vec<PaymentOp> = Vec::new(&env);
+    payments.push_back(PaymentOp { recipient: Address::generate(&env), amount: 3_000 });
+
+    // 3_000 < 5_000 per-account limit → should succeed despite default being 500
+    let batch_id = client.execute_batch(&sender, &token, &payments, &0);
+    let record = client.get_batch(&batch_id);
+    assert_eq!(record.total_sent, 3_000);
+}
+
+// ── Unlimited (0 cap) means no restriction ────────────────────────────────────
+
+#[test]
+fn test_unlimited_tier_allows_any_amount() {
+    let (env, sender, token, client) = setup();
+    // daily = 0 (unlimited), weekly = 500, monthly = 0 (unlimited)
+    client.set_default_limits(&0, &500_000, &0);
+
+    let mut payments: Vec<PaymentOp> = Vec::new(&env);
+    payments.push_back(PaymentOp { recipient: Address::generate(&env), amount: 999 });
+
+    // No daily limit, weekly limit is high enough → should succeed
+    let batch_id = client.execute_batch(&sender, &token, &payments, &0);
+    let record = client.get_batch(&batch_id);
+    assert_eq!(record.total_sent, 999);
+}
+
+// ── Usage tracks partial batch actual amount sent ─────────────────────────────
+
+#[test]
+fn test_partial_batch_usage_tracks_actual_sent() {
+    let (env, sender, token, client) = setup();
+    client.set_default_limits(&10_000, &50_000, &200_000);
+
+    let mut payments: Vec<PaymentOp> = Vec::new(&env);
+    payments.push_back(PaymentOp { recipient: Address::generate(&env), amount: 500 });
+    payments.push_back(PaymentOp { recipient: Address::generate(&env), amount: 0 }); // skipped
+
+    client.execute_batch_partial(&sender, &token, &payments, &0);
+
+    let usage = client.get_account_usage(&sender);
+    // Only the 500 that was actually sent should be tracked
+    assert_eq!(usage.daily_spent, 500);
+}
+
+// ── Exact boundary: batch at exactly the limit ────────────────────────────────
+
+#[test]
+fn test_batch_at_exact_daily_limit_succeeds() {
+    let (env, sender, token, client) = setup();
+    client.set_default_limits(&1_000, &0, &0);
+
+    let mut payments: Vec<PaymentOp> = Vec::new(&env);
+    payments.push_back(PaymentOp { recipient: Address::generate(&env), amount: 1_000 });
+
+    // Exactly at the limit → should succeed
+    let batch_id = client.execute_batch(&sender, &token, &payments, &0);
+    let record = client.get_batch(&batch_id);
+    assert_eq!(record.total_sent, 1_000);
+}
+
+#[test]
+#[should_panic(expected = "Error(Contract, #10)")]
+fn test_batch_one_over_daily_limit_panics() {
+    let (env, sender, token, client) = setup();
+    client.set_default_limits(&1_000, &0, &0);
+
+    let mut payments: Vec<PaymentOp> = Vec::new(&env);
+    payments.push_back(PaymentOp { recipient: Address::generate(&env), amount: 1_001 });
+
+    client.execute_batch(&sender, &token, &payments, &0);
 }
