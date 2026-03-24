@@ -166,6 +166,20 @@ function MigrationStepRow({ step }: { step: MigrationStep }) {
   );
 }
 
+function migrationProgress(steps: MigrationStep[]): {
+  completed: number;
+  total: number;
+  percent: number;
+} {
+  if (steps.length === 0) return { completed: 0, total: 0, percent: 0 };
+  const completed = steps.filter((s) => s.status === 'completed').length;
+  return {
+    completed,
+    total: steps.length,
+    percent: Math.round((completed / steps.length) * 100),
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Props
 // ---------------------------------------------------------------------------
@@ -587,6 +601,29 @@ export default function UpgradeConfirmModal({
                 newHash={modal.wasmHash}
               />
 
+              <div className="p-4 bg-black/20 border border-hi rounded-xl">
+                <p className={LABEL_CLASS}>What Will Change</p>
+                <ul className="mt-2 grid gap-2 text-xs">
+                  <li className="flex items-start gap-2">
+                    <span className="text-accent">•</span>
+                    <span>
+                      Contract <code className="font-mono">{contract.contract_id}</code> bytecode
+                      hash will change from current deployed hash to the new uploaded WASM hash.
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-accent">•</span>
+                    <span>
+                      Contract version metadata will increment after successful execution.
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-accent">•</span>
+                    <span>Post-upgrade migration scripts will run and report per-step status.</span>
+                  </li>
+                </ul>
+              </div>
+
               {/* Cost breakdown */}
               {modal.simulation.success && (
                 <div className="p-4 bg-black/20 border border-hi rounded-xl">
@@ -723,6 +760,30 @@ export default function UpgradeConfirmModal({
           {/* ── Step 5: EXECUTING ─────────────────────────────────────── */}
           {modal.step === 'executing' && (
             <div className="flex flex-col gap-5">
+              {(() => {
+                const progress = migrationProgress(modal.migrationSteps);
+                return (
+                  <div className="p-4 bg-black/20 border border-hi rounded-xl">
+                    <div className="flex items-center justify-between text-xs mb-2">
+                      <span className="font-bold uppercase tracking-widest text-muted">
+                        Migration Progress
+                      </span>
+                      <span className="font-mono text-text">
+                        {progress.total === 0
+                          ? 'Initializing…'
+                          : `${progress.completed}/${progress.total} (${progress.percent}%)`}
+                      </span>
+                    </div>
+                    <div className="h-2 w-full rounded-full bg-white/5 overflow-hidden">
+                      <div
+                        className="h-full bg-accent transition-all duration-300"
+                        style={{ width: `${progress.percent}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })()}
+
               {/* Transaction info */}
               {modal.txHash && (
                 <div className="p-4 bg-black/20 border border-hi rounded-xl">

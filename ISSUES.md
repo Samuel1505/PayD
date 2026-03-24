@@ -1,13 +1,13 @@
 # PayD Project Issues Board
 
-This board tracks the breakdown of 70 issues for the PayD platform across Contract, Backend, and Frontend development.
+This board tracks the breakdown of 100 issues for the PayD platform across Contract, Backend, and Frontend development.
 
 ## 📊 Summary
 
-- **Total Issues**: 70
-- **Contract**: 23
-- **Backend**: 23
-- **Frontend**: 24
+- **Total Issues**: 100
+- **Contract**: 33
+- **Backend**: 33
+- **Frontend**: 34
 
 ---
 
@@ -40,6 +40,16 @@ _Focuses on asset issuance, trustlines, payment batching, and Soroban logic._
 | #041 | [Transaction Simulation for Validation](docs/issues/041-tx-simulation.md)                 |  ● MEDIUM  | ⏳ TODO |
 | #042 | [Ledger Observer for Real-time Events](docs/issues/042-ledger-observer.md)                |   ● HARD   | ⏳ TODO |
 | #043 | [SEP-31 Cross-Asset Payments](docs/issues/043-sep-31-payments.md)                         |   ● HARD   | ⏳ TODO |
+| #086 | [Implement Contract State Archival Strategy](docs/issues/086-archival-strategy.md)         |   ● HARD   | ⏳ TODO |
+| #087 | [Optimize Gas Fees for Bulk Execution](docs/issues/087-gas-optimization.md)                |  ● MEDIUM  | ⏳ TODO |
+| #088 | [Implement Account-Level Transaction Limits](docs/issues/088-tx-limits.md)                 |  ● MEDIUM  | ⏳ TODO |
+| #089 | [Add Support for Asset Path Payments](docs/issues/089-path-payments.md)                    |   ● HARD   | ⏳ TODO |
+| #090 | [Formal Verification of Multi-Sig Logic](docs/issues/090-formal-verification.md)           |   ● HARD   | ⏳ TODO |
+| #091 | [Implement Graceful Revert with Refund](docs/issues/091-graceful-revert.md)                |  ● MEDIUM  | ⏳ TODO |
+| #092 | [Add SECP256K1 Signature Support](docs/issues/092-secp256k1-support.md)                    |  ● MEDIUM  | ⏳ TODO |
+| #093 | [Implement Contract Metadata (SEP-0034)](docs/issues/093-contract-metadata.md)            |   ● EASY   | ⏳ TODO |
+| #094 | [Build On-Chain Audit Trail for Bonuses](docs/issues/094-bonus-audit.md)                   |  ● MEDIUM  | ⏳ TODO |
+| #095 | [Implement Emergency Pause (Circuit Breaker)](docs/issues/095-circuit-breaker.md)          |   ● EASY   | ⏳ TODO |
 
 ---
 
@@ -72,6 +82,16 @@ _Focuses on project structure, database schema, payroll scheduling, and API logi
 | #054 | [API Rate Limiting](docs/issues/054-api-rate-limiting.md)                             |   ● EASY   | ⏳ TODO |
 | #055 | [Health Dashboard API](docs/issues/055-health-api.md)                                 |   ● EASY   | ⏳ TODO |
 | #056 | [Custom Tax Calculations Support](docs/issues/056-tax-calculations.md)                |  ● MEDIUM  | ⏳ TODO |
+| #077 | [Contract Event Indexer Service](docs/issues/077-contract-event-indexer.md)           |   ● HARD   | ⏳ TODO |
+| #078 | [Contract Address Registry API](docs/issues/078-contract-address-registry-api.md)     |  ● MEDIUM  | ⏳ TODO |
+| #079 | [Preflight Balance Check Service](docs/issues/079-preflight-balance-check.md)         |  ● MEDIUM  | ⏳ TODO |
+| #080 | [Transaction History Backend Integration](docs/issues/080-transaction-history-backend-integration.md) |  ● MEDIUM  | ⏳ TODO |
+| #081 | [Payroll Scheduler Backend Wiring](docs/issues/081-payroll-scheduler-backend-wiring.md) |   ● HARD   | ⏳ TODO |
+| #096 | [OAuth2 Social Login Integration Expansion](docs/issues/096-oauth2-social-login.md)   |  ● MEDIUM  | ⏳ TODO |
+| #097 | [Add Swagger/OpenAPI Documentation](docs/issues/097-openapi-docs.md)                  |   ● EASY   | ⏳ TODO |
+| #098 | [Implement Redis-Based Queue for Payroll](docs/issues/098-redis-queue.md)             |   ● HARD   | ⏳ TODO |
+| #099 | [Build Advanced Reporting Engine (PDF/Excel)](docs/issues/099-reporting-engine.md)    |  ● MEDIUM  | ⏳ TODO |
+| #100 | [Implement Webhook Notification System](docs/issues/100-webhook-system.md)            |   ● HARD   | ⏳ TODO |
 
 ---
 
@@ -105,3 +125,13 @@ _Focuses on dashboard layout, wallet connection, management UI, and analytics._
 | #068 | [Interactive Documentation Page](docs/issues/068-documentation-page.md)                 |  ● MEDIUM  | ⏳ TODO |
 | #069 | [Form Autosave for Configurations](docs/issues/069-form-autosave.md)                    |  ● MEDIUM  | ⏳ TODO |
 | #070 | [Error Boundaries & Crash Reporting](docs/issues/070-error-boundaries.md)               |  ● MEDIUM  | ⏳ TODO |
+| #071 | [Soroban Contract Invocation Hook](docs/issues/071-soroban-contract-invocation-hook.md) |   ● HARD   | ⏳ TODO |
+| #072 | [Vesting Escrow UI Component](docs/issues/072-vesting-escrow-ui.md)                     |  ● MEDIUM  | ⏳ TODO |
+| #073 | [Bulk Payment Status Tracker](docs/issues/073-bulk-payment-status-tracker.md)           |  ● MEDIUM  | ⏳ TODO |
+| #074 | [Revenue Split Dashboard](docs/issues/074-revenue-split-dashboard.md)                   |   ● HARD   | ⏳ TODO |
+| #075 | [Cross-Asset Payment Integration](docs/issues/075-cross-asset-payment-integration.md)   |   ● HARD   | ⏳ TODO |
+| #076 | [Wallet Session Persistence](docs/issues/076-wallet-session-persistence.md)             |  ● MEDIUM  | ⏳ TODO |
+| #082 | [Contract Error Parsing UI](docs/issues/082-contract-error-parsing-ui.md)               |  ● MEDIUM  | ⏳ TODO |
+| #083 | [Employee Payout Claim Integration](docs/issues/083-employee-payout-claim-integration.md) |   ● HARD   | ⏳ TODO |
+| #084 | [Contract Upgrade Migration UI](docs/issues/084-contract-upgrade-migration-ui.md)       |   ● HARD   | ⏳ TODO |
+| #085 | [Network Switch (Testnet/Mainnet)](docs/issues/085-network-switch-testnet-mainnet.md)   |  ● MEDIUM  | ⏳ TODO |
