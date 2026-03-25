@@ -108,5 +108,6 @@ export function useTransactionHistory(
     hasMore,
     fetchNextPage: () => void query.fetchNextPage(),
     retry: () => void query.refetch(),
+    refetch: () => void query.refetch(),
   };
 }

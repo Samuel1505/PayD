@@ -5,9 +5,12 @@ import { PayrollJobData } from '../services/payrollQueueService.js';
 import { StellarService } from '../services/stellarService.js';
 import { PayrollAuditService } from '../services/payrollAuditService.js';
 import { emitBulkUpdate } from '../services/socketService.js';
+import { BalanceService } from '../services/balanceService.js';
+import { webhookNotificationService } from '../services/webhookNotificationService.js';
 import taxService from '../services/taxService.js';
 import logger from '../utils/logger.js';
 import { Keypair, Asset, Operation, TransactionBuilder } from '@stellar/stellar-sdk';
+import { getAssetIssuer } from '../config/assets.js';
 
 /**
  * Worker to process payroll runs in the background.
@@ -41,8 +44,64 @@ export const payrollWorker = new Worker<PayrollJobData>(
 
             const distributionKeypair = Keypair.fromSecret(distributionSecret);
             const assetCode = payroll_run.asset_code;
-            // In a real app, you'd get the issuer from the DB or config based on organization
-            const assetIssuer = process.env.ORGUSD_ISSUER_PUBLIC;
+
+            // Resolve the issuer from the centralized asset registry.
+            // For XLM (native) no issuer is needed; for any stablecoin (USDC,
+            // EURC, ORGUSD, …) the registry provides the correct address.
+            const assetIssuer = assetCode !== 'XLM' ? getAssetIssuer(assetCode) : null;
+
+            // 2a. Preflight balance check before execution for ORGUSD payroll runs.
+            if (assetCode === 'ORGUSD') {
+                if (!assetIssuer) {
+                    throw new Error('ORGUSD_ISSUER_PUBLIC not configured on server');
+                }
+
+                const preflightPayments = items.map((item) => ({
+                    employeeId: String(item.employee_id),
+                    employeeName:
+                        `${item.employee_first_name ?? ''} ${item.employee_last_name ?? ''}`.trim() ||
+                        item.employee_email ||
+                        `Employee #${item.employee_id}`,
+                    walletAddress: item.employee_wallet_address || 'N/A',
+                    amount: item.amount,
+                }));
+
+                const preflightResult = await BalanceService.preflightCheck(
+                    distributionKeypair.publicKey(),
+                    assetIssuer,
+                    preflightPayments
+                );
+
+                if (!preflightResult.sufficient) {
+                    const shortfallReport = {
+                        payrollRunId,
+                        batchId,
+                        organizationId: payroll_run.organization_id,
+                        generatedAt: new Date().toISOString(),
+                        ...preflightResult,
+                    };
+
+                    await webhookNotificationService.dispatch(
+                        'balance.low',
+                        {
+                            message: 'Payroll aborted due to insufficient ORGUSD distribution balance.',
+                            shortfallReport,
+                        },
+                        payroll_run.organization_id
+                    );
+
+                    emitBulkUpdate(batchId, 'failed', {
+                        error: 'Insufficient ORGUSD balance. Payroll aborted before execution.',
+                        shortfallReport,
+                    });
+
+                    throw new Error(
+                        `Insufficient ORGUSD balance for payroll run ${payrollRunId}. ` +
+                            `Required: ${preflightResult.totalRequired}, Available: ${preflightResult.availableBalance}, ` +
+                            `Shortfall: ${preflightResult.shortfall}`
+                    );
+                }
+            }
 
             const asset = assetCode === 'XLM'
                 ? Asset.native()

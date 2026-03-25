@@ -8,6 +8,7 @@ import { generateWallet } from '../services/stellar';
 import { useTranslation } from 'react-i18next';
 import { useNotification } from '../hooks/useNotification';
 import { HelpLink } from '../components/HelpLink';
+import { SUPPORTED_ASSETS } from '../config/assets';
 
 interface EmployeeFormState {
   fullName: string;
@@ -255,29 +256,21 @@ export default function EmployeeEntry() {
               <Select
                 id="currency"
                 fieldSize="md"
-                label="Preferred Currency"
+                label="Preferred Payout Asset"
+                note="The employee will receive salary in this asset. A trustline must exist in their wallet."
                 value={formData.currency}
                 onChange={(e) => handleSelectChange('currency', e.target.value)}
               >
-                <option value="USDC">USDC</option>
-                <option value="XLM">XLM</option>
-                <option value="EURC">EURC</option>
+                {SUPPORTED_ASSETS.map((asset) => (
+                  <option key={asset.code} value={asset.code}>
+                    {asset.label}
+                  </option>
+                ))}
               </Select>
               <div className="pt-6">
                 <HelpLink topic="trustline" variant="icon-text" size="sm" />
               </div>
             </div>
-            <Select
-              id="currency"
-              fieldSize="md"
-              label="Preferred Currency"
-              value={formData.currency}
-              onChange={(e) => handleSelectChange('currency', e.target.value)}
-            >
-              <option value="USDC">USDC</option>
-              <option value="XLM">XLM</option>
-              <option value="EURC">EURC</option>
-            </Select>
             <Button type="submit" variant="primary" size="md">
               Add Employee
             </Button>

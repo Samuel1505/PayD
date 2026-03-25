@@ -335,6 +335,9 @@ export interface UseTransactionHistoryResult {
   
   /** Function to retry after an error */
   retry: () => void;
+  
+  /** Function to refetch the current data (for real-time updates) */
+  refetch: () => void;
 }
 
 /**

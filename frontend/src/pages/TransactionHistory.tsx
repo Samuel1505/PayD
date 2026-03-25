@@ -1,9 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Activity, Calendar, Filter, Search, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useFilterState } from '../hooks/useFilterState';
 import { useTransactionHistory } from '../hooks/useTransactionHistory';
+import { useSocket } from '../hooks/useSocket';
+import { ConnectionStatus } from '../components/ConnectionStatus';
+import type { TimelineItem } from '../types/transactionHistory';
+
+const POLLING_INTERVAL_MS = 15_000;
 
 function getStatusClass(status: string): string {
   if (status === 'confirmed' || status === 'indexed') {
@@ -31,19 +36,63 @@ function TimelineSkeleton() {
 
 export default function TransactionHistory() {
   useTranslation();
+  const { socket, connected, isPollingFallback } = useSocket();
   const [showFilters, setShowFilters] = useState(false);
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Use filter state hook for managing filters with URL sync and debouncing
   const { filters, debouncedFilters, updateFilter, resetFilters, activeFilterCount } =
     useFilterState();
 
   // Use transaction history hook for data fetching with TanStack Query
-  const { data, isLoading, isLoadingMore, error, hasMore, fetchNextPage, retry } =
+  const { data, isLoading, isLoadingMore, error, hasMore, fetchNextPage, retry, refetch } =
     useTransactionHistory({
       filters: debouncedFilters,
       page: 1,
       limit: 20,
     });
+
+  // ── WebSocket: atomically update a single item status in-place ─────────
+  useEffect(() => {
+    if (!socket) return;
+
+    const onTransactionUpdate = (payload: {
+      transactionId: string;
+      status: string;
+      timestamp: string;
+    }) => {
+      // Refetch to get the latest data when a transaction updates
+      void refetch();
+    };
+
+    socket.on('transaction:update', onTransactionUpdate);
+    return () => {
+      socket.off('transaction:update', onTransactionUpdate);
+    };
+  }, [socket, refetch]);
+
+  // ── Polling fallback: refresh the first page when socket is down ───────
+  useEffect(() => {
+    const shouldPoll = !connected || isPollingFallback;
+
+    if (shouldPoll) {
+      pollingRef.current = setInterval(() => {
+        void refetch();
+      }, POLLING_INTERVAL_MS);
+    } else {
+      if (pollingRef.current !== null) {
+        clearInterval(pollingRef.current);
+        pollingRef.current = null;
+      }
+    }
+
+    return () => {
+      if (pollingRef.current !== null) {
+        clearInterval(pollingRef.current);
+        pollingRef.current = null;
+      }
+    };
+  }, [connected, isPollingFallback, refetch]);
 
   return (
     <div className="flex-1 flex flex-col p-6 lg:p-12 max-w-7xl mx-auto w-full page-fade">
@@ -57,6 +106,7 @@ export default function TransactionHistory() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <ConnectionStatus />
           <Link
             to="/help?q=failed+transaction"
             className="text-xs text-muted hover:text-accent underline transition"
