@@ -23,7 +23,7 @@
     "noUncheckedIndexedAccess": true,
     "jsx": "react-jsx",
     "verbatimModuleSyntax": false,
-    "isolatedModules": true
+    "isolatedModules": false
   },
   "include": [
     "src/**/*"
@@ -32,7 +32,6 @@
     "node_modules",
     "dist",
     "src_backup",
-    "**/*.test.ts",
     "src/benchmarks/**/*"
   ]
 }
