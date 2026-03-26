@@ -7,7 +7,7 @@ use soroban_sdk::token::StellarAssetClient;
 
 fn create_token_contract<'a>(e: &Env, admin: &Address) -> (Address, StellarAssetClient<'a>, TokenClient<'a>) {
     e.mock_all_auths();
-    let contract_id = e.register_stellar_asset_contract(admin.clone());
+    let contract_id = e.register_stellar_asset_contract_v2(admin.clone()).address();
     let stellar_asset_client = StellarAssetClient::new(e, &contract_id);
     let token_client = TokenClient::new(e, &contract_id);
     (contract_id, stellar_asset_client, token_client)

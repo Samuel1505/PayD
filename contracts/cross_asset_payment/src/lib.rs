@@ -1,6 +1,24 @@
 #![no_std]
 
-use soroban_sdk::{contract, contractimpl, contracttype, symbol_short, Address, Env, String, Symbol, token};
+use soroban_sdk::{contract, contractimpl, contracttype, contractevent, symbol_short, Address, Env, String, Symbol, token};
+
+// ── Events ────────────────────────────────────────────────────────────────────
+
+#[contractevent]
+pub struct PaymentInitiatedEvent {
+    #[topic]
+    pub payment_id: u64,
+    pub from: Address,
+    pub amount: i128,
+}
+
+#[contractevent]
+pub struct PaymentStatusUpdatedEvent {
+    #[topic]
+    pub payment_id: u64,
+    pub new_status: Symbol,
+}
+
 
 #[contracttype]
 #[derive(Clone)]
@@ -12,13 +30,8 @@ pub enum DataKey {
     LastPaymentLedger(Address),
 }
 
-const PERSISTENT_TTL_THRESHOLD: u32 = 20_000;
-const PERSISTENT_TTL_EXTEND_TO: u32 = 120_000;
-const TEMPORARY_TTL_THRESHOLD: u32 = 2_000;
-const TEMPORARY_TTL_EXTEND_TO: u32 = 20_000;
-
+#[derive(Clone, Debug, PartialEq, Eq)]
 #[contracttype]
-#[derive(Clone, Debug, PartialEq)]
 pub struct PaymentRecord {
     pub from: Address,
     pub amount: i128,
@@ -108,19 +121,15 @@ impl CrossAssetPaymentContract {
             status: symbol_short!("pending"),
         };
 
-        let payment_key = DataKey::Payment(count);
-        env.storage().temporary().set(&payment_key, &record);
-        env.storage().temporary().extend_ttl(
-            &payment_key,
-            TEMPORARY_TTL_THRESHOLD,
-            TEMPORARY_TTL_EXTEND_TO,
-        );
+        // Store the payment record in Persistent storage to keep Instance storage light
+        let key = DataKey::Payment(count);
+        env.storage().persistent().set(&key, &record);
+        
+        // Extend TTL (3 months default)
+        env.storage().persistent().extend_ttl(&key, 100_000, 1_500_000);
 
-        // Emit an event for backend/anchor tracking
-        env.events().publish(
-            (symbol_short!("pay_init"), count),
-            record,
-        );
+        // Emit typed event for backend/anchor tracking
+        PaymentInitiatedEvent { payment_id: count, from: record.from.clone(), amount: record.amount }.publish(&env);
 
         count
     }
@@ -130,95 +139,25 @@ impl CrossAssetPaymentContract {
         Self::require_admin(&env);
 
         let key = DataKey::Payment(payment_id);
-        let mut record: PaymentRecord = env.storage().temporary()
-            .get(&DataKey::Payment(payment_id))
-            .expect("Payment not found or archived");
+        let mut record: PaymentRecord = env.storage().persistent()
+            .get(&key)
+            .expect("Payment not found");
 
         record.status = new_status.clone();
-        env.storage().temporary().set(&key, &record);
-        env.storage().temporary().extend_ttl(
-            &key,
-            TEMPORARY_TTL_THRESHOLD,
-            TEMPORARY_TTL_EXTEND_TO,
-        );
+        env.storage().persistent().set(&key, &record);
+        env.storage().persistent().extend_ttl(&key, 100_000, 1_500_000);
 
-        env.events().publish(
-            (symbol_short!("pay_upd"), payment_id),
-            new_status,
-        );
+        PaymentStatusUpdatedEvent { payment_id, new_status }.publish(&env);
     }
 
     /// Get details of a payment.
     pub fn get_payment(env: Env, payment_id: u64) -> Option<PaymentRecord> {
         let key = DataKey::Payment(payment_id);
-        let record: Option<PaymentRecord> = env.storage().temporary().get(&key);
+        let record = env.storage().persistent().get(&key);
         if record.is_some() {
-            env.storage().temporary().extend_ttl(
-                &key,
-                TEMPORARY_TTL_THRESHOLD,
-                TEMPORARY_TTL_EXTEND_TO,
-            );
+            env.storage().persistent().extend_ttl(&key, 100_000, 1_500_000);
         }
         record
-    }
-
-    pub fn get_payment_count(env: Env) -> u64 {
-        let key = DataKey::PaymentCount;
-        let count = env.storage().persistent().get(&key).unwrap_or(0);
-        if env.storage().persistent().has(&key) {
-            env.storage().persistent().extend_ttl(
-                &key,
-                PERSISTENT_TTL_THRESHOLD,
-                PERSISTENT_TTL_EXTEND_TO,
-            );
-        }
-        count
-    }
-
-    /// Returns the ledger sequence of the last payment initiated by a given sender.
-    pub fn get_last_payment_ledger(env: Env, sender: Address) -> u32 {
-        env.storage().persistent()
-            .get(&DataKey::LastPaymentLedger(sender))
-            .unwrap_or(0)
-    }
-
-    /// Ensures the sender has not already initiated a payment in the current
-    /// ledger sequence, preventing replay attacks.
-    fn require_unique_ledger(env: &Env, sender: &Address) {
-        let current_ledger = env.ledger().sequence();
-        let key = DataKey::LastPaymentLedger(sender.clone());
-        let last_ledger: u32 = env.storage().persistent().get(&key).unwrap_or(0);
-        if last_ledger == current_ledger && current_ledger != 0 {
-            panic!("Payment already initiated in this ledger sequence");
-        }
-        env.storage().persistent().set(&key, &current_ledger);
-        env.storage().persistent().extend_ttl(
-            &key,
-            PERSISTENT_TTL_THRESHOLD,
-            PERSISTENT_TTL_EXTEND_TO,
-        );
-    }
-
-    fn require_admin(env: &Env) {
-        let admin: Address = env.storage().persistent().get(&DataKey::Admin).expect("Admin entry unavailable; restore and retry");
-        env.storage().persistent().extend_ttl(
-            &DataKey::Admin,
-            PERSISTENT_TTL_THRESHOLD,
-            PERSISTENT_TTL_EXTEND_TO,
-        );
-        admin.require_auth();
-    }
-
-    fn bump_core_ttl(env: &Env) {
-        for key in [DataKey::Admin, DataKey::PaymentCount] {
-            if env.storage().persistent().has(&key) {
-                env.storage().persistent().extend_ttl(
-                    &key,
-                    PERSISTENT_TTL_THRESHOLD,
-                    PERSISTENT_TTL_EXTEND_TO,
-                );
-            }
-        }
     }
 }
 

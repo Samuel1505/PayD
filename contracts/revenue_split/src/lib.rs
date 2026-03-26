@@ -13,10 +13,7 @@ pub enum DataKey {
     LastDistributeLedger,
 }
 
-const PERSISTENT_TTL_THRESHOLD: u32 = 20_000;
-const PERSISTENT_TTL_EXTEND_TO: u32 = 120_000;
-
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 #[contracttype]
 pub struct RecipientShare {
     pub destination: Address,
@@ -62,9 +59,12 @@ impl RevenueSplitContract {
             panic!("Shares must sum to 10000 basis points");
         }
 
-        env.storage().persistent().set(&DataKey::Admin, &admin);
-        env.storage().persistent().set(&DataKey::Recipients, &shares);
-        Self::bump_core_ttl(&env);
+        env.storage().instance().set(&DataKey::Admin, &admin);
+        
+        let recipient_key = DataKey::Recipients;
+        env.storage().persistent().set(&recipient_key, &shares);
+        // Extend TTL for recipients (1 month initially)
+        env.storage().persistent().extend_ttl(&recipient_key, 100_000, 500_000);
     }
 
     /// Allows the current admin to set a new admin.
@@ -89,43 +89,41 @@ impl RevenueSplitContract {
             panic!("Shares must sum to 10000 basis points");
         }
 
-        env.storage().persistent().set(&DataKey::Recipients, &new_shares);
-        Self::bump_core_ttl(&env);
-    }
-
-    /// Extends TTL for critical organization configuration.
-    pub fn bump_ttl(env: Env) {
-        let admin: Address = env.storage().persistent().get(&DataKey::Admin).expect("Admin entry unavailable; restore and retry");
-        admin.require_auth();
-        Self::bump_core_ttl(&env);
+        let key = DataKey::Recipients;
+        env.storage().persistent().set(&key, &new_shares);
+        env.storage().persistent().extend_ttl(&key, 100_000, 500_000);
     }
 
     /// Distributes a specific token amount from a sender to the listed recipients based on their shares.
     pub fn distribute(env: Env, token: Address, from: Address, amount: i128) {
+        if amount <= 0 {
+             return;
+        }
         from.require_auth();
 
         // Ledger sequence verification: prevent duplicate distributions in the same ledger
         Self::require_unique_ledger(&env);
         
-        let shares: Vec<RecipientShare> = env.storage().persistent().get(&DataKey::Recipients).expect("Recipients entry unavailable; restore and retry");
-        Self::bump_core_ttl(&env);
+        let shares: Vec<RecipientShare> = env.storage().persistent().get(&DataKey::Recipients).expect("Not initialized");
+        env.storage().persistent().extend_ttl(&DataKey::Recipients, 100_000, 500_000);
+        
         let client = token::Client::new(&env, &token);
 
         let mut amount_distributed = 0;
+        let total_bp = TOTAL_BASIS_POINTS as i128;
+        let shares_len = shares.len();
 
         for (i, share) in shares.iter().enumerate() {
-            // Calculate slice of the total amount using basis points
             // Formula: amount * basis_points / 10000
-            let recipient_amount = (amount as i128 * share.basis_points as i128) / TOTAL_BASIS_POINTS as i128;
-            
-            if recipient_amount > 0 {
-                // To avoid precision loss dust, the last recipient takes any minor remainders.
-                if i as u32 == shares.len() - 1 {
-                    let final_amount = amount - amount_distributed;
-                    if final_amount > 0 {
-                        client.transfer(&from, &share.destination, &final_amount);
-                    }
-                } else {
+            // We optimize by checking if we are at the last share to dump the precision remainder
+            if i as u32 == shares_len - 1 {
+                let final_amount = amount - amount_distributed;
+                if final_amount > 0 {
+                    client.transfer(&from, &share.destination, &final_amount);
+                }
+            } else {
+                let recipient_amount = (amount * share.basis_points as i128) / total_bp;
+                if recipient_amount > 0 {
                     client.transfer(&from, &share.destination, &recipient_amount);
                     amount_distributed += recipient_amount;
                 }
