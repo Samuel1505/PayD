@@ -9,6 +9,7 @@
     "build": "tsc -b && vite build",
     "install:contracts": "npm install --workspace=packages && npm run build --workspace=packages",
     "preview": "vite preview",
+    "test:docs": "node --test tests/*.test.mjs",
     "lint": "eslint .",
     "format": "prettier . --write",
     "prepare": "husky"
