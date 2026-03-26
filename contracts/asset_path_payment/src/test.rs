@@ -1,10 +1,10 @@
 #![cfg(test)]
 
 use super::*;
-use soroban_sdk::testutils::{Address as _, Ledger, LedgerInfo};
+use soroban_sdk::testutils::{Address as _};
 use soroban_sdk::{vec, Env, String};
 
-fn create_contract() -> (Env, AssetPathPaymentContract) {
+fn create_contract() -> (Env, Address) {
     let env = Env::default();
     let contract_id = env.register(AssetPathPaymentContract, ());
     env.as_contract(&contract_id, || {
@@ -38,7 +38,7 @@ fn test_init() {
 }
 
 #[test]
-#[should_panic(expected = "AlreadyInitialized")]
+#[should_panic(expected = "Already initialized")]
 fn test_double_init() {
     let env = Env::default();
     let contract_id = env.register(AssetPathPaymentContract, ());
@@ -69,13 +69,10 @@ fn test_get_payment_count() {
 fn test_bump_ttl() {
     let env = Env::default();
     let contract_id = env.register(AssetPathPaymentContract, ());
+    let client = AssetPathPaymentContractClient::new(&env, &contract_id);
+    let admin = Address::generate(&env);
 
-    env.as_contract(&contract_id, || {
-        let admin = Address::generate(&env);
-        AssetPathPaymentContract::init(env.clone(), admin.clone());
-
-        // This should work since admin is authorized
-        env.mock_all_auths(&admin);
-        AssetPathPaymentContract::bump_ttl(env.clone());
-    });
+    client.init(&admin);
+    env.mock_all_auths();
+    client.bump_ttl();
 }

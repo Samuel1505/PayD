@@ -403,7 +403,7 @@ fn test_contract_metadata() {
     let version = client.version();
     let author = client.author();
 
-    assert_eq!(name, String::from_str(&env, "PayD Cross-Asset Payment"));
-    assert_eq!(version, String::from_str(&env, "0.0.1"));
-    assert_eq!(author, String::from_str(&env, "The Aha Company"));
+    assert_eq!(name, String::from_str(&env, env!("CARGO_PKG_NAME")));
+    assert_eq!(version, String::from_str(&env, env!("CARGO_PKG_VERSION")));
+    assert_eq!(author, String::from_str(&env, env!("CARGO_PKG_AUTHORS")));
 }

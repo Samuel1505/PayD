@@ -221,17 +221,17 @@ impl BulkPaymentContract {
 
     /// Returns the human-readable contract name (SEP-0034).
     pub fn name(env: Env) -> String {
-        String::from_str(&env, "PayD Bulk Payment")
+        String::from_str(&env, env!("CARGO_PKG_NAME"))
     }
 
     /// Returns the contract version string (SEP-0034).
     pub fn version(env: Env) -> String {
-        String::from_str(&env, "0.0.1")
+        String::from_str(&env, env!("CARGO_PKG_VERSION"))
     }
 
     /// Returns the contract author / organization (SEP-0034).
     pub fn author(env: Env) -> String {
-        String::from_str(&env, "The Aha Company")
+        String::from_str(&env, env!("CARGO_PKG_AUTHORS"))
     }
 
     // ── Initialization ────────────────────────────────────────────────────

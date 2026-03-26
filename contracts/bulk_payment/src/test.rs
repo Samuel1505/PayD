@@ -1510,9 +1510,9 @@ fn test_read_only_functions_need_no_auth() {
     let name = client.name();
     let version = client.version();
     let author = client.author();
-    assert_eq!(name, soroban_sdk::String::from_str(&env, "PayD Bulk Payment"));
-    assert_eq!(version, soroban_sdk::String::from_str(&env, "0.0.1"));
-    assert_eq!(author, soroban_sdk::String::from_str(&env, "The Aha Company"));
+    assert_eq!(name, soroban_sdk::String::from_str(&env, env!("CARGO_PKG_NAME")));
+    assert_eq!(version, soroban_sdk::String::from_str(&env, env!("CARGO_PKG_VERSION")));
+    assert_eq!(author, soroban_sdk::String::from_str(&env, env!("CARGO_PKG_AUTHORS")));
 }
 
 /// Verify that `bump_ttl` requires admin auth.

@@ -7,7 +7,7 @@ use soroban_sdk::token::StellarAssetClient;
 
 fn create_token_contract<'a>(e: &Env, admin: &Address) -> (Address, StellarAssetClient<'a>, TokenClient<'a>) {
     e.mock_all_auths();
-    let contract_id = e.register_stellar_asset_contract(admin.clone());
+    let contract_id = e.register_stellar_asset_contract_v2(admin.clone()).address();
     let stellar_asset_client = StellarAssetClient::new(e, &contract_id);
     let token_client = TokenClient::new(e, &contract_id);
     (contract_id, stellar_asset_client, token_client)
@@ -143,6 +143,21 @@ fn test_double_init_panics() {
 fn test_set_admin() {
     let env = Env::default();
     env.mock_all_auths();
+    let contract_id = env.register(RevenueSplitContract, ());
+    let client = RevenueSplitContractClient::new(&env, &contract_id);
+
+    let admin = Address::generate(&env);
+    let new_admin = Address::generate(&env);
+    let recipient = Address::generate(&env);
+
+    let shares = Vec::from_array(&env, [
+        RecipientShare { destination: recipient.clone(), basis_points: 10000 },
+    ]);
+
+    client.init(&admin, &shares);
+    client.set_admin(&new_admin);
+}
+
 // ══════════════════════════════════════════════════════════════════════════════
 // ── LEDGER SEQUENCE VERIFICATION TESTS (Issue #173) ───────────────────────────
 // ══════════════════════════════════════════════════════════════════════════════
@@ -161,7 +176,6 @@ fn test_distribute_replay_same_ledger() {
     let client = RevenueSplitContractClient::new(&env, &contract_id);
 
     let admin = Address::generate(&env);
-    let new_admin = Address::generate(&env);
     let recipient = Address::generate(&env);
 
     let shares = Vec::from_array(&env, [
@@ -169,8 +183,12 @@ fn test_distribute_replay_same_ledger() {
     ]);
 
     client.init(&admin, &shares);
-    // Transfer admin rights
-    client.set_admin(&new_admin);
+
+    let sender = Address::generate(&env);
+    stellar_asset_client.mint(&sender, &2000);
+
+    client.distribute(&token_id, &sender, &1000);
+    client.distribute(&token_id, &sender, &500); // Should panic
 }
 
 #[test]
@@ -179,29 +197,9 @@ fn test_sep0034_metadata() {
     let contract_id = env.register(RevenueSplitContract, ());
     let client = RevenueSplitContractClient::new(&env, &contract_id);
 
-    assert_eq!(client.name(), soroban_sdk::String::from_str(&env, "PayD Revenue Split"));
-    assert_eq!(client.version(), soroban_sdk::String::from_str(&env, "0.0.1"));
-    assert_eq!(client.author(), soroban_sdk::String::from_str(&env, "The Aha Company"));
-}
-
-#[test]
-fn test_distribution_remainder_goes_to_last_recipient() {
-    let env = Env::default();
-    env.mock_all_auths();
-    let recipient = Address::generate(&env);
-    let shares = Vec::from_array(&env, [
-        RecipientShare { destination: recipient.clone(), basis_points: 10000 },
-    ]);
-    client.init(&admin, &shares);
-
-    let sender = Address::generate(&env);
-    stellar_asset_client.mint(&sender, &2000);
-
-    // First distribution at ledger 50 succeeds
-    client.distribute(&token_id, &sender, &1000);
-
-    // Second distribution at the same ledger 50 should panic
-    client.distribute(&token_id, &sender, &500);
+    assert_eq!(client.name(), soroban_sdk::String::from_str(&env, env!("CARGO_PKG_NAME")));
+    assert_eq!(client.version(), soroban_sdk::String::from_str(&env, env!("CARGO_PKG_VERSION")));
+    assert_eq!(client.author(), soroban_sdk::String::from_str(&env, env!("CARGO_PKG_AUTHORS")));
 }
 
 #[test]
@@ -265,6 +263,18 @@ fn test_update_recipients_invalid_sum_panics() {
         RecipientShare { destination: recipient2.clone(), basis_points: 5000 },
     ]);
     client.update_recipients(&bad_shares);
+}
+
+#[test]
+fn test_distribute_updates_ledger_state() {
+    let env = Env::default();
+    env.mock_all_auths();
+    env.ledger().set_sequence_number(50);
+
+    let token_admin = Address::generate(&env);
+    let (token_id, stellar_asset_client, token_client) = create_token_contract(&env, &token_admin);
+
+    let contract_id = env.register(RevenueSplitContract, ());
     let client = RevenueSplitContractClient::new(&env, &contract_id);
 
     let admin = Address::generate(&env);

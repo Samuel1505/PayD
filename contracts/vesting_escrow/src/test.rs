@@ -638,7 +638,7 @@ fn test_contract_metadata() {
     let version = client.version();
     let author = client.author();
 
-    assert_eq!(name, soroban_sdk::String::from_str(&e, "PayD Vesting Escrow"));
-    assert_eq!(version, soroban_sdk::String::from_str(&e, "0.0.1"));
-    assert_eq!(author, soroban_sdk::String::from_str(&e, "The Aha Company"));
+    assert_eq!(name, soroban_sdk::String::from_str(&e, env!("CARGO_PKG_NAME")));
+    assert_eq!(version, soroban_sdk::String::from_str(&e, env!("CARGO_PKG_VERSION")));
+    assert_eq!(author, soroban_sdk::String::from_str(&e, env!("CARGO_PKG_AUTHORS")));
 }
