@@ -94,8 +94,8 @@ const DEFAULT_SELECTED_COLUMNS: PayrollExportColumnId[] = PAYROLL_EXPORT_COLUMNS
 export default function CustomReportBuilder() {
   const { notifyError, notifySuccess, notifyApiError } = useNotification();
   const [organizationPublicKey, setOrganizationPublicKey] = useState('');
-  const [startDate, setStartDate] = useState(getDefaultStartDate());
-  const [endDate, setEndDate] = useState(getDefaultEndDate());
+  const [startDate, setStartDate] = useState(() => getDefaultStartDate());
+  const [endDate, setEndDate] = useState(() => getDefaultEndDate());
   const [selectedColumns, setSelectedColumns] =
     useState<PayrollExportColumnId[]>(DEFAULT_SELECTED_COLUMNS);
   const [format, setFormat] = useState<PayrollExportFormat>('excel');
@@ -358,11 +358,10 @@ export default function CustomReportBuilder() {
                         key={item.value}
                         type="button"
                         onClick={() => setFormat(item.value)}
-                        className={`rounded-2xl border px-4 py-3 text-left transition ${
-                          active
+                        className={`rounded-2xl border px-4 py-3 text-left transition ${active
                             ? 'border-(--accent)/40 bg-(--accent)/10 shadow-[0_0_0_1px_rgba(74,240,184,0.08)]'
                             : 'border-white/10 bg-black/20 hover:border-white/20 hover:bg-black/25'
-                        }`}
+                          }`}
                       >
                         <div className="flex items-center justify-between gap-3">
                           <div>
@@ -370,11 +369,10 @@ export default function CustomReportBuilder() {
                             <p className="text-xs text-(--muted)">{item.description}</p>
                           </div>
                           <div
-                            className={`grid h-5 w-5 place-items-center rounded-full border ${
-                              active
+                            className={`grid h-5 w-5 place-items-center rounded-full border ${active
                                 ? 'border-(--accent) bg-(--accent) text-black'
                                 : 'border-white/20 text-transparent'
-                            }`}
+                              }`}
                           >
                             <Check className="h-3.5 w-3.5" />
                           </div>
@@ -430,11 +428,10 @@ export default function CustomReportBuilder() {
                                     <div
                                       ref={dragProvided.innerRef}
                                       {...dragProvided.draggableProps}
-                                      className={`flex items-center justify-between gap-3 rounded-xl border px-3 py-2 transition ${
-                                        snapshot.isDragging
+                                      className={`flex items-center justify-between gap-3 rounded-xl border px-3 py-2 transition ${snapshot.isDragging
                                           ? 'border-(--accent)/50 bg-(--accent)/10 shadow-lg'
                                           : 'border-white/10 bg-white/5'
-                                      }`}
+                                        }`}
                                     >
                                       <div className="flex items-center gap-3">
                                         <button

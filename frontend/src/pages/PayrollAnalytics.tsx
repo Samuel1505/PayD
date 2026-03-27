@@ -194,8 +194,8 @@ export default function PayrollAnalytics() {
                       return `${d.currency ?? ''} ${d.value ?? 0}%`;
                     }}
                   >
-                    {data.currencyBreakdown.map((_, idx) => (
-                      <Cell key={idx} fill={PIE_COLORS[idx % PIE_COLORS.length]} />
+                    {data.currencyBreakdown.map((item, idx) => (
+                      <Cell key={item.currency} fill={PIE_COLORS[idx % PIE_COLORS.length]} />
                     ))}
                   </Pie>
                   <Tooltip

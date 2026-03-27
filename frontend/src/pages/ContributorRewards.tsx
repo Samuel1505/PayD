@@ -10,6 +10,7 @@ import {
     ArrowRight,
     Sparkles,
     Gift,
+    LucideIcon,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import styles from './ContributorRewards.module.css';
@@ -24,7 +25,7 @@ const RewardTier = ({
     tier: string;
     amount: string;
     description: string;
-    icon: any;
+    icon: LucideIcon;
     color: string;
 }) => (
     <motion.div
