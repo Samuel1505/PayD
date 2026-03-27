@@ -16,7 +16,7 @@ import TransactionHistory from './pages/TransactionHistory';
 import RevenueSplitDashboard from './pages/RevenueSplitDashboard';
 import BulkPayrollUpload from './pages/BulkPayrollUpload';
 import PayrollAnalytics from './pages/PayrollAnalytics';
-
+import ContributorRewards from './pages/ContributorRewards';
 import EmployeePortal from './pages/EmployeePortal';
 import Login from './pages/Login';
 import AuthCallback from './pages/AuthCallback';
@@ -180,6 +180,16 @@ function App() {
             </ErrorBoundary>
           }
         />
+        <Route
+          path="/rewards"
+          element={
+            <ErrorBoundary fallback={<ErrorFallback />}>
+              <ContributorRewards />
+            </ErrorBoundary>
+          }
+        />
+        <Route path="/login" element={<Login />} />
+        <Route path="/auth-callback" element={<AuthCallback />} />
       </Route>
 
       {/* Portal / Employee routes can still use AppLayout if they have a different look */}

@@ -69,6 +69,7 @@ export const employeeQuerySchema = z.object({
     .transform(Number)
     .optional()
     .default('10' as any),
+  q: z.string().optional(),
   search: z.string().optional(),
   status: z.enum(['active', 'inactive', 'pending']).optional(),
   department: z.string().optional(),

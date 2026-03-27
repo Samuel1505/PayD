@@ -95,6 +95,25 @@ describe('EmployeeController', () => {
         })
       );
     });
+
+    it('should pass q to findAll when provided', async () => {
+      const mockResult = {
+        data: [{ id: 1, first_name: 'Alice' }],
+        pagination: { total: 1, page: 1, limit: 10, totalPages: 1 },
+      };
+      (employeeService.findAll as jest.Mock).mockResolvedValue(mockResult);
+
+      await request(app).get('/api/employees?q=alice').expect(200);
+
+      expect(employeeService.findAll).toHaveBeenCalledWith(
+        1,
+        expect.objectContaining({ q: 'alice' })
+      );
+    });
+
+    it('should return 400 for invalid query params', async () => {
+      await request(app).get('/api/employees?status=invalid_status').expect(400);
+    });
   });
 
   describe('GET /api/employees/:id', () => {

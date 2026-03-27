@@ -118,6 +118,7 @@ export class EmployeeService {
     const {
       page = 1,
       limit = 10,
+      q,
       search,
       status,
       department,
@@ -129,6 +130,8 @@ export class EmployeeService {
       sort_by = 'created_at',
       sort_order = 'desc',
     } = params;
+    // `q` is the canonical search param; `search` is kept for backwards compatibility
+    const searchTerm = q ?? search;
     const offset = (page - 1) * limit;
 
     const allowedSortColumns = [
@@ -162,13 +165,13 @@ export class EmployeeService {
     }
 
     let ftsParamIndex: number | null = null;
-    if (search) {
+    if (searchTerm) {
       ftsParamIndex = paramIndex;
       whereClause += ` AND (
         search_vector @@ plainto_tsquery('english', $${paramIndex})
         OR wallet_address ILIKE $${paramIndex + 1}
       )`;
-      values.push(search, `%${search}%`);
+      values.push(searchTerm, `%${searchTerm}%`);
       paramIndex += 2;
     }
 

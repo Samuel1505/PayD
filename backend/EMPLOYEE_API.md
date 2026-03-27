@@ -72,13 +72,14 @@ curl -X POST http://localhost:4000/api/employees \
 
 **Query parameters:**
 
-| Param      | Type   | Default | Description                                           |
-| ---------- | ------ | ------- | ----------------------------------------------------- |
-| page       | number | 1       | Page number                                           |
-| limit      | number | 10      | Items per page                                        |
-| search     | string | -       | Search across name, email, position, job_title, phone |
-| status     | enum   | -       | Filter by status                                      |
-| department | string | -       | Filter by department                                  |
+| Param      | Type   | Default | Description                                                              |
+| ---------- | ------ | ------- | ------------------------------------------------------------------------ |
+| page       | number | 1       | Page number                                                              |
+| limit      | number | 10      | Items per page                                                           |
+| q          | string | -       | Search query — full-text search across name, email, position, department, and wallet address |
+| search     | string | -       | Alias for `q` (kept for backwards compatibility; `q` takes precedence)   |
+| status     | enum   | -       | Filter by status (`active`, `inactive`, `pending`)                       |
+| department | string | -       | Filter by department                                                     |
 
 **Response:** `200 OK`
 

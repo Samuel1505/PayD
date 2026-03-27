@@ -165,6 +165,52 @@ describe('EmployeeService', () => {
       expect(calledQuery).toContain('job_title ILIKE');
       expect(calledQuery).toContain('phone ILIKE');
     });
+
+    it('should apply full-text search when q is provided', async () => {
+      (mockPool.query as jest.Mock).mockResolvedValueOnce({ rows: [] });
+
+      await employeeService.findAll(1, { q: 'alice', page: 1, limit: 10 });
+
+      expect(mockPool.query).toHaveBeenCalledWith(
+        expect.stringContaining('plainto_tsquery'),
+        expect.arrayContaining(['alice', '%alice%'])
+      );
+    });
+
+    it('should rank results by relevance when q is provided', async () => {
+      (mockPool.query as jest.Mock).mockResolvedValueOnce({ rows: [] });
+
+      await employeeService.findAll(1, { q: 'alice', page: 1, limit: 10 });
+
+      const calledQuery = (mockPool.query as jest.Mock).mock.calls[0][0];
+      expect(calledQuery).toContain('ts_rank');
+    });
+
+    it('q takes precedence over search when both are provided', async () => {
+      (mockPool.query as jest.Mock).mockResolvedValueOnce({ rows: [] });
+
+      await employeeService.findAll(1, { q: 'alice', search: 'bob', page: 1, limit: 10 });
+
+      expect(mockPool.query).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.arrayContaining(['alice', '%alice%'])
+      );
+      expect(mockPool.query).not.toHaveBeenCalledWith(
+        expect.any(String),
+        expect.arrayContaining(['bob'])
+      );
+    });
+
+    it('falls back to search when q is absent', async () => {
+      (mockPool.query as jest.Mock).mockResolvedValueOnce({ rows: [] });
+
+      await employeeService.findAll(1, { search: 'bob', page: 1, limit: 10 });
+
+      expect(mockPool.query).toHaveBeenCalledWith(
+        expect.stringContaining('plainto_tsquery'),
+        expect.arrayContaining(['bob', '%bob%'])
+      );
+    });
   });
 
   describe('findById', () => {

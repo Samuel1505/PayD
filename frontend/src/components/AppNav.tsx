@@ -118,8 +118,26 @@ const AppNav: React.FC = () => {
         debugger
       </NavLink>
 
-      <Link to="/help" className="text-blue-500 text-xs underline ml-2">
-        Need help?
+      <NavLink
+        to="/rewards"
+        onClick={() => setMobileOpen(false)}
+        className={({ isActive }) =>
+          `flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-semibold transition ${
+            isActive
+              ? 'text-(--accent) bg-white/5'
+              : 'text-(--muted) hover:bg-white/10 hover:text-white'
+          }`
+        }
+      >
+        Rewards
+      </NavLink>
+
+      <Link
+        to="/help"
+        onClick={() => setMobileOpen(false)}
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-semibold transition text-(--accent) hover:bg-(--accent)/10"
+      >
+        Help
       </Link>
 
       <div className="p-1 bg-gray-50 rounded-lg flex items-center gap-2">

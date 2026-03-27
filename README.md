@@ -166,6 +166,7 @@ Need the full setup? Keep reading for prerequisites, environment variables, and 
 For cloud hosting instructions, see the deployment guide:
 
 - [Vercel + Render Deployment Guide](docs/DEPLOYMENT_GUIDE_VERCEL_RENDER.md)
+- [Staging Environment Known Issues](docs/STAGING_ISSUES.md)
 
 ## Getting Started
 

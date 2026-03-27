@@ -514,6 +514,50 @@ If issues persist, check the transaction simulation panel for specific error det
       },
     ],
   },
+  {
+    id: 'contributor-rewards',
+    name: 'Contributor Rewards',
+    description: 'Learn how to earn rewards for contributing to PayD',
+    icon: 'Trophy',
+    items: [
+      {
+        id: 'cr-1',
+        question: 'How can I earn rewards as a contributor?',
+        answer: `Open-source contributors can earn rewards by solving high-priority issues:
+        
+1. Find an issue with the **reward-eligible** label on GitHub
+2. Express interest and get assigned to the issue
+3. Submit a high-quality PR with tests and documentation
+4. Once merged, you are eligible for the reward in XLM or USDC
+        
+Visit our [Rewards Program](/rewards) page for a full breakdown of reward tiers and requirements.`,
+        tags: ['contribute', 'rewards', 'bounties', 'stellar'],
+        category: 'contributor-rewards',
+      },
+      {
+        id: 'cr-2',
+        question: 'What are the reward tiers?',
+        answer: `We offer three main reward tiers based on issue complexity:
+        
+- **Minor (100 XLM)**: Bug fixes, documentation, small UI changes
+- **Major (500 XLM)**: New features, complex bug fixes, optimizations
+- **Critical (2000 XLM)**: Security fixes, core protocol changes
+        
+The exact reward for an issue is explicitly stated in its GitHub description.`,
+        tags: ['tiers', 'amount', 'xlm', 'usdc'],
+        category: 'contributor-rewards',
+      },
+      {
+        id: 'cr-3',
+        question: 'How are rewards paid out?',
+        answer: `Rewards are paid out directly to your Stellar wallet. 
+        
+Once your PR is merged, provide your Stellar address to the maintainers. Payment is processed via our automated payroll engine and typically arrives within 24 hours of approval.`,
+        tags: ['payment', 'stellar', 'wallet', 'speed'],
+        category: 'contributor-rewards',
+      },
+    ],
+  },
 ];
 
 export function searchDocumentation(query: string): DocItem[] {

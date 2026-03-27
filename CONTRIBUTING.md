@@ -42,4 +42,10 @@ Include your:
 - GitHub Profile Link
 - A brief description of your role or what you contributed (e.g., "Frontend", "Bug Fixes", "Documentation")
 
+## 💰 Rewards Program
+
+We reward our contributors! High-priority issues labeled with **reward-eligible** are eligible for payouts in XLM or USDC.
+
+Check out our [Contributor Rewards Page](/rewards) for details on reward tiers, eligibility, and how to claim.
+
 Thank you for contributing!
