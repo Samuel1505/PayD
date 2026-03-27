@@ -91,6 +91,21 @@ pub struct ContractStatusChangedEvent {
     pub admin:    Address,
 }
 
+/// Emitted when an all-or-nothing batch completes successfully.
+#[contractevent]
+pub struct BatchExecutedEvent {
+    pub batch_id:   u64,
+    pub total_sent: i128,
+}
+
+/// Emitted when a partial batch completes (some payments may have been skipped).
+#[contractevent]
+pub struct BatchPartialEvent {
+    pub batch_id:      u64,
+    pub success_count: u32,
+    pub fail_count:    u32,
+}
+
 // ── Storage types ─────────────────────────────────────────────────────────────
 
 #[contracttype]
@@ -395,14 +410,15 @@ impl BulkPaymentContract {
         // Single transfer of total amount to escrow
         token_client.transfer(&sender, &current_contract, &total);
 
-        // Distribute from escrow to recipients
+        let batch_id = Self::next_batch_id(&env);
+
+        // Distribute from escrow to recipients and emit per-payment events
         for op in payments.iter() {
             token_client.transfer(&current_contract, &op.recipient, &op.amount);
+            PaymentSentEvent { recipient: op.recipient.clone(), amount: op.amount }.publish(&env);
         }
 
         Self::record_usage(&env, &sender, total);
-
-        let batch_id = Self::next_batch_id(&env);
         let record = BatchRecord {
             sender,
             token,

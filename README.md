@@ -96,7 +96,7 @@ PayD utilizes Stellar's asset issuance capabilities to create organization-speci
 
 ### 4️⃣ FX & Conversion System
 
-- **Real-time Rates**: Live asset-to-fiat conversion
+- **Real-time Rates**: Live asset-to-fiat conversion (see our [FX Rate Fetching Logic](docs/FX_RATE_FETCHING_LOGIC.md) for details on fallback and caching architecture).
 - **Anchor Fees**: Transparent withdrawal costs
 - **Network Fees**: Minimal Stellar transaction fees
 - **Multi-currency Support**: Support for various local currencies
@@ -163,9 +163,9 @@ Start PayD locally in three steps:
 
 Need the full setup? Keep reading for prerequisites, environment variables, and database setup.
 
-Related guides:
+For cloud hosting instructions, see the deployment guide:
 
-- [Filenaming Convention Guide](docs/FILENAMING_CONVENTIONS.md)
+- [Vercel + Render Deployment Guide](docs/DEPLOYMENT_GUIDE_VERCEL_RENDER.md)
 
 ## Getting Started
 
@@ -241,3 +241,9 @@ Run tests:
 ```bash
 npm run test
 ```
+
+## 🙌 Contributors
+
+We'd like to extend a huge thank you to everyone who has contributed to making PayD what it is today! For a full list of our amazing contributors, please see our [Contributors List](CONTRIBUTORS.md).
+
+[![All Contributors](https://img.shields.io/badge/all_contributors-2-orange.svg?style=flat-square)](#contributors)

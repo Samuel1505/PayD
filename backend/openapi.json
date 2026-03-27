@@ -178,58 +178,6 @@
         }
       }
     },
-    "/auth/google": {
-      "get": {
-        "summary": "Initiate Google OAuth login",
-        "tags": [
-          "Auth"
-        ],
-        "responses": {
-          "302": {
-            "description": "Redirect to Google authentication page"
-          }
-        }
-      }
-    },
-    "/auth/google/callback": {
-      "get": {
-        "summary": "Google OAuth callback",
-        "tags": [
-          "Auth"
-        ],
-        "responses": {
-          "302": {
-            "description": "Redirect to frontend dashboard with JWT token"
-          }
-        }
-      }
-    },
-    "/auth/github": {
-      "get": {
-        "summary": "Initiate GitHub OAuth login",
-        "tags": [
-          "Auth"
-        ],
-        "responses": {
-          "302": {
-            "description": "Redirect to GitHub authentication page"
-          }
-        }
-      }
-    },
-    "/auth/github/callback": {
-      "get": {
-        "summary": "GitHub OAuth callback",
-        "tags": [
-          "Auth"
-        ],
-        "responses": {
-          "302": {
-            "description": "Redirect to frontend dashboard with JWT token"
-          }
-        }
-      }
-    },
     "/api/balance/{accountId}": {
       "get": {
         "summary": "Query balance for a Stellar account",
@@ -287,6 +235,117 @@
         "responses": {
           "200": {
             "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/v1/bulk-payments": {
+      "post": {
+        "summary": "Submit a bulk payment batch",
+        "description": "Batches up to 100 payment operations per Stellar transaction envelope. Handles fee bumping for high-traffic scenarios, manages sequence numbers across envelopes, and provides per-envelope rollback on partial failure.\n",
+        "tags": [
+          "Bulk Payments"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "sourceSecret",
+                  "payments"
+                ],
+                "properties": {
+                  "sourceSecret": {
+                    "type": "string",
+                    "description": "Stellar secret key of the source account"
+                  },
+                  "payments": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "destination",
+                        "amount"
+                      ],
+                      "properties": {
+                        "destination": {
+                          "type": "string"
+                        },
+                        "amount": {
+                          "type": "string"
+                        },
+                        "referenceId": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "assetCode": {
+                    "type": "string",
+                    "default": "XLM"
+                  },
+                  "assetIssuer": {
+                    "type": "string"
+                  },
+                  "feeBumpFeePerOp": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "All envelopes submitted successfully"
+          },
+          "207": {
+            "description": "Partial success - some envelopes failed"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "502": {
+            "description": "All envelopes failed"
+          }
+        }
+      }
+    },
+    "/api/v1/bulk-payments/{batchId}": {
+      "get": {
+        "summary": "Get bulk payment batch status",
+        "tags": [
+          "Bulk Payments"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "batchId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Batch status and item details"
+          },
+          "404": {
+            "description": "Batch not found"
           }
         }
       }
@@ -582,138 +641,6 @@
             "schema": {
               "type": "string"
             }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
-    "/api/employees": {
-      "post": {
-        "summary": "Create a new employee",
-        "tags": [
-          "Employees"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "Created"
-          }
-        }
-      },
-      "get": {
-        "summary": "Get all employees",
-        "tags": [
-          "Employees"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
-    "/api/employees/{id}": {
-      "get": {
-        "summary": "Get a single employee",
-        "tags": [
-          "Employees"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      },
-      "patch": {
-        "summary": "Update an employee",
-        "tags": [
-          "Employees"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      },
-      "delete": {
-        "summary": "Delete an employee",
-        "tags": [
-          "Employees"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
-    "/api/employees/bulk-import": {
-      "post": {
-        "summary": "Bulk import employees from CSV",
-        "tags": [
-          "Employees"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
           }
         ],
         "responses": {
@@ -1201,516 +1128,6 @@
             "schema": {
               "type": "string"
             }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
-    "/api/payroll/transactions": {
-      "get": {
-        "summary": "Query payroll transactions with filtering and pagination",
-        "tags": [
-          "Payroll"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "query",
-            "name": "orgPublicKey",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "employeeId",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "batchId",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "assetCode",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "assetIssuer",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "startDate",
-            "schema": {
-              "type": "string",
-              "format": "date-time"
-            }
-          },
-          {
-            "in": "query",
-            "name": "endDate",
-            "schema": {
-              "type": "string",
-              "format": "date-time"
-            }
-          },
-          {
-            "in": "query",
-            "name": "page",
-            "schema": {
-              "type": "integer"
-            }
-          },
-          {
-            "in": "query",
-            "name": "limit",
-            "schema": {
-              "type": "integer"
-            }
-          },
-          {
-            "in": "query",
-            "name": "sortBy",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "sortOrder",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
-    "/api/payroll/employees/{employeeId}": {
-      "get": {
-        "summary": "Get payroll for a specific employee",
-        "tags": [
-          "Payroll"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "employeeId",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "orgPublicKey",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "startDate",
-            "schema": {
-              "type": "string",
-              "format": "date-time"
-            }
-          },
-          {
-            "in": "query",
-            "name": "endDate",
-            "schema": {
-              "type": "string",
-              "format": "date-time"
-            }
-          },
-          {
-            "in": "query",
-            "name": "page",
-            "schema": {
-              "type": "integer"
-            }
-          },
-          {
-            "in": "query",
-            "name": "limit",
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
-    "/api/payroll/employees/{employeeId}/summary": {
-      "get": {
-        "summary": "Get employee payroll summary",
-        "tags": [
-          "Payroll"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "employeeId",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "orgPublicKey",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "startDate",
-            "schema": {
-              "type": "string",
-              "format": "date-time"
-            }
-          },
-          {
-            "in": "query",
-            "name": "endDate",
-            "schema": {
-              "type": "string",
-              "format": "date-time"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
-    "/api/payroll/batches/{batchId}": {
-      "get": {
-        "summary": "Get payroll batch details",
-        "tags": [
-          "Payroll"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "batchId",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "orgPublicKey",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "page",
-            "schema": {
-              "type": "integer"
-            }
-          },
-          {
-            "in": "query",
-            "name": "limit",
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
-    "/api/payroll/aggregation": {
-      "get": {
-        "summary": "Get payroll aggregation statistics",
-        "tags": [
-          "Payroll"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "query",
-            "name": "orgPublicKey",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "startDate",
-            "schema": {
-              "type": "string",
-              "format": "date-time"
-            }
-          },
-          {
-            "in": "query",
-            "name": "endDate",
-            "schema": {
-              "type": "string",
-              "format": "date-time"
-            }
-          },
-          {
-            "in": "query",
-            "name": "assetCode",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "assetIssuer",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
-    "/api/payroll/audit": {
-      "get": {
-        "summary": "Get organization-wide audit report",
-        "tags": [
-          "Payroll"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "query",
-            "name": "orgPublicKey",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "startDate",
-            "schema": {
-              "type": "string",
-              "format": "date-time"
-            }
-          },
-          {
-            "in": "query",
-            "name": "endDate",
-            "schema": {
-              "type": "string",
-              "format": "date-time"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
-    "/api/payroll/search/memo": {
-      "get": {
-        "summary": "Search transactions by memo pattern",
-        "tags": [
-          "Payroll"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "query",
-            "name": "orgPublicKey",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "pattern",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "page",
-            "schema": {
-              "type": "integer"
-            }
-          },
-          {
-            "in": "query",
-            "name": "limit",
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
-    "/api/payroll/transactions/{txHash}": {
-      "get": {
-        "summary": "Get transaction details by hash",
-        "tags": [
-          "Payroll"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "txHash",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
-    "/api/payroll/status/rate-limit": {
-      "get": {
-        "summary": "Get SDS rate limit information",
-        "tags": [
-          "Payroll"
-        ],
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
-    "/api/payroll/status/health": {
-      "get": {
-        "summary": "Check SDS health status",
-        "tags": [
-          "Payroll"
-        ],
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
-    "/api/payroll/cache/clear": {
-      "post": {
-        "summary": "Clear cache (admin endpoint)",
-        "tags": [
-          "Payroll"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
-    "/api/payroll/cache/stats": {
-      "get": {
-        "summary": "Get cache statistics",
-        "tags": [
-          "Payroll"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
           }
         ],
         "responses": {
@@ -2617,12 +2034,12 @@
       "description": "Transaction audit management"
     },
     {
-      "name": "Auth",
-      "description": "Authentication API endpoints"
-    },
-    {
       "name": "Balance",
       "description": "Stellar account balance and preflight checks"
+    },
+    {
+      "name": "Bulk Payments",
+      "description": "Multi-operation Stellar transaction batching"
     },
     {
       "name": "Contract Events",
@@ -2635,10 +2052,6 @@
     {
       "name": "Contract Upgrades",
       "description": "On-chain contract upgrade lifecycle"
-    },
-    {
-      "name": "Employees",
-      "description": "Employee management"
     },
     {
       "name": "Exports",
@@ -2655,10 +2068,6 @@
     {
       "name": "Payments",
       "description": "Cross-border and cross-asset payments"
-    },
-    {
-      "name": "Payroll",
-      "description": "Payroll transaction querying and management"
     },
     {
       "name": "Payroll Audit",

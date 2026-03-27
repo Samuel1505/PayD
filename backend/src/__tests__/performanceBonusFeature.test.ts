@@ -63,13 +63,15 @@ describe('Performance Bonus Feature', () => {
       const baseItem = await PayrollBonusService.addBaseSalaryItem(
         testPayrollRunId,
         testEmployeeId,
-        '1000.0000000'
+        '1000.0000000',
+        'January payroll base payout'
       );
 
       expect(baseItem).toBeDefined();
       expect(baseItem.item_type).toBe('base');
       expect(baseItem.amount).toBe('1000.0000000');
       expect(baseItem.employee_id).toBe(testEmployeeId);
+      expect(baseItem.metadata).toBe('January payroll base payout');
     });
 
     it('should add a single bonus item', async () => {
@@ -78,12 +80,14 @@ describe('Performance Bonus Feature', () => {
         employee_id: testEmployeeId,
         amount: '500.0000000',
         description: 'Q1 Performance Bonus',
+        metadata: 'Manager-approved bonus payout',
       });
 
       expect(bonusItem).toBeDefined();
       expect(bonusItem.item_type).toBe('bonus');
       expect(bonusItem.amount).toBe('500.0000000');
       expect(bonusItem.description).toBe('Q1 Performance Bonus');
+      expect(bonusItem.metadata).toBe('Manager-approved bonus payout');
     });
 
     it('should add multiple bonus items in batch', async () => {

@@ -1,5 +1,5 @@
 #![no_std]
-use soroban_sdk::{contract, contractimpl, contracttype, token, Address, Env, String};
+use soroban_sdk::{contract, contractimpl, contracttype, contractevent, token, Address, Env, String};
 
 #[contracttype]
 #[derive(Clone)]
@@ -22,6 +22,35 @@ pub enum DataKey {
     LastClaimLedger,
     /// Tracks the last ledger sequence in which a clawback was processed.
     LastClawbackLedger,
+}
+
+// ── Events ────────────────────────────────────────────────────────────────────
+
+/// Emitted when the vesting escrow is successfully funded and configured.
+#[contractevent]
+pub struct VestingInitializedEvent {
+    pub beneficiary: Address,
+    pub token: Address,
+    pub total_amount: i128,
+    pub cliff_seconds: u64,
+    pub duration_seconds: u64,
+    pub start_time: u64,
+}
+
+/// Emitted when the beneficiary successfully claims vested tokens.
+#[contractevent]
+pub struct TokensClaimedEvent {
+    pub beneficiary: Address,
+    pub amount: i128,
+    pub total_claimed: i128,
+}
+
+/// Emitted when the clawback admin terminates the grant early.
+#[contractevent]
+pub struct ClawbackExecutedEvent {
+    pub clawback_admin: Address,
+    pub unvested_returned: i128,
+    pub vested_remaining: i128,
 }
 
 const PERSISTENT_TTL_THRESHOLD: u32 = 20_000;
@@ -88,10 +117,19 @@ impl VestingContract {
 
         e.storage().persistent().set(&DataKey::Config, &config);
         Self::bump_config_ttl(&e);
-        
+
         // Transfer tokens from funder to contract
         let client = token::Client::new(&e, &token);
         client.transfer(&funder, &e.current_contract_address(), &amount);
+
+        VestingInitializedEvent {
+            beneficiary,
+            token,
+            total_amount: amount,
+            cliff_seconds,
+            duration_seconds,
+            start_time,
+        }.publish(&e);
     }
 
     pub fn claim(e: Env) {
@@ -118,6 +156,12 @@ impl VestingContract {
         // Transfer tokens
         let client = token::Client::new(&e, &config.token);
         client.transfer(&e.current_contract_address(), &config.beneficiary, &claimable);
+
+        TokensClaimedEvent {
+            beneficiary: config.beneficiary,
+            amount: claimable,
+            total_claimed: config.claimed_amount,
+        }.publish(&e);
     }
     
     pub fn clawback(e: Env) {
@@ -150,6 +194,14 @@ impl VestingContract {
             let client = token::Client::new(&e, &config.token);
             client.transfer(&e.current_contract_address(), &config.clawback_admin, &unvested);
         }
+
+        // vested_remaining = vested - already_claimed (still held in contract for beneficiary)
+        let vested_remaining = vested - config.claimed_amount;
+        ClawbackExecutedEvent {
+            clawback_admin: config.clawback_admin,
+            unvested_returned: unvested,
+            vested_remaining,
+        }.publish(&e);
     }
 
     pub fn get_vested_amount(e: Env) -> i128 {

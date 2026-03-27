@@ -168,7 +168,13 @@ export class PayrollAuditService {
     amount: string,
     assetCode: string,
     actor: { type: ActorType; id?: string; email?: string },
-    context?: { ipAddress?: string; userAgent?: string; itemType?: 'base' | 'bonus'; description?: string }
+    context?: {
+      ipAddress?: string;
+      userAgent?: string;
+      itemType?: 'base' | 'bonus';
+      description?: string;
+      payoutMetadata?: string;
+    }
   ): Promise<PayrollAuditLog> {
     return this.log({
       organizationId,
@@ -184,6 +190,7 @@ export class PayrollAuditService {
       metadata: {
         item_type: context?.itemType || 'base',
         description: context?.description,
+        payout_metadata: context?.payoutMetadata,
       },
       ipAddress: context?.ipAddress,
       userAgent: context?.userAgent,

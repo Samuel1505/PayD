@@ -18,7 +18,8 @@ Content-Type: application/json
   "payrollRunId": 123,
   "employeeId": 456,
   "amount": "500.0000000",
-  "description": "Q1 Performance Bonus"
+  "description": "Q1 Performance Bonus",
+  "metadata": "Manager-approved bonus payout"
 }
 ```
 
@@ -34,12 +35,14 @@ Content-Type: application/json
     {
       "employeeId": 456,
       "amount": "500.0000000",
-      "description": "Q1 Performance Bonus"
+      "description": "Q1 Performance Bonus",
+      "metadata": "Exceeded quarterly revenue goal"
     },
     {
       "employeeId": 789,
       "amount": "750.0000000",
-      "description": "Project Completion Bonus"
+      "description": "Project Completion Bonus",
+      "metadata": "Delivered Phase 2 milestones"
     }
   ]
 }
@@ -60,7 +63,8 @@ All audit log entries now include `item_type` in the metadata field:
   "action": "item_added",
   "metadata": {
     "item_type": "bonus",
-    "description": "Q1 Performance Bonus"
+    "description": "Q1 Performance Bonus",
+    "payout_metadata": "Manager-approved bonus payout"
   }
 }
 ```
@@ -111,6 +115,7 @@ total_amount DECIMAL(20, 7) DEFAULT 0
 ```sql
 item_type VARCHAR(20) NOT NULL CHECK (item_type IN ('base', 'bonus'))
 description TEXT  -- Optional description for bonuses
+metadata TEXT  -- Optional descriptive metadata for any payout item
 ```
 
 ### payroll_audit_logs table
