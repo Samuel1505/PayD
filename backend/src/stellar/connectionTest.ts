@@ -1,4 +1,4 @@
-import { getStellarServer, getActiveNetworkConfig } from "./client";
+import { getStellarServer, getActiveNetworkConfig } from './client.js';
 
 export interface ConnectionTestResult {
   connected: boolean;
@@ -36,7 +36,7 @@ export async function testConnection(): Promise<ConnectionTestResult> {
       network: config.network,
       horizonUrl: config.horizonUrl,
       latencyMs: Date.now() - start,
-      error: err instanceof Error ? err.message : "Connection failed",
+      error: err instanceof Error ? err.message : 'Connection failed',
     };
   }
 }

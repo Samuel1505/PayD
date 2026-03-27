@@ -1,13 +1,13 @@
 #![cfg(test)]
 
 use crate::{RevenueSplitContract, RevenueSplitContractClient, RecipientShare};
-use soroban_sdk::{testutils::{Address as _}, Address, Env, Vec};
+use soroban_sdk::{testutils::{Address as _, Ledger}, Address, Env, Vec};
 use soroban_sdk::token::Client as TokenClient;
 use soroban_sdk::token::StellarAssetClient;
 
 fn create_token_contract<'a>(e: &Env, admin: &Address) -> (Address, StellarAssetClient<'a>, TokenClient<'a>) {
     e.mock_all_auths();
-    let contract_id = e.register_stellar_asset_contract(admin.clone());
+    let contract_id = e.register_stellar_asset_contract_v2(admin.clone()).address();
     let stellar_asset_client = StellarAssetClient::new(e, &contract_id);
     let token_client = TokenClient::new(e, &contract_id);
     (contract_id, stellar_asset_client, token_client)
@@ -101,7 +101,7 @@ fn test_update_recipients() {
 
     let admin = Address::generate(&env);
     let recipient1 = Address::generate(&env);
-    
+
     // Initial 100% to recipient1
     let shares = Vec::from_array(&env, [
         RecipientShare { destination: recipient1.clone(), basis_points: 10000 },
@@ -116,4 +116,184 @@ fn test_update_recipients() {
     ]);
 
     client.update_recipients(&new_shares);
+}
+
+#[test]
+#[should_panic(expected = "Already initialized")]
+fn test_double_init_panics() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let contract_id = env.register(RevenueSplitContract, ());
+    let client = RevenueSplitContractClient::new(&env, &contract_id);
+
+    let admin = Address::generate(&env);
+    let recipient = Address::generate(&env);
+
+    let shares = Vec::from_array(&env, [
+        RecipientShare { destination: recipient.clone(), basis_points: 10000 },
+    ]);
+
+    client.init(&admin, &shares);
+    // Second init must panic
+    client.init(&admin, &shares);
+}
+
+#[test]
+fn test_set_admin() {
+    let env = Env::default();
+    env.mock_all_auths();
+    let contract_id = env.register(RevenueSplitContract, ());
+    let client = RevenueSplitContractClient::new(&env, &contract_id);
+
+    let admin = Address::generate(&env);
+    let new_admin = Address::generate(&env);
+    let recipient = Address::generate(&env);
+
+    let shares = Vec::from_array(&env, [
+        RecipientShare { destination: recipient.clone(), basis_points: 10000 },
+    ]);
+
+    client.init(&admin, &shares);
+    client.set_admin(&new_admin);
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ── LEDGER SEQUENCE VERIFICATION TESTS (Issue #173) ───────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+
+#[test]
+#[should_panic(expected = "Distribution already processed in this ledger sequence")]
+fn test_distribute_replay_same_ledger() {
+    let env = Env::default();
+    env.mock_all_auths();
+    env.ledger().set_sequence_number(50);
+
+    let token_admin = Address::generate(&env);
+    let (token_id, stellar_asset_client, _) = create_token_contract(&env, &token_admin);
+
+    let contract_id = env.register(RevenueSplitContract, ());
+    let client = RevenueSplitContractClient::new(&env, &contract_id);
+
+    let admin = Address::generate(&env);
+    let recipient = Address::generate(&env);
+
+    let shares = Vec::from_array(&env, [
+        RecipientShare { destination: recipient.clone(), basis_points: 10000 },
+    ]);
+
+    client.init(&admin, &shares);
+
+    let sender = Address::generate(&env);
+    stellar_asset_client.mint(&sender, &2000);
+
+    client.distribute(&token_id, &sender, &1000);
+    client.distribute(&token_id, &sender, &500); // Should panic
+}
+
+#[test]
+fn test_sep0034_metadata() {
+    let env = Env::default();
+    let contract_id = env.register(RevenueSplitContract, ());
+    let client = RevenueSplitContractClient::new(&env, &contract_id);
+
+    assert_eq!(client.name(), soroban_sdk::String::from_str(&env, env!("CARGO_PKG_NAME")));
+    assert_eq!(client.version(), soroban_sdk::String::from_str(&env, env!("CARGO_PKG_VERSION")));
+    assert_eq!(client.author(), soroban_sdk::String::from_str(&env, env!("CARGO_PKG_AUTHORS")));
+}
+
+#[test]
+fn test_distribute_allowed_different_ledgers() {
+    let env = Env::default();
+    env.mock_all_auths();
+    env.ledger().set_sequence_number(50);
+
+    let token_admin = Address::generate(&env);
+    let (token_id, stellar_asset_client, token_client) = create_token_contract(&env, &token_admin);
+
+    let contract_id = env.register(RevenueSplitContract, ());
+    let contract_client = RevenueSplitContractClient::new(&env, &contract_id);
+
+    let admin = Address::generate(&env);
+    let recipient1 = Address::generate(&env);
+    let recipient2 = Address::generate(&env);
+
+    // 33.33% / 66.67% split — 3333 + 6667 basis points
+    let shares = Vec::from_array(&env, [
+        RecipientShare { destination: recipient1.clone(), basis_points: 3333 },
+        RecipientShare { destination: recipient2.clone(), basis_points: 6667 },
+    ]);
+
+    contract_client.init(&admin, &shares);
+
+    let sender = Address::generate(&env);
+    stellar_asset_client.mint(&sender, &1000);
+
+    contract_client.distribute(&token_id, &sender, &1000);
+
+    // sender balance must be fully drained
+    assert_eq!(token_client.balance(&sender), 0);
+    // combined balances must equal the original 1000
+    let r1 = token_client.balance(&recipient1);
+    let r2 = token_client.balance(&recipient2);
+    assert_eq!(r1 + r2, 1000);
+}
+
+#[test]
+#[should_panic(expected = "Shares must sum to 10000 basis points")]
+fn test_update_recipients_invalid_sum_panics() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let contract_id = env.register(RevenueSplitContract, ());
+    let client = RevenueSplitContractClient::new(&env, &contract_id);
+
+    let admin = Address::generate(&env);
+    let recipient1 = Address::generate(&env);
+
+    let shares = Vec::from_array(&env, [
+        RecipientShare { destination: recipient1.clone(), basis_points: 10000 },
+    ]);
+    client.init(&admin, &shares);
+
+    // Bad update: only sums to 9000
+    let recipient2 = Address::generate(&env);
+    let bad_shares = Vec::from_array(&env, [
+        RecipientShare { destination: recipient1.clone(), basis_points: 4000 },
+        RecipientShare { destination: recipient2.clone(), basis_points: 5000 },
+    ]);
+    client.update_recipients(&bad_shares);
+}
+
+#[test]
+fn test_distribute_updates_ledger_state() {
+    let env = Env::default();
+    env.mock_all_auths();
+    env.ledger().set_sequence_number(50);
+
+    let token_admin = Address::generate(&env);
+    let (token_id, stellar_asset_client, token_client) = create_token_contract(&env, &token_admin);
+
+    let contract_id = env.register(RevenueSplitContract, ());
+    let client = RevenueSplitContractClient::new(&env, &contract_id);
+
+    let admin = Address::generate(&env);
+    let recipient = Address::generate(&env);
+    let shares = Vec::from_array(&env, [
+        RecipientShare { destination: recipient.clone(), basis_points: 10000 },
+    ]);
+    client.init(&admin, &shares);
+
+    let sender = Address::generate(&env);
+    stellar_asset_client.mint(&sender, &2000);
+
+    client.distribute(&token_id, &sender, &1000);
+    assert_eq!(client.get_last_distribute_ledger(), 50);
+
+    // Advance to a new ledger
+    env.ledger().set_sequence_number(51);
+
+    client.distribute(&token_id, &sender, &500);
+    assert_eq!(client.get_last_distribute_ledger(), 51);
+    assert_eq!(token_client.balance(&recipient), 1500);
 }

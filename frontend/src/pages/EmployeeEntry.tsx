@@ -1,12 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import { Icon, Button, Card, Input, Select, Alert } from '@stellar/design-system';
-import { EmployeeList } from '../components/EmployeeList';
-import { AutosaveIndicator } from '../components/AutosaveIndicator';
-import { WalletQRCode } from '../components/WalletQRCode';
-import { useAutosave } from '../hooks/useAutosave';
-import { generateWallet } from '../services/stellar';
+import { Alert, Button, Card, Icon, Input, Select } from '@stellar/design-system';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
+// Type assertion for Stellar components to work around library typing issues
+const AlertComponent = Alert as unknown as React.FC<Record<string, unknown>>;
+const InputComponent = Input as unknown as React.FC<Record<string, unknown>>;
+const SelectComponent = Select as unknown as React.FC<Record<string, unknown>>;
+
+import { AutosaveIndicator } from '../components/AutosaveIndicator';
+import { EmployeeList } from '../components/EmployeeList';
+import { HelpLink } from '../components/HelpLink';
+import { WalletQRCode } from '../components/WalletQRCode';
+import { SUPPORTED_ASSETS } from '../config/assets';
+import { useAutosave } from '../hooks/useAutosave';
 import { useNotification } from '../hooks/useNotification';
+import { generateWallet } from '../services/stellar';
 
 interface EmployeeFormState {
   fullName: string;
@@ -73,6 +81,7 @@ const mockEmployees: EmployeeItem[] = [
 
 export default function EmployeeEntry() {
   const [isAdding, setIsAdding] = useState(false);
+  const [employees, setEmployees] = useState<EmployeeItem[]>(mockEmployees);
   const [formData, setFormData] = useState<EmployeeFormState>(initialFormState);
   const [notification, setNotification] = useState<{
     message: string;
@@ -80,7 +89,7 @@ export default function EmployeeEntry() {
     walletAddress?: string;
     employeeName?: string;
   } | null>(null);
-  const { notifySuccess } = useNotification();
+  const { notifySuccess, notify } = useNotification();
   const { saving, lastSaved, loadSavedData } = useAutosave<EmployeeFormState>(
     'employee-entry-draft',
     formData
@@ -91,8 +100,9 @@ export default function EmployeeEntry() {
     const saved = loadSavedData();
     if (saved) {
       setFormData(saved);
+      notify('Recovered unsaved employee draft');
     }
-  }, [loadSavedData]);
+  }, [loadSavedData, notify]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -217,9 +227,9 @@ export default function EmployeeEntry() {
 
         {notification && !notification.walletAddress && (
           <div style={{ marginBottom: '1.5rem' }}>
-            <Alert variant="success" title="Success" placement="inline">
+            <AlertComponent variant="success" title="Success" placement="inline">
               {notification.message}
-            </Alert>
+            </AlertComponent>
           </div>
         )}
 
@@ -228,7 +238,7 @@ export default function EmployeeEntry() {
             onSubmit={handleSubmit}
             style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}
           >
-            <Input
+            <InputComponent
               id="fullName"
               fieldSize="md"
               label="Full Name"
@@ -238,7 +248,7 @@ export default function EmployeeEntry() {
               placeholder="Jane Smith"
               required
             />
-            <Input
+            <InputComponent
               id="walletAddress"
               fieldSize="md"
               label="Stellar Wallet Address (Optional)"
@@ -248,28 +258,27 @@ export default function EmployeeEntry() {
               onChange={handleChange}
               placeholder="Leave blank to generate a wallet"
             />
-            <Select
-              id="role"
-              fieldSize="md"
-              label="Role"
-              value={formData.role}
-              onChange={(e) => handleSelectChange('role', e.target.value)}
-            >
-              <option value="contractor">Contractor</option>
-              <option value="full-time">Full Time</option>
-              <option value="part-time">Part Time</option>
-            </Select>
-            <Select
-              id="currency"
-              fieldSize="md"
-              label="Preferred Currency"
-              value={formData.currency}
-              onChange={(e) => handleSelectChange('currency', e.target.value)}
-            >
-              <option value="USDC">USDC</option>
-              <option value="XLM">XLM</option>
-              <option value="EURC">EURC</option>
-            </Select>
+            <div className="flex items-center gap-2">
+              <SelectComponent
+                id="currency"
+                fieldSize="md"
+                label="Preferred Payout Asset"
+                note="The employee will receive salary in this asset. A trustline must exist in their wallet."
+                value={formData.currency}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                  handleSelectChange('currency', e.target.value)
+                }
+              >
+                {SUPPORTED_ASSETS.map((asset) => (
+                  <option key={asset.code} value={asset.code}>
+                    {asset.label}
+                  </option>
+                ))}
+              </SelectComponent>
+              <div className="pt-6">
+                <HelpLink topic="trustline" variant="icon-text" size="sm" />
+              </div>
+            </div>
             <Button type="submit" variant="primary" size="md">
               Add Employee
             </Button>
@@ -283,9 +292,10 @@ export default function EmployeeEntry() {
     <div className="flex-1 flex flex-col items-center justify-start p-12 max-w-6xl mx-auto w-full">
       <div className="w-full mb-12 flex items-end justify-between border-b border-hi pb-8">
         <div>
-          <h1 className="text-4xl font-black mb-2 tracking-tight">
+          <h1 className="text-4xl font-black mb-2 tracking-tight flex items-center gap-3">
             {t('employees.title', { highlight: '' }).replace('{{highlight}}', '')}
             <span className="text-accent"> {t('employees.titleHighlight')}</span>
+            <HelpLink topic="add employee" variant="icon" size="sm" />
           </h1>
           <p className="text-muted font-mono text-sm tracking-wider uppercase">
             {t('employees.subtitle')}
@@ -302,9 +312,23 @@ export default function EmployeeEntry() {
       </div>
 
       <EmployeeList
-        employees={mockEmployees}
+        employees={employees}
         onEmployeeClick={(employee) => console.log('Clicked:', employee.name)}
-        onAddEmployee={(employee) => console.log('Added:', employee)}
+        onAddEmployee={(employee) => {
+          setEmployees((prev) => [...prev, employee]);
+          notifySuccess(`Added ${employee.name}`);
+        }}
+        onEditEmployee={(employee) => {
+          setEmployees((prev) => prev.map((item) => (item.id === employee.id ? employee : item)));
+        }}
+        onRemoveEmployee={(id) => {
+          setEmployees((prev) => prev.filter((item) => item.id !== id));
+        }}
+        onUpdateEmployeeImage={(id, imageUrl) => {
+          setEmployees((prev) =>
+            prev.map((item) => (item.id === id ? { ...item, imageUrl } : item))
+          );
+        }}
       />
     </div>
   );

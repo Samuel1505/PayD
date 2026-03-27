@@ -36,8 +36,23 @@ export const SchedulingWizard = ({
   const handleNext = () => setStep((s: number) => Math.min(s + 1, 3));
   const handleBack = () => setStep((s: number) => Math.max(s - 1, 1));
 
+  const parseTimeOfDay = (time: string) => {
+    const [hhRaw, mmRaw] = time.split(':');
+    const hh = Number.parseInt(hhRaw ?? '0', 10);
+    const mm = Number.parseInt(mmRaw ?? '0', 10);
+    return {
+      hours: Number.isFinite(hh) ? hh : 0,
+      minutes: Number.isFinite(mm) ? mm : 0,
+    };
+  };
+
+  const clampDayOfMonth = (year: number, monthIndex: number, desired: number) => {
+    const lastDay = new Date(year, monthIndex + 1, 0).getDate();
+    return Math.max(1, Math.min(desired, lastDay));
+  };
+
   const generatePreviewDates = () => {
-    const dates = [];
+    const dates: Date[] = [];
     const now = new Date();
     // Simplified logic for preview demonstration
     for (let i = 1; i <= 3; i++) {
@@ -54,9 +69,23 @@ export const SchedulingWizard = ({
       const [hours, minutes] = config.timeOfDay.split(":");
       d.setHours(parseInt(hours), parseInt(minutes), 0, 0);
 
-      // Ensure the date isn't in the past if it's the current period
-      dates.push(d);
+    const first = new Date(now);
+    first.setDate(now.getDate() + diffDays);
+    first.setHours(hours, minutes, 0, 0);
+
+    // If it's the target day but time already passed, jump to next week
+    if (diffDays === 0 && first.getTime() <= now.getTime()) {
+      first.setDate(first.getDate() + 7);
     }
+
+    const stepDays = config.frequency === 'biweekly' ? 14 : 7;
+
+    for (let i = 0; i < 3; i++) {
+      const run = new Date(first);
+      run.setDate(first.getDate() + i * stepDays);
+      dates.push(run);
+    }
+
     return dates;
   };
 

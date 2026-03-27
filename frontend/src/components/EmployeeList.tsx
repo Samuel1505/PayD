@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { Avatar } from './Avatar';
+import { AvatarUpload } from './AvatarUpload';
 import { CSVUploader } from './CSVUploader';
 import type { CSVRow } from './CSVUploader';
 import { Pencil, Trash2 } from 'lucide-react';
+import { EmployeeRemovalConfirmModal } from './EmployeeRemovalConfirmModal';
 
 interface Employee {
   id: string;
@@ -21,6 +23,7 @@ interface EmployeeListProps {
   onAddEmployee: (employee: Employee) => void;
   onEditEmployee?: (employee: Employee) => void;
   onRemoveEmployee?: (id: string) => void;
+  onUpdateEmployeeImage?: (id: string, imageUrl: string) => void;
 }
 
 export const EmployeeList: React.FC<EmployeeListProps> = ({
@@ -28,6 +31,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
   onAddEmployee,
   onEditEmployee,
   onRemoveEmployee,
+  onUpdateEmployeeImage,
 }) => {
   const [csvData, setCsvData] = useState<Employee[]>([]);
   const [showCSVUploader, setShowCSVUploader] = useState(false);
@@ -35,9 +39,16 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
   const [showEditModal, setShowEditModal] = useState<{ open: boolean; employee?: Employee }>({
     open: false,
   });
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState<{ open: boolean; id?: string }>({
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<{
+    open: boolean;
+    employee?: Employee;
+  }>({
     open: false,
   });
+  const [showAvatarModal, setShowAvatarModal] = useState<{
+    open: boolean;
+    employee?: Employee;
+  }>({ open: false });
   const [sortKey, setSortKey] = useState<keyof Employee>('name');
   const [sortAsc, setSortAsc] = useState(true);
 
@@ -129,9 +140,9 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
   };
 
   // Delete Confirm
-  const handleDeleteConfirm = () => {
-    if (showDeleteConfirm.id && onRemoveEmployee) {
-      onRemoveEmployee(showDeleteConfirm.id);
+  const handleDeleteConfirm = (employeeId: string) => {
+    if (onRemoveEmployee) {
+      onRemoveEmployee(employeeId);
     }
     setShowDeleteConfirm({ open: false });
   };
@@ -195,7 +206,16 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                       imageUrl={employee.imageUrl}
                       size="sm"
                     />
-                    <span className="text-xs text-muted">{employee.name}</span>
+                    <div className="flex flex-col">
+                      <span className="text-xs text-muted">{employee.name}</span>
+                      <button
+                        type="button"
+                        className="text-[10px] text-blue-500 hover:underline text-left"
+                        onClick={() => setShowAvatarModal({ open: true, employee })}
+                      >
+                        Update photo
+                      </button>
+                    </div>
                   </div>
                 </td>
                 <td className="p-6 text-sm font-medium">{employee.position}</td>
@@ -248,7 +268,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
                   <button
                     className="text-red-500 hover:text-red-700"
                     title="Remove"
-                    onClick={() => setShowDeleteConfirm({ open: true, id: employee.id })}
+                    onClick={() => setShowDeleteConfirm({ open: true, employee })}
                   >
                     <Trash2 className="w-5 h-5" />
                   </button>
@@ -396,26 +416,40 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
           </div>
         </div>
       )}
-      {/* Delete Confirm */}
-      {showDeleteConfirm.open && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-lg font-bold mb-4">Confirm Removal</h2>
-            <p className="mb-4">Are you sure you want to remove this employee?</p>
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => setShowDeleteConfirm({ open: false })}
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDeleteConfirm}
-                className="px-4 py-2 bg-red-500 text-white rounded"
-              >
-                Remove
-              </button>
-            </div>
+      {/* Employee Removal Confirmation Modal */}
+      <EmployeeRemovalConfirmModal
+        isOpen={showDeleteConfirm.open}
+        employeeName={showDeleteConfirm.employee?.name || ''}
+        employeeId={showDeleteConfirm.employee?.id || ''}
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setShowDeleteConfirm({ open: false })}
+      />
+
+      {showAvatarModal.open && showAvatarModal.employee && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-sm rounded-lg bg-white p-6">
+            <h2 className="mb-4 text-lg font-bold">Update Employee Photo</h2>
+            <AvatarUpload
+              email={showAvatarModal.employee.email}
+              name={showAvatarModal.employee.name}
+              currentImageUrl={showAvatarModal.employee.imageUrl}
+              label="Upload Employee Photo"
+              onImageUpload={(imageUrl) => {
+                if (onUpdateEmployeeImage) {
+                  onUpdateEmployeeImage(showAvatarModal.employee!.id, imageUrl);
+                } else if (onEditEmployee) {
+                  onEditEmployee({ ...showAvatarModal.employee!, imageUrl });
+                }
+                setShowAvatarModal({ open: false });
+              }}
+            />
+            <button
+              type="button"
+              className="mt-4 w-full rounded bg-gray-200 px-3 py-2 text-sm text-gray-700"
+              onClick={() => setShowAvatarModal({ open: false })}
+            >
+              Close
+            </button>
           </div>
         </div>
       )}

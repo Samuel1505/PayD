@@ -3,23 +3,9 @@
 -- Purpose : Single, append-only ledger for every auditable event in the
 --           system: employee changes, payroll runs, wallet operations,
 --           admin actions, API calls, and security events.
---
--- Design decisions:
---   • BIGSERIAL PK: billions of audit events expected over the system lifetime;
---     INTEGER (2^31) would overflow within years on a busy payroll platform.
---   • append-only: NO updated_at column, NO UPDATE trigger, NO DELETE policy.
---     Immutability is enforced at the DB layer via the RLS policy below.
---   • actor_ip uses the native INET type for efficient subnet queries and
---     to validate that stored values are legal IP addresses.
---   • old_values / new_values stored as JSONB for schemaless flexibility
---     while still supporting GIN-indexed key/value queries.
---   • BRIN index on created_at: audit logs are almost always queried by
---     time range; BRIN is O(1) to build and ~100× smaller than B-tree
---     on monotonically-increasing time columns.
---   • Partitioning note: when the table exceeds ~50M rows, partition by
---     RANGE(created_at) monthly. The BRIN index and sequential scan
---     patterns make partition pruning highly effective.
 -- =============================================================================
+
+CREATE EXTENSION IF NOT EXISTS btree_gist;
 
 -- ---------------------------------------------------------------------------
 -- Enum-like domain tables for entity_type and action

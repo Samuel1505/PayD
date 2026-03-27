@@ -1,6 +1,6 @@
 import { Asset, Keypair, Operation, TransactionBuilder } from '@stellar/stellar-sdk';
-import { StellarService } from './stellarService';
-import { pool } from '../config/database';
+import { StellarService } from './stellarService.js';
+import { pool } from '../config/database.js';
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -205,6 +205,15 @@ export class FreezeService {
       .build();
 
     transaction.sign(issuerKeypair);
+
+    const simulation = await StellarService.simulateTransaction(transaction);
+    if (!simulation.success) {
+      throw new Error(
+        `Transaction simulation failed: ${simulation.errorMessage}. ` +
+          `This freeze operation would likely fail on-chain. ` +
+          `Please verify the account exists and the asset trustline is established.`
+      );
+    }
 
     const result = await server.submitTransaction(transaction);
 

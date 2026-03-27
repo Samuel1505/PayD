@@ -1,10 +1,10 @@
 import * as csv from 'fast-csv';
 import { Readable } from 'stream';
 import { StrKey } from '@stellar/stellar-sdk';
-import { createEmployeeSchema, CreateEmployeeInput } from '../schemas/employeeSchema';
-import { employeeService } from './employeeService';
-import { pool } from '../config/database';
-import logger from '../utils/logger';
+import { createEmployeeSchema, CreateEmployeeInput } from '../schemas/employeeSchema.js';
+import { employeeService } from './employeeService.js';
+import { pool } from '../config/database.js';
+import logger from '../utils/logger.js';
 
 export interface CsvRow {
   first_name: string;
@@ -31,6 +31,17 @@ export interface ImportResult {
 }
 
 export class CsvPayrollImportService {
+  private static readonly SUPPORTED_CURRENCIES = new Set([
+    'USDC',
+    'USD',
+    'EUR',
+    'GBP',
+    'KES',
+    'NGN',
+  ]);
+  private static readonly MIN_SALARY = 0;
+  private static readonly MAX_SALARY = 1000000000;
+
   async processCsv(organizationId: number, csvContent: string): Promise<ImportResult> {
     const stream = Readable.from(csvContent);
     const rows: CsvRow[] = [];
@@ -76,22 +87,31 @@ export class CsvPayrollImportService {
       const salary = row.base_salary ? parseFloat(row.base_salary) : 0;
       if (row.base_salary && isNaN(salary)) {
         rowErrors.push('Invalid salary format: must be a number');
-      } else if (salary < 0) {
+      } else if (salary < CsvPayrollImportService.MIN_SALARY) {
         rowErrors.push('Salary cannot be negative');
+      } else if (salary > CsvPayrollImportService.MAX_SALARY) {
+        rowErrors.push(`Salary exceeds allowed maximum (${CsvPayrollImportService.MAX_SALARY})`);
+      }
+
+      const baseCurrency = (row.base_currency || 'USDC').trim().toUpperCase();
+      if (!CsvPayrollImportService.SUPPORTED_CURRENCIES.has(baseCurrency)) {
+        rowErrors.push(
+          `Unsupported base_currency '${baseCurrency}'. Allowed: ${Array.from(CsvPayrollImportService.SUPPORTED_CURRENCIES).join(', ')}`
+        );
       }
 
       // Zod validation for the rest
       try {
         const validated = createEmployeeSchema.parse({
           organization_id: organizationId,
-          first_name: row.first_name,
-          last_name: row.last_name,
-          email: row.email,
-          wallet_address: row.wallet_address,
+          first_name: row.first_name?.trim(),
+          last_name: row.last_name?.trim(),
+          email: row.email?.trim(),
+          wallet_address: row.wallet_address?.trim(),
           position: row.position,
           department: row.department,
           base_salary: salary,
-          base_currency: row.base_currency || 'USDC',
+          base_currency: baseCurrency,
           status: 'active',
         });
 

@@ -9,7 +9,8 @@ TypeScript/Node.js backend service for PayD payroll platform with Stellar Data S
 ✅ **Query Abstraction** - Clean API for payroll operations  
 ✅ **Automatic Caching** - Reduced SDS API calls  
 ✅ **Retry Logic** - Exponential backoff for resilience  
-✅ **Aggregate Reporting** - Organization-wide audit reports  
+✅ **Aggregate Reporting** - Organization-wide audit reports
+✅ **Tenant Config Caching** - Organization settings cached in Redis for 5 minutes
 ✅ **Performance Benchmarking** - SDS vs Horizon comparison  
 ✅ **REST API** - Comprehensive endpoints for all operations
 
@@ -63,7 +64,23 @@ STELLAR_HORIZON_URL=https://horizon-testnet.stellar.org
 
 ### Running
 
-**Development**:
+**Docker** (recommended for local development):
+
+```bash
+# Check if Docker is properly configured
+./scripts/docker-diagnose.sh
+
+# Start all services (API, PostgreSQL, Redis)
+docker-compose up
+
+# In another terminal, check service health
+./scripts/docker-health-check.sh
+
+# View logs
+docker-compose logs -f api
+```
+
+**Development** (without Docker):
 
 ```bash
 npm run dev
@@ -335,6 +352,8 @@ docker build -t payd-backend .
 docker run -p 3001:3001 --env-file .env payd-backend
 ```
 
+**Having Docker issues?** See [DOCKER_TROUBLESHOOTING.md](./DOCKER_TROUBLESHOOTING.md) for solutions to common port mapping, permission, and service startup problems.
+
 ### Environment Variables (Production)
 
 ```
@@ -390,6 +409,23 @@ config = {
 
 ## Troubleshooting
 
+### Docker Issues
+
+For Docker-related problems (port mapping, permissions, service failures), see [DOCKER_TROUBLESHOOTING.md](./DOCKER_TROUBLESHOOTING.md).
+
+**Quick diagnosis:**
+
+```bash
+# Check Docker configuration
+./scripts/docker-diagnose.sh
+
+# Check if services are healthy
+./scripts/docker-health-check.sh
+
+# View service logs
+docker-compose logs [service-name]
+```
+
 ### SDS Connection Issues
 
 ```bash
@@ -423,6 +459,7 @@ Memos must be 28 characters or less (Stellar limit).
 
 Issues and questions:
 
+- Check [DOCKER_TROUBLESHOOTING.md](./DOCKER_TROUBLESHOOTING.md) for Docker issues
 - Submit GitHub issues
 - Check inline code documentation
 - Review SDS Integration Guide

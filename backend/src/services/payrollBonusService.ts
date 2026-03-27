@@ -1,5 +1,5 @@
-import { pool } from '../config/database';
-import logger from '../utils/logger';
+import { pool } from '../config/database.js';
+import logger from '../utils/logger.js';
 
 export interface PayrollRun {
   id: number;
@@ -24,6 +24,7 @@ export interface PayrollItem {
   item_type: 'base' | 'bonus';
   amount: string;
   description?: string;
+  metadata?: string;
   tx_hash?: string;
   status: 'pending' | 'completed' | 'failed';
   created_at: Date;
@@ -42,6 +43,7 @@ export interface CreateBonusItemInput {
   employee_id: number;
   amount: string;
   description?: string;
+  metadata?: string;
 }
 
 export interface PayrollRunSummary {
@@ -121,13 +123,14 @@ export class PayrollBonusService {
   static async addBaseSalaryItem(
     payrollRunId: number,
     employeeId: number,
-    amount: string
+    amount: string,
+    metadata?: string
   ): Promise<PayrollItem> {
     const result = await pool.query(
-      `INSERT INTO payroll_items (payroll_run_id, employee_id, item_type, amount)
-       VALUES ($1, $2, 'base', $3)
+      `INSERT INTO payroll_items (payroll_run_id, employee_id, item_type, amount, metadata)
+       VALUES ($1, $2, 'base', $3, $4)
        RETURNING *`,
-      [payrollRunId, employeeId, amount]
+      [payrollRunId, employeeId, amount, metadata || null]
     );
 
     await this.updatePayrollRunTotals(payrollRunId);
@@ -137,10 +140,16 @@ export class PayrollBonusService {
 
   static async addBonusItem(input: CreateBonusItemInput): Promise<PayrollItem> {
     const result = await pool.query(
-      `INSERT INTO payroll_items (payroll_run_id, employee_id, item_type, amount, description)
-       VALUES ($1, $2, 'bonus', $3, $4)
+      `INSERT INTO payroll_items (payroll_run_id, employee_id, item_type, amount, description, metadata)
+       VALUES ($1, $2, 'bonus', $3, $4, $5)
        RETURNING *`,
-      [input.payroll_run_id, input.employee_id, input.amount, input.description || null]
+      [
+        input.payroll_run_id,
+        input.employee_id,
+        input.amount,
+        input.description || null,
+        input.metadata || null,
+      ]
     );
 
     await this.updatePayrollRunTotals(input.payroll_run_id);
@@ -150,7 +159,7 @@ export class PayrollBonusService {
 
   static async addBatchBonusItems(
     payrollRunId: number,
-    items: Array<{ employee_id: number; amount: string; description?: string }>
+    items: Array<{ employee_id: number; amount: string; description?: string; metadata?: string }>
   ): Promise<PayrollItem[]> {
     const client = await pool.connect();
     try {
@@ -160,10 +169,16 @@ export class PayrollBonusService {
 
       for (const item of items) {
         const result = await client.query(
-          `INSERT INTO payroll_items (payroll_run_id, employee_id, item_type, amount, description)
-           VALUES ($1, $2, 'bonus', $3, $4)
+          `INSERT INTO payroll_items (payroll_run_id, employee_id, item_type, amount, description, metadata)
+           VALUES ($1, $2, 'bonus', $3, $4, $5)
            RETURNING *`,
-          [payrollRunId, item.employee_id, item.amount, item.description || null]
+          [
+            payrollRunId,
+            item.employee_id,
+            item.amount,
+            item.description || null,
+            item.metadata || null,
+          ]
         );
         insertedItems.push(result.rows[0]);
       }
@@ -237,6 +252,22 @@ export class PayrollBonusService {
       items,
       summary,
     };
+  }
+
+  /**
+   * Get payroll item by transaction hash (for receipt generation)
+   */
+  static async getPayrollItemByTxHash(txHash: string): Promise<PayrollItemWithEmployee | null> {
+    const result = await pool.query(
+      `SELECT pi.*, e.first_name as employee_first_name, e.last_name as employee_last_name,
+              e.email as employee_email, e.wallet_address as employee_wallet_address
+       FROM payroll_items pi
+       JOIN employees e ON pi.employee_id = e.id
+       WHERE pi.tx_hash = $1
+       LIMIT 1`,
+      [txHash]
+    );
+    return result.rows[0] || null;
   }
 
   static async updatePayrollRunTotals(payrollRunId: number): Promise<void> {

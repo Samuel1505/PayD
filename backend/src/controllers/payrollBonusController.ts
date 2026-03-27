@@ -1,15 +1,18 @@
 import { Request, Response } from 'express';
-import { PayrollBonusService } from '../services/payrollBonusService';
-import logger from '../utils/logger';
+import { PayrollBonusService } from '../services/payrollBonusService.js';
+import { PayrollAuditService } from '../services/payrollAuditService.js';
+import logger from '../utils/logger.js';
 
 export class PayrollBonusController {
   static async createPayrollRun(req: Request, res: Response): Promise<void> {
     try {
-      const { organizationId, periodStart, periodEnd, assetCode } = req.body;
+      const organizationId = req.user?.organizationId;
+      const { periodStart, periodEnd, assetCode } = req.body;
 
       if (!organizationId || !periodStart || !periodEnd) {
         res.status(400).json({
-          error: 'Missing required fields: organizationId, periodStart, periodEnd',
+          error:
+            'Missing required fields: periodStart, periodEnd (user must belong to an organization)',
         });
         return;
       }
@@ -19,6 +22,13 @@ export class PayrollBonusController {
         new Date(periodStart),
         new Date(periodEnd),
         assetCode || 'XLM'
+      );
+
+      await PayrollAuditService.logRunCreated(
+        organizationId,
+        payrollRun.id,
+        { type: 'user', id: req.user?.id?.toString(), email: req.user?.email },
+        { ipAddress: req.ip, userAgent: req.get('user-agent') }
       );
 
       res.status(201).json({
@@ -37,7 +47,14 @@ export class PayrollBonusController {
   static async getPayrollRun(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      const summary = await PayrollBonusService.getPayrollRunSummary(parseInt(id, 10));
+      const organizationId = req.user?.organizationId;
+      const run = await PayrollBonusService.getPayrollRunById(parseInt(id as string, 10));
+      if (!run || run.organization_id !== organizationId) {
+        res.status(404).json({ error: 'Payroll run not found' });
+        return;
+      }
+
+      const summary = await PayrollBonusService.getPayrollRunSummary(parseInt(id as string, 10));
 
       if (!summary) {
         res.status(404).json({ error: 'Payroll run not found' });
@@ -59,15 +76,16 @@ export class PayrollBonusController {
 
   static async listPayrollRuns(req: Request, res: Response): Promise<void> {
     try {
-      const { organizationId, page, limit } = req.query;
+      const organizationId = req.user?.organizationId;
+      const { page, limit } = req.query;
 
       if (!organizationId) {
-        res.status(400).json({ error: 'Missing required parameter: organizationId' });
+        res.status(400).json({ error: 'User must belong to an organization' });
         return;
       }
 
       const result = await PayrollBonusService.listPayrollRuns(
-        parseInt(organizationId as string, 10),
+        organizationId,
         parseInt(page as string, 10) || 1,
         parseInt(limit as string, 10) || 20
       );
@@ -87,7 +105,8 @@ export class PayrollBonusController {
 
   static async addBonusItem(req: Request, res: Response): Promise<void> {
     try {
-      const { payrollRunId, employeeId, amount, description } = req.body;
+      const { payrollRunId, employeeId, amount, description, metadata } = req.body;
+      const organizationId = req.user?.organizationId;
 
       if (!payrollRunId || !employeeId || !amount) {
         res.status(400).json({
@@ -96,12 +115,38 @@ export class PayrollBonusController {
         return;
       }
 
+      // Verify payroll run belongs to organization
+      const run = await PayrollBonusService.getPayrollRunById(payrollRunId);
+      if (!run || run.organization_id !== organizationId) {
+        res.status(404).json({ error: 'Payroll run not found' });
+        return;
+      }
+
       const item = await PayrollBonusService.addBonusItem({
         payroll_run_id: payrollRunId,
         employee_id: employeeId,
         amount,
         description,
+        metadata,
       });
+
+      // Log audit entry for bonus item addition
+      await PayrollAuditService.logItemAdded(
+        organizationId!,
+        payrollRunId,
+        item.id,
+        employeeId,
+        amount,
+        run.asset_code,
+        { type: 'user', id: req.user?.id?.toString(), email: req.user?.email },
+        {
+          ipAddress: req.ip,
+          userAgent: req.get('user-agent'),
+          itemType: 'bonus',
+          description,
+          payoutMetadata: metadata,
+        }
+      );
 
       res.status(201).json({
         success: true,
@@ -119,6 +164,7 @@ export class PayrollBonusController {
   static async addBatchBonusItems(req: Request, res: Response): Promise<void> {
     try {
       const { payrollRunId, items } = req.body;
+      const organizationId = req.user?.organizationId;
 
       if (!payrollRunId || !items || !Array.isArray(items) || items.length === 0) {
         res.status(400).json({
@@ -136,16 +182,47 @@ export class PayrollBonusController {
         }
       }
 
+      // Verify payroll run belongs to organization
+      const run = await PayrollBonusService.getPayrollRunById(payrollRunId);
+      if (!run || run.organization_id !== organizationId) {
+        res.status(404).json({ error: 'Payroll run not found' });
+        return;
+      }
+
       const formattedItems = items.map((item) => ({
         employee_id: item.employeeId,
         amount: item.amount,
         description: item.description,
+        metadata: item.metadata,
       }));
 
       const insertedItems = await PayrollBonusService.addBatchBonusItems(
         payrollRunId,
         formattedItems
       );
+
+      // Log audit entries for each bonus item
+      for (let i = 0; i < insertedItems.length; i++) {
+        const item = insertedItems[i]!;
+        const originalItem = items[i]!;
+
+        await PayrollAuditService.logItemAdded(
+          organizationId!,
+          payrollRunId,
+          item.id,
+          item.employee_id,
+          item.amount,
+          run.asset_code,
+          { type: 'user', id: req.user?.id?.toString(), email: req.user?.email },
+          {
+            ipAddress: req.ip,
+            userAgent: req.get('user-agent'),
+            itemType: 'bonus',
+            description: originalItem.description,
+            payoutMetadata: originalItem.metadata,
+          }
+        );
+      }
 
       res.status(201).json({
         success: true,
@@ -167,7 +244,7 @@ export class PayrollBonusController {
       const { itemType } = req.query;
 
       const items = await PayrollBonusService.getPayrollItems(
-        parseInt(payrollRunId, 10),
+        parseInt(payrollRunId as string, 10),
         itemType as 'base' | 'bonus' | undefined
       );
 
@@ -188,7 +265,7 @@ export class PayrollBonusController {
   static async deletePayrollItem(req: Request, res: Response): Promise<void> {
     try {
       const { itemId } = req.params;
-      const deleted = await PayrollBonusService.deletePayrollItem(parseInt(itemId, 10));
+      const deleted = await PayrollBonusService.deletePayrollItem(parseInt(itemId as string, 10));
 
       if (!deleted) {
         res.status(404).json({ error: 'Payroll item not found' });
@@ -212,6 +289,7 @@ export class PayrollBonusController {
     try {
       const { id } = req.params;
       const { status } = req.body;
+      const organizationId = req.user?.organizationId;
 
       if (!status || !['draft', 'pending', 'processing', 'completed', 'failed'].includes(status)) {
         res.status(400).json({
@@ -220,12 +298,30 @@ export class PayrollBonusController {
         return;
       }
 
-      const payrollRun = await PayrollBonusService.updatePayrollRunStatus(parseInt(id, 10), status);
+      const existing = await PayrollBonusService.getPayrollRunById(parseInt(id as string, 10));
+      if (!existing || existing.organization_id !== organizationId) {
+        res.status(404).json({ error: 'Payroll run not found' });
+        return;
+      }
+
+      const payrollRun = await PayrollBonusService.updatePayrollRunStatus(
+        parseInt(id as string, 10),
+        status
+      );
 
       if (!payrollRun) {
         res.status(404).json({ error: 'Payroll run not found' });
         return;
       }
+
+      await PayrollAuditService.logRunStatusChanged(
+        organizationId,
+        payrollRun.id,
+        existing.status,
+        payrollRun.status,
+        { type: 'user', id: req.user?.id?.toString(), email: req.user?.email },
+        { ipAddress: req.ip, userAgent: req.get('user-agent') }
+      );
 
       res.json({
         success: true,
@@ -242,15 +338,16 @@ export class PayrollBonusController {
 
   static async getBonusHistory(req: Request, res: Response): Promise<void> {
     try {
-      const { organizationId, page, limit } = req.query;
+      const organizationId = req.user?.organizationId;
+      const { page, limit } = req.query;
 
       if (!organizationId) {
-        res.status(400).json({ error: 'Missing required parameter: organizationId' });
+        res.status(400).json({ error: 'User must belong to an organization' });
         return;
       }
 
       const result = await PayrollBonusService.getOrganizationBonusHistory(
-        parseInt(organizationId as string, 10),
+        organizationId,
         parseInt(page as string, 10) || 1,
         parseInt(limit as string, 10) || 20
       );

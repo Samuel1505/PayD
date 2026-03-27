@@ -1,4 +1,4 @@
-import { StellarService, TransactionResult, MultiSigConfig } from '../stellarService';
+import { StellarService, TransactionResult, MultiSigConfig } from '../stellarService.js';
 import { Keypair, Asset, Operation, Memo, Networks, Transaction } from '@stellar/stellar-sdk';
 
 jest.mock('@stellar/stellar-sdk', () => {
@@ -85,7 +85,7 @@ describe('StellarService', () => {
 
       expect(transaction).toBeDefined();
       expect(transaction.operations).toHaveLength(1);
-      expect(transaction.operations[0].type).toBe('payment');
+      expect(transaction.operations[0]!.type).toBe('payment');
     });
 
     it('should build a payment transaction with custom fee', async () => {
@@ -287,7 +287,7 @@ describe('StellarService', () => {
 
       expect(transaction).toBeDefined();
       expect(transaction.operations).toHaveLength(1);
-      expect(transaction.operations[0].type).toBe('setOptions');
+      expect(transaction.operations[0]!.type).toBe('setOptions');
     });
 
     it('should add a signer with custom weight', async () => {
@@ -307,7 +307,7 @@ describe('StellarService', () => {
 
       expect(transaction).toBeDefined();
       expect(transaction.operations).toHaveLength(1);
-      expect(transaction.operations[0].type).toBe('setOptions');
+      expect(transaction.operations[0]!.type).toBe('setOptions');
     });
 
     it('should set partial thresholds', async () => {
@@ -332,6 +332,9 @@ describe('StellarService', () => {
       StellarService.signTransaction(setupTx, testKeypair);
 
       expect(setupTx.signatures).toHaveLength(1);
+
+      expect(StellarService.verifySignature(setupTx, testKeypair.publicKey())).toBe(true);
+      expect(StellarService.verifySignature(setupTx, secondSigner.publicKey())).toBe(false);
     });
   });
 
@@ -467,6 +470,7 @@ describe('StellarService', () => {
       await expect(StellarService.submitTransaction(transaction)).rejects.toThrow(
         'Transaction submission failed'
       );
+      await expect(StellarService.submitTransaction(transaction)).rejects.toThrow('Result XDR');
     });
 
     it('should handle network errors', async () => {

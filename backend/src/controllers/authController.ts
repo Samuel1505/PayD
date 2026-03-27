@@ -3,7 +3,7 @@ import { authenticator } from '@otplib/preset-default';
 import QRCode from 'qrcode';
 import crypto from 'crypto';
 import { Pool } from 'pg';
-import { config } from '../config/env';
+import { config } from '../config/env.js';
 import jwt from 'jsonwebtoken';
 
 const pool = new Pool({ connectionString: config.DATABASE_URL });
@@ -89,6 +89,7 @@ export class AuthController {
           {
             id: user.id,
             walletAddress: user.wallet_address,
+            email: '',
             organizationId: user.organization_id,
             role: user.role,
           },
@@ -184,6 +185,7 @@ export class AuthController {
           {
             id: newUser.id,
             walletAddress: newUser.wallet_address,
+            email: '',
             organizationId: newUser.organization_id,
             role: newUser.role,
           },
@@ -250,6 +252,7 @@ export class AuthController {
         {
           id: user.id,
           walletAddress: user.wallet_address,
+          email: '',
           organizationId: user.organization_id,
           role: user.role,
         },

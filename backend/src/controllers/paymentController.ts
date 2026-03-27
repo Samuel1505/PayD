@@ -1,17 +1,22 @@
 import { Request, Response } from 'express';
-import { AnchorService } from '../services/anchorService';
+import { AnchorService } from '../services/anchorService.js';
 import { Keypair } from '@stellar/stellar-sdk';
+import { findConversionPaths, type PathfindRequest } from '../services/crossAssetPaymentService.js';
+import { Sep31TrackingService } from '../services/sep31TrackingService.js';
 
 export class PaymentController {
   /**
    * GET /api/payments/anchor-info
    */
   static async getAnchorInfo(req: Request, res: Response) {
-    const { domain } = req.query;
+    const { domain, protocol } = req.query;
     if (!domain) return res.status(400).json({ error: 'Domain required' });
 
     try {
-      const info = await AnchorService.getSEP31Info(domain as string);
+      const info =
+        protocol === 'sep24'
+          ? await AnchorService.getSEP24Info(domain as string)
+          : await AnchorService.getSEP31Info(domain as string);
       res.json(info);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -22,14 +27,19 @@ export class PaymentController {
    * POST /api/payments/sep31/initiate
    */
   static async initiateSEP31(req: Request, res: Response) {
-    const { domain, paymentData, secretKey } = req.body;
+    const { domain, paymentData, secretKey, senderPublicKey } = req.body;
 
-    if (!domain || !paymentData || !secretKey) {
-      return res.status(400).json({ error: 'Missing required fields' });
+    if (!domain || !paymentData || !secretKey || !senderPublicKey) {
+      return res.status(400).json({
+        error: 'Missing required fields: domain, paymentData, secretKey, senderPublicKey',
+      });
     }
 
     try {
       const clientKeypair = Keypair.fromSecret(secretKey);
+      if (clientKeypair.publicKey() !== senderPublicKey) {
+        return res.status(400).json({ error: 'senderPublicKey does not match secretKey' });
+      }
 
       // 1. Authenticate
       const token = await AnchorService.authenticate(domain, clientKeypair);
@@ -37,9 +47,38 @@ export class PaymentController {
       // 2. Initiate Payment
       const result = await AnchorService.initiatePayment(domain, token, paymentData);
 
+      await Sep31TrackingService.recordInitiation({
+        organizationId: req.user?.organizationId ?? null,
+        senderPublicKey,
+        anchorDomain: domain,
+        requestPayload: paymentData,
+        anchorResponse: result as Record<string, unknown>,
+      });
+
       res.json(result);
     } catch (error: any) {
       console.error('SEP-31 Initiation Error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  /**
+   * POST /api/payments/pathfind
+   */
+  static async findPaths(req: Request, res: Response) {
+    const { fromAsset, toAsset, amount } = req.body as PathfindRequest;
+
+    if (!fromAsset || !toAsset || !amount || amount <= 0) {
+      return res.status(400).json({
+        error: 'Invalid pathfind request: fromAsset, toAsset, and positive amount required',
+      });
+    }
+
+    try {
+      const paths = await findConversionPaths({ fromAsset, toAsset, amount });
+      res.json({ paths });
+    } catch (error: any) {
+      console.error('Pathfinding error:', error);
       res.status(500).json({ error: error.message });
     }
   }
@@ -59,12 +98,85 @@ export class PaymentController {
       const clientKeypair = Keypair.fromSecret(secretKey as string);
       // Re-auth to get a fresh token or use a session-based approach
       // For simplicity in this implementation, we re-auth
-      const token = await AnchorService.authenticate(domain, clientKeypair);
+      const token = await AnchorService.authenticate(domain as string, clientKeypair);
 
-      const status = await AnchorService.getTransaction(domain, token, id);
+      const status = await AnchorService.getTransaction(domain as string, token, id as string);
+      await Sep31TrackingService.updateFromPoll(
+        domain as string,
+        id as string,
+        status as Record<string, unknown>
+      );
       res.json(status);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
+    }
+  }
+
+  /**
+   * POST /api/payments/sep24/withdraw/interactive
+   */
+  static async initiateSEP24Withdrawal(req: Request, res: Response) {
+    const { domain, transactionData, secretKey, senderPublicKey, redirect } = req.body;
+
+    if (!domain || !transactionData || !secretKey || !senderPublicKey) {
+      return res.status(400).json({
+        error: 'Missing required fields: domain, transactionData, secretKey, senderPublicKey',
+      });
+    }
+
+    if (!transactionData.asset_code) {
+      return res.status(400).json({ error: 'transactionData.asset_code is required' });
+    }
+
+    try {
+      const clientKeypair = Keypair.fromSecret(secretKey);
+      if (clientKeypair.publicKey() !== senderPublicKey) {
+        return res.status(400).json({ error: 'senderPublicKey does not match secretKey' });
+      }
+
+      const token = await AnchorService.authenticate(domain, clientKeypair);
+      const result = await AnchorService.initiateSEP24Withdrawal(domain, token, {
+        account: senderPublicKey,
+        ...transactionData,
+      });
+
+      const interactiveUrl = result.url || result.interactive_url;
+      if (!interactiveUrl) {
+        return res.status(502).json({ error: 'Anchor did not return an interactive URL' });
+      }
+
+      if (redirect) {
+        return res.redirect(303, interactiveUrl);
+      }
+
+      return res.status(200).json({
+        ...result,
+        interactiveUrl,
+      });
+    } catch (error: any) {
+      console.error('SEP-24 Withdrawal Error:', error);
+      return res.status(500).json({ error: error.message });
+    }
+  }
+
+  /**
+   * GET /api/payments/sep24/status/:domain/:id
+   */
+  static async getSEP24Status(req: Request, res: Response) {
+    const { domain, id } = req.params;
+    const { secretKey } = req.query;
+
+    if (!domain || !id || !secretKey) {
+      return res.status(400).json({ error: 'Missing required params' });
+    }
+
+    try {
+      const clientKeypair = Keypair.fromSecret(secretKey as string);
+      const token = await AnchorService.authenticate(domain as string, clientKeypair);
+      const status = await AnchorService.getSEP24Transaction(domain as string, token, id as string);
+      return res.json(status);
+    } catch (error: any) {
+      return res.status(500).json({ error: error.message });
     }
   }
 }

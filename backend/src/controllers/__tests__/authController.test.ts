@@ -1,6 +1,6 @@
 import request from 'supertest';
 import express from 'express';
-import authRoutes from '../../routes/authRoutes';
+import authRoutes from '../../routes/authRoutes.js';
 import { authenticator } from '@otplib/preset-default';
 import pg from 'pg';
 
@@ -74,7 +74,7 @@ describe('Auth Controller 2FA Integration', () => {
         .send({ walletAddress: 'GCXX_TEST_WALLET', token: '000000' });
 
       expect(response.status).toBe(401);
-      expect(response.body.error).toBe('Invalid 2FA token generated mapping');
+      expect(response.body.error).toBe('Invalid 2FA token');
     });
   });
 

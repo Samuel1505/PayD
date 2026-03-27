@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
-import { ContractUpgradeService } from '../services/contractUpgradeService';
+import { ContractUpgradeService } from '../services/contractUpgradeService.js';
 
 // ---------------------------------------------------------------------------
 // Validation schemas — defined once at module scope (O(1) memory)
@@ -19,9 +19,7 @@ const simulateBodySchema = z.object({
 });
 
 const executeBodySchema = z.object({
-  adminSecret: z
-    .string()
-    .min(56, 'adminSecret must be a valid Stellar secret key (S...)'),
+  adminSecret: z.string().min(56, 'adminSecret must be a valid Stellar secret key (S...)'),
 });
 
 const validateHashBodySchema = z.object({
@@ -246,7 +244,7 @@ export class ContractUpgradeController {
    */
   private static handleError(error: unknown, res: Response): void {
     if (error instanceof z.ZodError) {
-      res.status(400).json({ error: 'Validation Error', details: error.errors });
+      res.status(400).json({ error: 'Validation Error', details: error.issues });
       return;
     }
 

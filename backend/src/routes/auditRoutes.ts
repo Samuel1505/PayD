@@ -1,30 +1,95 @@
 import { Router } from 'express';
-import { TransactionAuditController } from '../controllers/transactionAuditController';
+import { TransactionAuditController } from '../controllers/transactionAuditController.js';
 
 const router = Router();
 
 /**
- * @route GET /api/audit
- * @desc List audit records with pagination
- * @query page, limit, sourceAccount
+ * @swagger
+ * tags:
+ *   name: Audit
+ *   description: Transaction audit management
+ */
+
+/**
+ * @swagger
+ * /api/audit:
+ *   get:
+ *     summary: List audit records with pagination
+ *     tags: [Audit]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Success
  */
 router.get('/', TransactionAuditController.listAuditRecords);
 
 /**
- * @route GET /api/audit/:txHash
- * @desc Get a stored audit record by transaction hash
+ * @swagger
+ * /api/audit/{txHash}:
+ *   get:
+ *     summary: Get a stored audit record by transaction hash
+ *     tags: [Audit]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: txHash
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Success
  */
 router.get('/:txHash', TransactionAuditController.getAuditRecord);
 
 /**
- * @route GET /api/audit/:txHash/verify
- * @desc Re-fetch from Horizon and verify integrity of stored record
+ * @swagger
+ * /api/audit/{txHash}/verify:
+ *   get:
+ *     summary: Verify integrity of a stored audit record
+ *     tags: [Audit]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: txHash
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Success
  */
 router.get('/:txHash/verify', TransactionAuditController.verifyAuditRecord);
 
 /**
- * @route POST /api/audit/:txHash
- * @desc Fetch transaction from Horizon and create immutable audit record
+ * @swagger
+ * /api/audit/{txHash}:
+ *   post:
+ *     summary: Create an audit record for a transaction
+ *     tags: [Audit]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: txHash
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       201:
+ *         description: Created
  */
 router.post('/:txHash', TransactionAuditController.createAuditRecord);
 

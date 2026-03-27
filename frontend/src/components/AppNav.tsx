@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import {
   Code,
@@ -14,9 +14,21 @@ import {
   PieChart,
 } from 'lucide-react';
 import { Avatar } from './Avatar';
+import { AvatarUpload } from './AvatarUpload';
+import { useWallet } from '../hooks/useWallet';
 
 const AppNav: React.FC = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
+  const [userImageUrl, setUserImageUrl] = useState<string | undefined>(undefined);
+  const { address, walletName, isConnecting, network, setNetwork } = useWallet();
+
+  useEffect(() => {
+    const savedImage = localStorage.getItem('payd:user-avatar');
+    if (savedImage) {
+      setUserImageUrl(savedImage);
+    }
+  }, []);
 
 const AppNav = () => {
   // Mock user data - replace with actual user context

@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { query } from '../config/database';
+import { query } from '../config/database.js';
 
 export class ContractEventsController {
   static async listByContract(req: Request, res: Response) {
@@ -11,13 +11,23 @@ export class ContractEventsController {
         100
       );
       const offset = (page - 1) * limit;
-      const eventType = (req.query.eventType as string | undefined)?.trim();
+      const eventTypeRaw = req.query.eventType;
+      const eventType = typeof eventTypeRaw === 'string' ? eventTypeRaw.trim() : undefined;
+      const categoryRaw = req.query.category;
+      const category = typeof categoryRaw === 'string' ? categoryRaw.trim() : undefined;
 
-      const params: Array<string | number> = [contractId];
+      const params: Array<string | number> = [contractId as string];
+
       let whereClause = 'WHERE contract_id = $1';
+
       if (eventType) {
         params.push(eventType);
         whereClause += ` AND event_type = $${params.length}`;
+      }
+
+      if (category) {
+        params.push(category);
+        whereClause += ` AND category = $${params.length}`;
       }
 
       const countResult = await query(

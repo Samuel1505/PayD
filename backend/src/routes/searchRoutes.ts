@@ -1,52 +1,66 @@
 import { Router } from 'express';
-import searchController from '../controllers/searchController';
-import { authenticateJWT } from '../middlewares/auth';
-import { isolateOrganization } from '../middlewares/rbac';
-import { authenticateJWT } from '../middlewares/auth';
-import { isolateOrganization } from '../middlewares/rbac';
-import { requireTenantContext } from '../middleware/tenantContext';
-
-import authenticateJWT from '../middlewares/auth';
-import { isolateOrganization } from '../middlewares/rbac';
-import { requireTenantContext } from '../middleware/tenantContext';
+import searchController from '../controllers/searchController.js';
+import { authenticateJWT } from '../middlewares/auth.js';
+import { isolateOrganization } from '../middlewares/rbac.js';
+import { requireTenantContext } from '../middleware/tenantContext.js';
 
 const router = Router();
 
 /**
- * @route GET /api/search/organizations/:organizationId/employees
- * @desc Search and filter employees
- * @query query - Full-text search query
- * @query status - Comma-separated status values (active,inactive,pending)
- * @query dateFrom - Start date (ISO 8601)
- * @query dateTo - End date (ISO 8601)
- * @query page - Page number (default: 1)
- * @query limit - Items per page (default: 20)
- * @query sortBy - Sort column (created_at, first_name, last_name, email, status)
- * @query sortOrder - Sort order (asc, desc)
+ * @swagger
+ * tags:
+ *   name: Data Search
+ *   description: Search and filter employees and transactions
+ */
+
+// Apply global authentication and isolation to all search routes
+router.use(authenticateJWT);
+router.use(isolateOrganization);
+router.use(requireTenantContext);
+
+/**
+ * @swagger
+ * /api/v1/search/organizations/{organizationId}/employees:
+ *   get:
+ *     summary: Search and filter employees
+ *     tags: [Data Search]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: organizationId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Success
  */
 router.get(
   '/organizations/:organizationId/employees',
-  requireTenantContext,
   searchController.searchEmployees.bind(searchController)
 );
 
 /**
- * @route GET /api/search/organizations/:organizationId/transactions
- * @desc Search and filter transactions
- * @query query - Full-text search query (tx_hash, asset_code)
- * @query status - Comma-separated status values (pending,completed,failed)
- * @query dateFrom - Start date (ISO 8601)
- * @query dateTo - End date (ISO 8601)
- * @query amountMin - Minimum amount
- * @query amountMax - Maximum amount
- * @query page - Page number (default: 1)
- * @query limit - Items per page (default: 20)
- * @query sortBy - Sort column (created_at, amount, status, tx_hash)
- * @query sortOrder - Sort order (asc, desc)
+ * @swagger
+ * /api/v1/search/organizations/{organizationId}/transactions:
+ *   get:
+ *     summary: Search and filter transactions
+ *     tags: [Data Search]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: organizationId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Success
  */
 router.get(
   '/organizations/:organizationId/transactions',
-  requireTenantContext,
   searchController.searchTransactions.bind(searchController)
 );
 

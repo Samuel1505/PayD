@@ -1,28 +1,38 @@
 import { Router } from 'express';
-import { throttlingMiddleware } from '../../middlewares/throttlingMiddleware';
-import { authRateLimit, apiRateLimit, dataRateLimit } from '../../middlewares/rateLimitMiddleware';
-import searchRoutes from '../searchRoutes';
-import employeeRoutes from '../employeeRoutes';
-import paymentRoutes from '../paymentRoutes';
-import authRoutes from '../authRoutes';
-import assetRoutes from '../assetRoutes';
-import throttlingRoutes from '../throttlingRoutes';
-import payrollBonusRoutes from '../payrollBonusRoutes';
-import payrollAuditRoutes from '../payrollAuditRoutes';
-import auditRoutes from '../auditRoutes';
-import balanceRoutes from '../balanceRoutes';
-import trustlineRoutes from '../trustlineRoutes';
-import payrollRoutes from '../payroll.routes';
-import exportRoutes from '../exportRoutes';
-import taxRoutes from '../taxRoutes';
-import multiSigRoutes from '../multiSigRoutes';
-import rateLimitRoutes from '../rateLimitRoutes';
-import freezeRoutes from '../freezeRoutes';
-import contractUpgradeRoutes from '../contractUpgradeRoutes';
+import { throttlingMiddleware } from '../../middlewares/throttlingMiddleware.js';
+import {
+  authRateLimit,
+  apiRateLimit,
+  dataRateLimit,
+} from '../../middlewares/rateLimitMiddleware.js';
+import searchRoutes from '../searchRoutes.js';
+import employeeRoutes from '../employeeRoutes.js';
+import paymentRoutes from '../paymentRoutes.js';
+import authRoutes from '../authRoutes.js';
+import assetRoutes from '../assetRoutes.js';
+import throttlingRoutes from '../throttlingRoutes.js';
+import payrollBonusRoutes from '../payrollBonusRoutes.js';
+import payrollAuditRoutes from '../payrollAuditRoutes.js';
+import auditRoutes from '../auditRoutes.js';
+import balanceRoutes from '../balanceRoutes.js';
+import trustlineRoutes from '../trustlineRoutes.js';
+import payrollRoutes from '../payroll.routes.js';
+import exportRoutes from '../exportRoutes.js';
+import taxRoutes from '../taxRoutes.js';
+import multiSigRoutes from '../multiSigRoutes.js';
+import rateLimitRoutes from '../rateLimitRoutes.js';
+import freezeRoutes from '../freezeRoutes.js';
+import contractUpgradeRoutes from '../contractUpgradeRoutes.js';
+import claimRoutes from '../claimRoutes.js';
+import feeRoutes from '../feeRoutes.js';
+import assetPathPaymentRoutes from '../assetPathPaymentRoutes.js';
+import tenantConfigRoutes from '../tenantConfigRoutes.js';
+import bulkPaymentRoutes from '../bulkPaymentRoutes.js';
 
 const router = Router();
 
 router.use('/auth', authRateLimit(), authRoutes);
+
 router.use('/search', dataRateLimit(), searchRoutes);
 router.use('/employees', dataRateLimit(), employeeRoutes);
 router.use('/payments', apiRateLimit(), throttlingMiddleware(), paymentRoutes);
@@ -40,5 +50,10 @@ router.use('/multisig', apiRateLimit(), multiSigRoutes);
 router.use('/rate-limit', apiRateLimit(), rateLimitRoutes);
 router.use('/freeze', apiRateLimit(), freezeRoutes);
 router.use('/contracts', apiRateLimit(), contractUpgradeRoutes);
+router.use('/claims', dataRateLimit(), claimRoutes);
+router.use('/fees', dataRateLimit(), feeRoutes);
+router.use('/path-payments', apiRateLimit(), assetPathPaymentRoutes);
+router.use('/tenant-configs', dataRateLimit(), tenantConfigRoutes);
+router.use('/bulk-payments', apiRateLimit(), bulkPaymentRoutes);
 
 export default router;

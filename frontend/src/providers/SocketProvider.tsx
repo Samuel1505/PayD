@@ -23,6 +23,11 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
   const [connected, setConnected] = useState(false);
   const { notify } = useNotification();
 
+  // Track whether the first successful connection has fired so we don't
+  // show the "connected" toast on every reconnect after a brief drop.
+  const hasConnectedOnce = useRef(false);
+  const reconnectCount = useRef(0);
+
   useEffect(() => {
     const newSocket: Socket = io(SOCKET_URL, {
       withCredentials: true,
@@ -66,13 +71,28 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+  const subscribeToBulk = (batchId: string) => {
+    if (socket && connected) {
+      socket.emit('subscribe:bulk', { batchId });
+    }
+  };
+
+  const unsubscribeFromBulk = (batchId: string) => {
+    if (socket && connected) {
+      socket.emit('unsubscribe:bulk', { batchId });
+    }
+  };
+
   return (
     <SocketContext.Provider
       value={{
         socket,
         connected,
+        isPollingFallback,
         subscribeToTransaction,
         unsubscribeFromTransaction,
+        subscribeToBulk,
+        unsubscribeFromBulk,
       }}
     >
       {children}

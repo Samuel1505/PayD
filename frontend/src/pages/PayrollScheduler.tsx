@@ -1,16 +1,25 @@
+import { Button, Card, Heading, Input, Select, Text } from '@stellar/design-system';
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
+// Type assertion for Stellar components to work around library typing issues
+const InputComponent = Input as unknown as React.FC<Record<string, unknown>>;
+const SelectComponent = Select as unknown as React.FC<Record<string, unknown>>;
+
 import { AutosaveIndicator } from '../components/AutosaveIndicator';
-import { useAutosave } from '../hooks/useAutosave';
-import { useTransactionSimulation } from '../hooks/useTransactionSimulation';
+import { BulkPaymentStatusTracker } from '../components/BulkPaymentStatusTracker';
+import { CountdownTimer } from '../components/CountdownTimer';
+import { SchedulingWizard } from '../components/SchedulingWizard';
 import { TransactionSimulationPanel } from '../components/TransactionSimulationPanel';
+import { useAutosave } from '../hooks/useAutosave';
 import { useNotification } from '../hooks/useNotification';
 import { useSocket } from '../hooks/useSocket';
+import { useTransactionSimulation } from '../hooks/useTransactionSimulation';
 import { createClaimableBalanceTransaction, generateWallet } from '../services/stellar';
-import { useTranslation } from 'react-i18next';
-import { Card, Heading, Text, Button, Input, Select } from '@stellar/design-system';
-import { SchedulingWizard } from '../components/SchedulingWizard';
-import { CountdownTimer } from '../components/CountdownTimer';
-import { BulkPaymentStatusTracker } from '../components/BulkPaymentStatusTracker';
+
+import { ContractErrorPanel } from '../components/ContractErrorPanel';
+import { HelpLink } from '../components/HelpLink';
+import { parseContractError, type ContractErrorDetail } from '../utils/contractErrorParser';
 
 interface PayrollFormState {
   employeeName: string;
@@ -50,6 +59,13 @@ const initialFormState: PayrollFormState = {
   memo: "",
 };
 
+const formatLocalDateInput = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export default function PayrollScheduler() {
   const { t } = useTranslation();
   const { notify } = useNotification();
@@ -62,6 +78,9 @@ export default function PayrollScheduler() {
     null,
   );
   const [nextRunDate, setNextRunDate] = useState<Date | null>(null);
+  const [contractError, setContractError] = useState<ContractErrorDetail | null>(null);
+
+  const scheduleStorageKey = 'payd-scheduler-config';
 
   const [pendingClaims, setPendingClaims] = useState<PendingClaim[]>(() => {
     const saved = localStorage.getItem("pending-claims");
@@ -93,8 +112,9 @@ export default function PayrollScheduler() {
     const saved = loadSavedData();
     if (saved) {
       setFormData(saved);
+      notify('Recovered unsaved payroll draft');
     }
-  }, [loadSavedData]);
+  }, [loadSavedData, notify]);
 
   const handleScheduleComplete = (config: SchedulingConfig) => {
     setActiveSchedule(config);
@@ -107,7 +127,7 @@ export default function PayrollScheduler() {
     else if (config.frequency === "weekly") d.setDate(d.getDate() + 7);
     else d.setDate(d.getDate() + 14);
 
-    setNextRunDate(d);
+    setNextRunDate(computeNextRunDate(config, new Date()));
   };
 
   const handleChange = (
@@ -117,7 +137,10 @@ export default function PayrollScheduler() {
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    if (simulationResult) resetSimulation();
+    if (simulationResult) {
+      resetSimulation();
+      setContractError(null);
+    }
   };
 
   useEffect(() => {
@@ -158,16 +181,23 @@ export default function PayrollScheduler() {
       return;
     }
 
+    setContractError(null);
+
     // Mock XDR for simulation demonstration
     // In a real app, this would be built using the Stellar SDK from formData
     const mockXdr =
       "AAAAAgAAAABmF8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
 
-    await simulate({ envelopeXdr: mockXdr });
+    const result = await simulate({ envelopeXdr: mockXdr });
+    if (result && !result.success) {
+      const parsed = parseContractError(result.envelopeXdr, result.description);
+      setContractError(parsed);
+    }
   };
 
   const handleBroadcast = async () => {
     setIsBroadcasting(true);
+    setContractError(null);
     try {
       // Simulate a brief delay for network broadcast
       await new Promise((resolve) => setTimeout(resolve, 1500));
@@ -408,11 +438,16 @@ export default function PayrollScheduler() {
 
           {/* Simulation & Info Side Panel */}
           <div className="lg:col-span-2 flex flex-col gap-6">
+            <ContractErrorPanel error={contractError} onClear={() => setContractError(null)} />
+
             <TransactionSimulationPanel
               result={simulationResult}
               isSimulating={isSimulating}
               processError={simulationProcessError}
-              onReset={resetSimulation}
+              onReset={() => {
+                resetSimulation();
+                setContractError(null);
+              }}
             />
 
             <div className="card glass noise h-fit">

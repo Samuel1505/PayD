@@ -96,7 +96,7 @@ PayD utilizes Stellar's asset issuance capabilities to create organization-speci
 
 ### 4️⃣ FX & Conversion System
 
-- **Real-time Rates**: Live asset-to-fiat conversion
+- **Real-time Rates**: Live asset-to-fiat conversion (see our [FX Rate Fetching Logic](docs/FX_RATE_FETCHING_LOGIC.md) for details on fallback and caching architecture).
 - **Anchor Fees**: Transparent withdrawal costs
 - **Network Fees**: Minimal Stellar transaction fees
 - **Multi-currency Support**: Support for various local currencies
@@ -116,11 +116,6 @@ Every payment includes:
 
 - **React 19** - Modern UI framework
 - **TypeScript** - Type-safe development
-- **Vite** - Fast build tool
-- **Stellar Design System** - Consistent UI components
-- **React Router** - Client-side routing
-- **TanStack Query** - Data fetching and caching
-
 ### Backend
 
 - **Node.js** - Runtime environment
@@ -132,7 +127,12 @@ Every payment includes:
 ### Blockchain
 
 - **Stellar Network** - Primary blockchain
-- **Soroban** - Smart contracts (future expansion)
+- **Soroban** - Smart contracts including:
+  - **Bulk Payment**: Efficiently distribute funds to multiple recipients.
+  - **Revenue Split**: Automate the division of incoming payments.
+  - **Vesting Escrow**: Lock and gradually release tokens over time.
+  - **Cross-Asset Payment**: Seamlessly convert assets during payments.
+  - **Asset Path Payment**: Advanced routing for payments across different assets.
 - **Stellar Wallets Kit** - Wallet integration
 
 ### DevOps
@@ -142,7 +142,32 @@ Every payment includes:
 - **ESLint + Prettier** - Code quality
 - **Husky** - Git hooks
 
-## 🚀 Getting Started
+## 🚀 Quick Start
+
+Start PayD locally in three steps:
+
+1. **Clone and enter the repo**
+   ```bash
+   git clone https://github.com/Gildado/PayD.git
+   cd PayD
+   ```
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+3. **Create your local environment and start the app**
+   ```bash
+   cp .env.example .env
+   npm run dev
+   ```
+
+Need the full setup? Keep reading for prerequisites, environment variables, and database setup.
+
+For cloud hosting instructions, see the deployment guide:
+
+- [Vercel + Render Deployment Guide](docs/DEPLOYMENT_GUIDE_VERCEL_RENDER.md)
+
+## Getting Started
 
 ### Prerequisites
 
@@ -157,59 +182,75 @@ Ensure you have the following installed:
 ### Installation
 
 1. **Clone the repository:**
+
    ```bash
-   git clone [https://github.com/your-org/payD.git](https://github.com/your-org/payD.git)
-   cd payD
-   Install dependencies:
-   bash
+   git clone https://github.com/Gildado/PayD.git
+   cd PayD
+   ```
+
+2. **Install dependencies:**
+
+   ```bash
    npm install
-   Environment Setup:
-   bash
+   ```
+
+3. **Environment Setup:**
+
+   ```bash
    cp .env.example .env
    ```
 
-# Edit .env with your configuration
+   _Edit `.env` with your configuration._
 
-Database Setup:
-bash
+4. **Database Setup:**
+   ```bash
+   # Using Docker
+   docker run --name payd-postgres -e POSTGRES_PASSWORD=mypassword -p 5432:5432 -d postgres:15
+   ```
+   _Or set up PostgreSQL manually._
 
-# Using Docker
+### Configuration
 
-docker run --name payd-postgres -e POSTGRES_PASSWORD=mypassword -d postgres:15
+Edit `.env` with the following key variables:
 
-# Or set up PostgreSQL manually
-
-Configuration
-Edit
-.env
-with the following key variables:
-
-env
-
+```env
 # Stellar Network
-
 STELLAR_NETWORK=testnet # or mainnet
 STELLAR_HORIZON_URL=https://horizon-testnet.stellar.org
 
 # Database
-
 DATABASE_URL=postgresql://user:password@localhost:5432/payd
 
 # API Keys
-
 STELLAR_SECRET_KEY=your_issuer_secret_key
 ANCHOR_API_KEY=your_anchor_service_key
 
 # JWT
-
 JWT_SECRET=your_jwt_secret
-Development
+```
+
+### Development
+
 Start the development server:
-bash
+
+```bash
 npm run dev
+```
+
 Build for production:
-bash
+
+```bash
 npm run build
+```
+
 Run tests:
-bash
-npm run test.
+
+```bash
+npm run test
+```
+
+## 🙌 Contributors
+
+We'd like to extend a huge thank you to everyone who has contributed to making PayD what it is today! For a full list of our amazing contributors, please see our [Contributors List](CONTRIBUTORS.md).
+
+[![All Contributors](https://img.shields.io/badge/all_contributors-2-orange.svg?style=flat-square)](#contributors)
