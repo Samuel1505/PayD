@@ -872,7 +872,7 @@ export default function UpgradeConfirmModal({
                 <div className="flex items-center gap-2">
                   <code className="flex-1 font-mono text-xs break-all">{modal.txHash}</code>
                   <a
-                    href={getTxExplorerUrl(modal.txHash!, contract.network)}
+                    href={getTxExplorerUrl(modal.txHash, contract.network)}
                     target="_blank"
                     rel="noopener noreferrer"
                     title="View on Stellar Expert"

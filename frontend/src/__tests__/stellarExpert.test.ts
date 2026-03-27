@@ -68,9 +68,7 @@ describe('getTxExplorerUrl – env-based fallback', () => {
   test('uses VITE_STELLAR_EXPLORER_TX_URL when no network provided', async () => {
     vi.stubEnv('VITE_STELLAR_EXPLORER_TX_URL', 'https://stellar.expert/explorer/public/tx/');
     const { getTxExplorerUrl } = await import('../utils/stellarExpert');
-    expect(getTxExplorerUrl(TX_HASH)).toBe(
-      `https://stellar.expert/explorer/public/tx/${TX_HASH}`
-    );
+    expect(getTxExplorerUrl(TX_HASH)).toBe(`https://stellar.expert/explorer/public/tx/${TX_HASH}`);
     vi.unstubAllEnvs();
   });
 
@@ -84,10 +82,7 @@ describe('getTxExplorerUrl – env-based fallback', () => {
   });
 
   test('appends trailing slash if base URL is missing it', async () => {
-    vi.stubEnv(
-      'VITE_STELLAR_EXPLORER_TX_URL',
-      'https://stellar.expert/explorer/testnet/tx'
-    );
+    vi.stubEnv('VITE_STELLAR_EXPLORER_TX_URL', 'https://stellar.expert/explorer/testnet/tx');
     const { getTxExplorerUrl } = await import('../utils/stellarExpert');
     const url = getTxExplorerUrl(TX_HASH);
     expect(url).toBe(`https://stellar.expert/explorer/testnet/tx/${TX_HASH}`);
