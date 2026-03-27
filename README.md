@@ -116,11 +116,6 @@ Every payment includes:
 
 - **React 19** - Modern UI framework
 - **TypeScript** - Type-safe development
-- **Vite** - Fast build tool
-- **Stellar Design System** - Consistent UI components
-- **React Router** - Client-side routing
-- **TanStack Query** - Data fetching and caching
-
 ### Backend
 
 - **Node.js** - Runtime environment
