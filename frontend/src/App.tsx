@@ -1,10 +1,11 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import Home from './pages/Home';
 import Debugger from './pages/Debugger';
 import PayrollScheduler from './pages/PayrollScheduler';
 import EmployeeEntry from './pages/EmployeeEntry';
 import AppLayout from './components/AppLayout';
+import EmployerDashboardLayout from './components/EmployerDashboardLayout';
 import HelpCenter from './pages/HelpCenter';
 import ErrorBoundary from './components/ErrorBoundary';
 import ErrorFallback from './components/ErrorFallback';
@@ -34,7 +35,12 @@ function App() {
 
   return (
     <Routes>
-      <Route element={<AppLayout />}>
+      {/* Auth Routes */}
+      <Route path="/login" element={<Login />} />
+      <Route path="/auth-callback" element={<AuthCallback />} />
+
+      {/* Main Employer Dashboard Layout */}
+      <Route element={<EmployerDashboardLayout />}>
         <Route
           path="/"
           element={
@@ -77,21 +83,6 @@ function App() {
               }
             >
               <EmployeeEntry />
-            </ErrorBoundary>
-          }
-        />
-        <Route
-          path="/portal"
-          element={
-            <ErrorBoundary
-              fallback={
-                <ErrorFallback
-                  title="Employee Portal Error"
-                  description="Something went wrong loading your portal."
-                />
-              }
-            >
-              <EmployeePortal />
             </ErrorBoundary>
           }
         />
@@ -189,9 +180,29 @@ function App() {
             </ErrorBoundary>
           }
         />
-        <Route path="/login" element={<Login />} />
-        <Route path="/auth-callback" element={<AuthCallback />} />
       </Route>
+
+      {/* Portal / Employee routes can still use AppLayout if they have a different look */}
+      <Route element={<AppLayout />}>
+        <Route
+          path="/portal"
+          element={
+            <ErrorBoundary
+              fallback={
+                <ErrorFallback
+                  title="Employee Portal Error"
+                  description="Something went wrong loading your portal."
+                />
+              }
+            >
+              <EmployeePortal />
+            </ErrorBoundary>
+          }
+        />
+      </Route>
+
+      {/* Redirect unknown routes */}
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }

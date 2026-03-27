@@ -1,17 +1,11 @@
-import React, { useState, useEffect } from "react";
-import { Outlet, NavLink, useLocation } from "react-router-dom";
-import { Card } from "@stellar/design-system";
-import { useWallet } from "../providers/WalletProvider";
-import {
-  Menu,
-  X,
-  Wallet,
-  Users,
-  FileText,
-  Settings,
-  Home,
-  Coins,
-} from "lucide-react";
+import React, { useState, useEffect } from 'react';
+import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { Card, Icon, Heading } from '@stellar/design-system';
+import { useWallet } from '../hooks/useWallet';
+import { LanguageSelector } from './LanguageSelector';
+import { ThemeToggle } from './ThemeToggle';
+import ConnectAccount from './ConnectAccount';
+import { Menu, X } from 'lucide-react';
 
 interface OrganizationData {
   name: string;
@@ -19,28 +13,22 @@ interface OrganizationData {
   balanceAsset: string;
 }
 
-type WalletContext = {
-  address: string | null;
-};
-
 // Mock organization data - replace with actual API call
 const useOrganizationData = (): OrganizationData => {
-  const { address } = (useWallet as () => WalletContext)();
+  const { address } = useWallet();
   const [orgData, setOrgData] = useState<OrganizationData>({
-    name: "Acme Corporation",
-    balance: "0.00",
-    balanceAsset: "XLM",
+    name: 'PayD Organization',
+    balance: '0.00',
+    balanceAsset: 'XLM',
   });
 
   useEffect(() => {
-    // TODO: Replace with actual API call to fetch organization data
-    // For now, using mock data
     if (address) {
-      // Simulate fetching balance - in real app, fetch from Stellar Horizon or backend
+      // TODO: Replace with actual API call to fetch organization data
       setOrgData({
-        name: "Acme Corporation",
-        balance: "12,450.50",
-        balanceAsset: "USDC",
+        name: 'Stellar Global Corp',
+        balance: '125,480.25',
+        balanceAsset: 'USDC',
       });
     }
   }, [address]);
@@ -50,15 +38,18 @@ const useOrganizationData = (): OrganizationData => {
 
 const EmployerDashboardLayout: React.FC = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const organization = useOrganizationData();
+  const { address } = useWallet();
 
   const navigationItems = [
-    { path: "/", label: "Dashboard", icon: Home },
-    { path: "/payroll", label: "Payroll", icon: Wallet },
-    { path: "/employee", label: "Employees", icon: Users },
-    { path: "/reports", label: "Reports", icon: FileText },
-    { path: "/settings", label: "Settings", icon: Settings },
+    { path: '/', label: 'Dashboard', icon: Icon.Home01 },
+    { path: '/payroll', label: 'Payroll', icon: Icon.Coins01 },
+    { path: '/employee', label: 'Employees', icon: Icon.Users01 },
+    { path: '/reports', label: 'Reports', icon: Icon.File02 },
+    { path: '/analytics', label: 'Analytics', icon: Icon.BarChart01 },
+    { path: '/settings', label: 'Settings', icon: Icon.Settings01 },
   ];
 
   // Close sidebar when route changes (mobile)
@@ -67,37 +58,42 @@ const EmployerDashboardLayout: React.FC = () => {
   }, [location.pathname]);
 
   return (
-    <div className="flex h-screen bg-[#080b10] text-white overflow-hidden">
+    <div className="flex h-screen bg-bg text-text overflow-hidden font-body">
       {/* Sidebar */}
       <aside
         className={`
           fixed lg:static inset-y-0 left-0 z-50
-          w-64 bg-[#0d1117] border-r border-white/10
+          w-72 bg-surface border-r border-border
           transform transition-transform duration-300 ease-in-out
-          ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
+          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         `}
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="flex items-center justify-between p-6 border-b border-white/10">
-            <NavLink to="/" className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg grid place-items-center font-extrabold text-black text-sm tracking-tight shadow-[0_0_20px_rgba(74,240,184,0.3)] bg-gradient-to-br from-[#4af0b8] to-[#7c6ff7]">
+          <div className="flex items-center justify-between p-6 border-b border-border">
+            <NavLink to="/" className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl grid place-items-center font-black text-black text-sm tracking-tight shadow-lg shadow-accent/20 bg-gradient-to-br from-accent to-accent2">
                 P
               </div>
-              <span className="text-lg font-extrabold tracking-tight">
-                Pay<span className="text-[#4af0b8]">D</span>
-              </span>
+              <div className="flex flex-col">
+                <span className="text-xl font-black tracking-tight leading-none">
+                  Pay<span className="text-accent">D</span>
+                </span>
+                <span className="text-[10px] font-mono text-muted tracking-widest uppercase">
+                  Employer
+                </span>
+              </div>
             </NavLink>
             <button
               onClick={() => setSidebarOpen(false)}
-              className="lg:hidden text-[#8b949e] hover:text-white"
+              className="lg:hidden p-2 text-muted hover:text-text rounded-lg hover:bg-surface-hi"
             >
-              <X className="w-5 h-5" />
+              <X size={20} />
             </button>
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 overflow-y-auto p-4 space-y-1">
+          <nav className="flex-1 overflow-y-auto p-4 py-8 space-y-2">
             {navigationItems.map((item) => {
               const IconComponent = item.icon;
               const isActive = location.pathname === item.path;
@@ -106,27 +102,52 @@ const EmployerDashboardLayout: React.FC = () => {
                   key={item.path}
                   to={item.path}
                   className={`
-                    flex items-center gap-3 px-4 py-3 rounded-lg
-                    transition-all duration-200
+                    flex items-center gap-4 px-5 py-3.5 rounded-xl
+                    transition-all duration-200 group
                     ${
                       isActive
-                        ? "bg-white/10 text-[#4af0b8] border border-[#4af0b8]/30"
-                        : "text-[#8b949e] hover:bg-white/5 hover:text-white"
+                        ? 'bg-accent/10 text-accent border border-accent/20'
+                        : 'text-muted hover:bg-surface-hi hover:text-text'
                     }
                   `}
                 >
-                  <IconComponent className="w-5 h-5" />
-                  <span className="font-medium text-sm">{item.label}</span>
+                  <IconComponent
+                    className={`w-5 h-5 transition-colors ${isActive ? 'text-accent' : 'text-muted group-hover:text-text'}`}
+                  />
+                  <span className="font-bold text-sm tracking-wide">{item.label}</span>
                 </NavLink>
               );
             })}
           </nav>
 
+          {/* Org Selector / Context */}
+          <div className="p-4 mx-4 mb-6 rounded-2xl bg-surface-hi border border-border">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-8 h-8 rounded-full bg-accent/20 grid place-items-center">
+                <Icon.Anchor className="w-4 h-4 text-accent" />
+              </div>
+              <div className="overflow-hidden">
+                <p className="text-[10px] font-mono text-muted uppercase tracking-tighter truncate">
+                  Connected Organization
+                </p>
+                <p className="text-xs font-black truncate">{organization.name}</p>
+              </div>
+            </div>
+            <button
+              className="w-full py-2 bg-bg hover:bg-black/40 text-[10px] font-black uppercase tracking-widest rounded-lg border border-border transition-colors text-muted hover:text-text"
+              onClick={() => {
+                void navigate('/settings');
+              }}
+            >
+              Switch Org
+            </button>
+          </div>
+
           {/* Footer */}
-          <div className="p-4 border-t border-white/10">
-            <div className="flex items-center gap-2 text-xs text-[#8b949e]">
-              <div className="w-1.5 h-1.5 rounded-full bg-[#4af0b8] shadow-[0_0_6px_#4af0b8]" />
-              <span className="font-mono">STELLAR NETWORK</span>
+          <div className="p-6 border-t border-border bg-bg/50">
+            <div className="flex items-center gap-2 text-[10px] text-muted font-mono tracking-widest uppercase">
+              <div className="w-2 h-2 rounded-full bg-accent animate-pulse shadow-[0_0_8px_var(--accent)]" />
+              Mainnet Activity
             </div>
           </div>
         </div>
@@ -135,7 +156,7 @@ const EmployerDashboardLayout: React.FC = () => {
       {/* Overlay for mobile */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -143,43 +164,61 @@ const EmployerDashboardLayout: React.FC = () => {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top Bar */}
-        <header className="h-16 bg-[#0d1117]/85 backdrop-blur-[20px] backdrop-saturate-180 border-b border-white/10 flex items-center justify-between px-6">
-          {/* Mobile Menu Button */}
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="lg:hidden text-[#8b949e] hover:text-white"
-          >
-            <Menu className="w-6 h-6" />
-          </button>
+        <header className="h-20 bg-surface/80 backdrop-blur-xl border-b border-border flex items-center justify-between px-8 sticky top-0 z-30">
+          <div className="flex items-center gap-4">
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="lg:hidden p-2.5 bg-surface-hi border border-border text-muted hover:text-text rounded-xl"
+            >
+              <Menu size={24} />
+            </button>
 
-          {/* Organization Name */}
-          <div className="flex-1 flex items-center gap-4">
-            <h1 className="text-lg font-bold text-white">
-              {organization.name}
-            </h1>
+            {/* Breadcrumb / Title area */}
+            <div className="hidden md:block">
+              <p className="text-[10px] uppercase tracking-[0.2em] text-muted font-black mb-0.5">
+                Employer Console
+              </p>
+              <Heading as="h1" size="xs" weight="bold">
+                {navigationItems.find((item) => item.path === location.pathname)?.label ||
+                  'Overview'}
+              </Heading>
+            </div>
           </div>
 
-          {/* Balance Display */}
-          <div className="flex items-center gap-4">
-            <Card>
-              <div className="flex items-center gap-2 px-2 py-1">
-                <Coins className="w-5 h-5 text-[#4af0b8]" />
-                <div className="flex flex-col">
-                  <span className="text-xs text-[#8b949e] font-mono">
-                    Balance
+          {/* Right side controls */}
+          <div className="flex items-center gap-4 lg:gap-6">
+            <div className="hidden lg:flex items-center gap-2">
+              <LanguageSelector />
+              <ThemeToggle />
+            </div>
+
+            <div className="h-10 w-px bg-border hidden lg:block" />
+
+            {/* Balance Card using SDS */}
+            {address && (
+              <Card addlClassName="!p-0 !bg-transparent !border-0 hidden sm:block">
+                <div className="flex flex-col items-end px-4 py-1 rounded-xl bg-accent/5 border border-accent/20">
+                  <span className="text-[9px] text-accent/70 font-mono font-bold uppercase tracking-widest leading-none mb-1">
+                    Available Balance
                   </span>
-                  <span className="text-sm font-bold text-white">
-                    {organization.balance} {organization.balanceAsset}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-black text-text">{organization.balance}</span>
+                    <span className="text-[10px] font-black text-accent bg-accent/10 px-1.5 py-0.5 rounded">
+                      {organization.balanceAsset}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            </Card>
+              </Card>
+            )}
+
+            <ConnectAccount />
           </div>
         </header>
 
         {/* Content Area with Route Outlet */}
-        <main className="flex-1 overflow-y-auto bg-[#080b10]">
-          <div className="p-6">
+        <main className="flex-1 overflow-y-auto bg-bg p-8 custom-scrollbar">
+          <div className="max-w-7xl mx-auto page-fade">
             <Outlet />
           </div>
         </main>

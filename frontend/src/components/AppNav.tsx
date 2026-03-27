@@ -1,27 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
-import {
-  Code,
-  User,
-  Wallet,
-  FileText,
-  Globe,
-  LayoutDashboard,
-  Activity,
-  ShieldAlert,
-  Menu,
-  X,
-  PieChart,
-} from 'lucide-react';
+import { Code, User, Wallet, FileText, Globe, PieChart } from 'lucide-react';
 import { Avatar } from './Avatar';
-import { AvatarUpload } from './AvatarUpload';
-import { useWallet } from '../hooks/useWallet';
 
 const AppNav: React.FC = () => {
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [isProfileEditorOpen, setIsProfileEditorOpen] = useState(false);
   const [userImageUrl, setUserImageUrl] = useState<string | undefined>(undefined);
-  const { address, walletName, isConnecting, network, setNetwork } = useWallet();
 
   useEffect(() => {
     const savedImage = localStorage.getItem('payd:user-avatar');
@@ -30,12 +13,11 @@ const AppNav: React.FC = () => {
     }
   }, []);
 
-const AppNav = () => {
   // Mock user data - replace with actual user context
   const currentUser = {
-    email: "user@example.com",
-    name: "John Doe",
-    imageUrl: undefined,
+    email: 'user@example.com',
+    name: 'John Doe',
+    imageUrl: userImageUrl,
   };
 
   return (
@@ -45,8 +27,8 @@ const AppNav = () => {
         className={({ isActive }) =>
           `flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-semibold transition ${
             isActive
-              ? "text-(--accent) bg-white/5"
-              : "text-(--muted) hover:bg-white/10 hover:text-white"
+              ? 'text-(--accent) bg-white/5'
+              : 'text-(--muted) hover:bg-white/10 hover:text-white'
           }`
         }
       >
@@ -61,8 +43,8 @@ const AppNav = () => {
         className={({ isActive }) =>
           `flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-semibold transition ${
             isActive
-              ? "text-(--accent) bg-white/5"
-              : "text-(--muted) hover:bg-white/10 hover:text-white"
+              ? 'text-(--accent) bg-white/5'
+              : 'text-(--muted) hover:bg-white/10 hover:text-white'
           }`
         }
       >
@@ -77,8 +59,8 @@ const AppNav = () => {
         className={({ isActive }) =>
           `flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-semibold transition ${
             isActive
-              ? "text-(--accent) bg-white/5"
-              : "text-(--muted) hover:bg-white/10 hover:text-white"
+              ? 'text-(--accent) bg-white/5'
+              : 'text-(--muted) hover:bg-white/10 hover:text-white'
           }`
         }
       >
@@ -93,8 +75,8 @@ const AppNav = () => {
         className={({ isActive }) =>
           `flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-semibold transition ${
             isActive
-              ? "text-(--accent) bg-white/5"
-              : "text-(--muted) hover:bg-white/10 hover:text-white"
+              ? 'text-(--accent) bg-white/5'
+              : 'text-(--muted) hover:bg-white/10 hover:text-white'
           }`
         }
       >
@@ -113,7 +95,6 @@ const AppNav = () => {
               : 'text-(--muted) hover:bg-white/10 hover:text-white'
           }`
         }
-        onClick={() => setMobileOpen(false)}
       >
         <span className="opacity-70">
           <PieChart className="w-4 h-4" />
@@ -128,8 +109,8 @@ const AppNav = () => {
         className={({ isActive }) =>
           `flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-mono tracking-wide border transition ${
             isActive
-              ? "text-(--accent2) bg-[rgba(124,111,247,0.06)] border-[rgba(124,111,247,0.25)]"
-              : "text-(--accent2) bg-[rgba(124,111,247,0.06)] border-[rgba(124,111,247,0.25)] hover:bg-[rgba(124,111,247,0.12)]"
+              ? 'text-(--accent2) bg-[rgba(124,111,247,0.06)] border-[rgba(124,111,247,0.25)]'
+              : 'text-(--accent2) bg-[rgba(124,111,247,0.06)] border-[rgba(124,111,247,0.25)] hover:bg-[rgba(124,111,247,0.12)]'
           }`
         }
       >
@@ -149,12 +130,8 @@ const AppNav = () => {
           size="sm"
         />
         <div className="flex-1 min-w-0">
-          <p className="text-[10px] font-semibold text-gray-800 truncate">
-            {currentUser.name}
-          </p>
-          <p className="text-[10px] text-gray-500 truncate">
-            {currentUser.email}
-          </p>
+          <p className="text-[10px] font-semibold text-gray-800 truncate">{currentUser.name}</p>
+          <p className="text-[10px] text-gray-500 truncate">{currentUser.email}</p>
         </div>
       </div>
     </nav>

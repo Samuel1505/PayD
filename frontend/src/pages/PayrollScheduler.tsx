@@ -1,10 +1,6 @@
-import { Button, Card, Heading, Input, Select, Text } from '@stellar/design-system';
+import { Card } from '@stellar/design-system';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-
-// Type assertion for Stellar components to work around library typing issues
-const InputComponent = Input as unknown as React.FC<Record<string, unknown>>;
-const SelectComponent = Select as unknown as React.FC<Record<string, unknown>>;
 
 import { AutosaveIndicator } from '../components/AutosaveIndicator';
 import { BulkPaymentStatusTracker } from '../components/BulkPaymentStatusTracker';
@@ -15,16 +11,16 @@ import { useAutosave } from '../hooks/useAutosave';
 import { useNotification } from '../hooks/useNotification';
 import { useSocket } from '../hooks/useSocket';
 import { useTransactionSimulation } from '../hooks/useTransactionSimulation';
-import { createClaimableBalanceTransaction, generateWallet } from '../services/stellar';
+import { generateWallet } from '../services/stellar';
 
 import { ContractErrorPanel } from '../components/ContractErrorPanel';
-import { HelpLink } from '../components/HelpLink';
 import { parseContractError, type ContractErrorDetail } from '../utils/contractErrorParser';
+import { computeNextRunDate } from '../utils/dateUtils';
 
 interface PayrollFormState {
   employeeName: string;
   amount: string;
-  frequency: "weekly" | "monthly";
+  frequency: 'weekly' | 'monthly';
   startDate: string;
   memo?: string;
 }
@@ -39,7 +35,7 @@ interface PendingClaim {
 }
 
 interface SchedulingConfig {
-  frequency: "weekly" | "biweekly" | "monthly";
+  frequency: 'weekly' | 'biweekly' | 'monthly';
   dayOfWeek?: number;
   dayOfMonth?: number;
   timeOfDay: string;
@@ -52,38 +48,26 @@ interface SchedulingConfig {
 }
 
 const initialFormState: PayrollFormState = {
-  employeeName: "",
-  amount: "",
-  frequency: "monthly",
-  startDate: "",
-  memo: "",
-};
-
-const formatLocalDateInput = (date: Date) => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+  employeeName: '',
+  amount: '',
+  frequency: 'monthly',
+  startDate: '',
+  memo: '',
 };
 
 export default function PayrollScheduler() {
   const { t } = useTranslation();
   const { notify } = useNotification();
-  const { socket, subscribeToTransaction, unsubscribeFromTransaction } =
-    useSocket();
+  const { socket, subscribeToTransaction, unsubscribeFromTransaction } = useSocket();
   const [formData, setFormData] = useState<PayrollFormState>(initialFormState);
   const [isBroadcasting, setIsBroadcasting] = useState(false);
   const [isWizardOpen, setIsWizardOpen] = useState(false);
-  const [activeSchedule, setActiveSchedule] = useState<SchedulingConfig | null>(
-    null,
-  );
+  const [activeSchedule, setActiveSchedule] = useState<SchedulingConfig | null>(null);
   const [nextRunDate, setNextRunDate] = useState<Date | null>(null);
   const [contractError, setContractError] = useState<ContractErrorDetail | null>(null);
 
-  const scheduleStorageKey = 'payd-scheduler-config';
-
   const [pendingClaims, setPendingClaims] = useState<PendingClaim[]>(() => {
-    const saved = localStorage.getItem("pending-claims");
+    const saved = localStorage.getItem('pending-claims');
     if (saved) {
       try {
         return JSON.parse(saved) as PendingClaim[];
@@ -95,8 +79,8 @@ export default function PayrollScheduler() {
   });
 
   const { saving, lastSaved, loadSavedData } = useAutosave<PayrollFormState>(
-    "payroll-scheduler-draft",
-    formData,
+    'payroll-scheduler-draft',
+    formData
   );
 
   const {
@@ -119,21 +103,19 @@ export default function PayrollScheduler() {
   const handleScheduleComplete = (config: SchedulingConfig) => {
     setActiveSchedule(config);
     setIsWizardOpen(false);
-    notify("Payroll schedule successfully configured!");
+    notify('Payroll schedule successfully configured!');
 
     // Compute next run for countdown demo
     const d = new Date();
-    if (config.frequency === "monthly") d.setMonth(d.getMonth() + 1);
-    else if (config.frequency === "weekly") d.setDate(d.getDate() + 7);
+    if (config.frequency === 'monthly') d.setMonth(d.getMonth() + 1);
+    else if (config.frequency === 'weekly') d.setDate(d.getDate() + 7);
     else d.setDate(d.getDate() + 14);
 
     setNextRunDate(computeNextRunDate(config, new Date()));
   };
 
   const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >,
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -152,24 +134,22 @@ export default function PayrollScheduler() {
     }
 
     const handleTransactionUpdate = (data: TransactionUpdate) => {
-      console.log("Received transaction update:", data);
+      console.log('Received transaction update:', data);
       setPendingClaims((prev) =>
         prev.map((claim) =>
-          claim.id === data.transactionId
-            ? { ...claim, status: data.status }
-            : claim,
-        ),
+          claim.id === data.transactionId ? { ...claim, status: data.status } : claim
+        )
       );
 
-      if (data.status === "confirmed") {
+      if (data.status === 'confirmed') {
         notify(`Payment ${data.transactionId} confirmed!`);
       }
     };
 
-    socket.on("transaction:update", handleTransactionUpdate);
+    socket.on('transaction:update', handleTransactionUpdate);
 
     return () => {
-      socket.off("transaction:update", handleTransactionUpdate);
+      socket.off('transaction:update', handleTransactionUpdate);
     };
   }, [socket, notify]);
 
@@ -177,7 +157,7 @@ export default function PayrollScheduler() {
     e.preventDefault();
 
     if (!formData.employeeName || !formData.amount) {
-      notify("Please fill in all required fields.");
+      notify('Please fill in all required fields.');
       return;
     }
 
@@ -186,7 +166,7 @@ export default function PayrollScheduler() {
     // Mock XDR for simulation demonstration
     // In a real app, this would be built using the Stellar SDK from formData
     const mockXdr =
-      "AAAAAgAAAABmF8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
+      'AAAAAgAAAABmF8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
 
     const result = await simulate({ envelopeXdr: mockXdr });
     if (result && !result.success) {
@@ -207,24 +187,23 @@ export default function PayrollScheduler() {
         id: Math.random().toString(36).substr(2, 9),
         employeeName: formData.employeeName,
         amount: formData.amount,
-        dateScheduled:
-          formData.startDate || new Date().toISOString().split("T")[0],
+        dateScheduled: formData.startDate || new Date().toISOString().split('T')[0],
         claimantPublicKey: generateWallet().publicKey,
-        status: "Pending Claim",
+        status: 'Pending Claim',
       };
       const updatedClaims = [...pendingClaims, newClaim];
       setPendingClaims(updatedClaims);
-      localStorage.setItem("pending-claims", JSON.stringify(updatedClaims));
+      localStorage.setItem('pending-claims', JSON.stringify(updatedClaims));
 
       // Subscribe to updates for this new claim
       subscribeToTransaction(newClaim.id);
 
-      notify("Payroll stream successfully broadcasted to Stellar network!");
+      notify('Payroll stream successfully broadcasted to Stellar network!');
       resetSimulation();
       setFormData(initialFormState);
     } catch (err) {
       console.error(err);
-      notify("Broadcast failed. Please check your connection.");
+      notify('Broadcast failed. Please check your connection.');
     } finally {
       setIsBroadcasting(false);
     }
@@ -234,7 +213,7 @@ export default function PayrollScheduler() {
     unsubscribeFromTransaction(id);
     const updatedClaims = pendingClaims.filter((c) => c.id !== id);
     setPendingClaims(updatedClaims);
-    localStorage.setItem("pending-claims", JSON.stringify(updatedClaims));
+    localStorage.setItem('pending-claims', JSON.stringify(updatedClaims));
   };
 
   return (
@@ -242,13 +221,11 @@ export default function PayrollScheduler() {
       <div className="w-full mb-12 flex items-end justify-between border-b border-hi pb-8">
         <div>
           <h1 className="text-4xl font-black mb-2 tracking-tight">
-            {t("payroll.title", "Payroll")}{" "}
-            <span className="text-accent">
-              {t("payroll.titleHighlight", "Scheduler")}
-            </span>
+            {t('payroll.title', 'Payroll')}{' '}
+            <span className="text-accent">{t('payroll.titleHighlight', 'Scheduler')}</span>
           </h1>
           <p className="text-muted font-mono text-sm tracking-wider uppercase">
-            {t("payroll.subtitle", "Automated distribution engine")}
+            {t('payroll.subtitle', 'Automated distribution engine')}
           </p>
         </div>
         <div className="flex flex-col items-end gap-2">
@@ -295,14 +272,11 @@ export default function PayrollScheduler() {
               Automation Active
             </h3>
             <p className="text-muted text-sm">
-              Scheduled to run{" "}
+              Scheduled to run{' '}
               <span className="font-bold text-text capitalize">
-                {activeSchedule?.frequency ?? ""}
-              </span>{" "}
-              at{" "}
-              <span className="font-mono text-text">
-                {activeSchedule?.timeOfDay ?? ""}
-              </span>
+                {activeSchedule?.frequency ?? ''}
+              </span>{' '}
+              at <span className="font-mono text-text">{activeSchedule?.timeOfDay ?? ''}</span>
             </p>
           </div>
           <div className="bg-bg border border-hi rounded-xl p-4 shadow-inner">
@@ -331,7 +305,7 @@ export default function PayrollScheduler() {
             >
               <div className="md:col-span-2">
                 <label className="block text-xs font-bold uppercase tracking-widest text-muted mb-3 ml-1">
-                  {t("payroll.employeeName", "Employee Name")}
+                  {t('payroll.employeeName', 'Employee Name')}
                 </label>
                 <input
                   type="text"
@@ -345,7 +319,7 @@ export default function PayrollScheduler() {
 
               <div>
                 <label className="block text-xs font-bold uppercase tracking-widest text-muted mb-3 ml-1">
-                  {t("payroll.amountLabel", "Amount (USD equivalent)")}
+                  {t('payroll.amountLabel', 'Amount (USD equivalent)')}
                 </label>
                 <div className="relative">
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted font-mono">
@@ -364,7 +338,7 @@ export default function PayrollScheduler() {
 
               <div>
                 <label className="block text-xs font-bold uppercase tracking-widest text-muted mb-3 ml-1">
-                  {t("payroll.distributionFrequency", "Distribution Frequency")}
+                  {t('payroll.distributionFrequency', 'Distribution Frequency')}
                 </label>
                 <select
                   name="frequency"
@@ -373,17 +347,17 @@ export default function PayrollScheduler() {
                   className="w-full bg-black/20 border border-hi rounded-xl p-4 text-text outline-none focus:border-accent/50 focus:bg-accent/5 transition-all appearance-none cursor-pointer"
                 >
                   <option value="weekly" className="bg-surface">
-                    {t("payroll.frequencyWeekly", "Weekly")}
+                    {t('payroll.frequencyWeekly', 'Weekly')}
                   </option>
                   <option value="monthly" className="bg-surface">
-                    {t("payroll.frequencyMonthly", "Monthly")}
+                    {t('payroll.frequencyMonthly', 'Monthly')}
                   </option>
                 </select>
               </div>
 
               <div className="md:col-span-2">
                 <label className="block text-xs font-bold uppercase tracking-widest text-muted mb-3 ml-1">
-                  {t("payroll.commencementDate", "Commencement Date")}
+                  {t('payroll.commencementDate', 'Commencement Date')}
                 </label>
                 <input
                   type="date"
@@ -415,8 +389,8 @@ export default function PayrollScheduler() {
                     className="w-full py-4 bg-accent text-bg font-black rounded-xl hover:scale-[1.01] transition-transform shadow-lg shadow-accent/10 uppercase tracking-widest text-sm flex items-center justify-center gap-2"
                   >
                     {isSimulating
-                      ? "Simulating..."
-                      : t("payroll.submit", "Initialize and Validate")}
+                      ? 'Simulating...'
+                      : t('payroll.submit', 'Initialize and Validate')}
                   </button>
                 ) : (
                   <button
@@ -427,9 +401,7 @@ export default function PayrollScheduler() {
                     disabled={isBroadcasting}
                     className="w-full py-4 bg-success text-bg font-black rounded-xl hover:scale-[1.01] transition-transform shadow-lg shadow-success/10 uppercase tracking-widest text-sm flex items-center justify-center gap-2"
                   >
-                    {isBroadcasting
-                      ? "Broadcasting..."
-                      : "Confirm & Broadcast to Network"}
+                    {isBroadcasting ? 'Broadcasting...' : 'Confirm & Broadcast to Network'}
                   </button>
                 )}
               </div>
@@ -469,8 +441,8 @@ export default function PayrollScheduler() {
                 Pre-flight Validation
               </h3>
               <p className="text-xs text-muted leading-relaxed mb-4">
-                All transactions are simulated via Stellar Horizon before
-                submission. This catches common errors like:
+                All transactions are simulated via Stellar Horizon before submission. This catches
+                common errors like:
               </p>
               <ul className="text-xs text-muted space-y-2 list-disc pl-4 font-medium">
                 <li>Insufficient XLM balance for fees</li>

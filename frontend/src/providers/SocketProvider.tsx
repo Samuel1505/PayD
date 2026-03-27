@@ -1,26 +1,17 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
-import { io, Socket } from "socket.io-client";
-import { useNotification } from "./NotificationProvider";
+import React, { useEffect, useState, useRef } from 'react';
+import { io, Socket } from 'socket.io-client';
+import { useNotification } from '../hooks/useNotification';
 
-interface SocketContextType {
-  socket: Socket | null;
-  connected: boolean;
-  subscribeToTransaction: (transactionId: string) => void;
-  unsubscribeFromTransaction: (transactionId: string) => void;
-}
-
-const SocketContext = createContext<SocketContextType | undefined>(undefined);
+import { SocketContext } from '../hooks/useSocket';
 
 // Assuming backend is running on port 3000
 const SOCKET_URL: string =
-  (import.meta.env.VITE_API_URL as string | undefined) ||
-  "http://localhost:3000";
+  (import.meta.env.VITE_API_URL as string | undefined) || 'http://localhost:3000';
 
-export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
+export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [connected, setConnected] = useState(false);
+  const [isPollingFallback, setIsPollingFallback] = useState(false);
   const { notify } = useNotification();
 
   // Track whether the first successful connection has fired so we don't
@@ -31,26 +22,36 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     const newSocket: Socket = io(SOCKET_URL, {
       withCredentials: true,
-      transports: ["websocket", "polling"], // Allow fallback to polling
+      transports: ['websocket', 'polling'], // Allow fallback to polling
       reconnectionAttempts: 5,
     });
 
     setSocket(newSocket);
 
-    newSocket.on("connect", () => {
-      console.log("Socket connected:", newSocket.id);
+    newSocket.on('connect', () => {
+      console.log('Socket connected:', newSocket.id);
       setConnected(true);
-      notify("Real-time updates connected");
+      setIsPollingFallback(newSocket.io.engine.transport.name === 'polling');
+
+      if (!hasConnectedOnce.current) {
+        notify('Real-time updates connected');
+        hasConnectedOnce.current = true;
+      }
     });
 
-    newSocket.on("disconnect", () => {
-      console.log("Socket disconnected");
+    newSocket.on('reconnect', (attempt: number) => {
+      reconnectCount.current = attempt;
+      notify(`Reconnected after ${attempt} attempts`);
+    });
+
+    newSocket.on('disconnect', () => {
+      console.log('Socket disconnected');
       setConnected(false);
-      notify("Real-time updates disconnected");
+      notify('Real-time updates disconnected');
     });
 
-    newSocket.on("connect_error", (err: Error) => {
-      console.error("Socket connection error:", err);
+    newSocket.on('connect_error', (err: Error) => {
+      console.error('Socket connection error:', err);
       setConnected(false);
     });
 
@@ -61,13 +62,13 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const subscribeToTransaction = (transactionId: string) => {
     if (socket && connected) {
-      socket.emit("subscribe:transaction", transactionId);
+      socket.emit('subscribe:transaction', transactionId);
     }
   };
 
   const unsubscribeFromTransaction = (transactionId: string) => {
     if (socket && connected) {
-      socket.emit("unsubscribe:transaction", transactionId);
+      socket.emit('unsubscribe:transaction', transactionId);
     }
   };
 
@@ -84,7 +85,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   return (
-    <SocketContext.Provider
+    <SocketContext
       value={{
         socket,
         connected,
@@ -96,14 +97,6 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
       }}
     >
       {children}
-    </SocketContext.Provider>
+    </SocketContext>
   );
-};
-
-export const useSocket = () => {
-  const context = useContext(SocketContext);
-  if (context === undefined) {
-    throw new Error("useSocket must be used within a SocketProvider");
-  }
-  return context;
 };
