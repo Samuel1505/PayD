@@ -119,7 +119,8 @@ app.use('/api/search', dataRateLimit(), searchRoutes);
 app.use('/api', apiRateLimit(), contractRoutes);
 app.use('/api/stellar-throttling', apiRateLimit(), stellarThrottlingRoutes);
 
-// Health check endpoint
+// Health check endpoints
+app.get('/api/health', HealthController.getHealthStatus);
 app.get('/health', HealthController.getHealthStatus);
 
 // 404 handler
