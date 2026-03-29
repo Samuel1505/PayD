@@ -23,6 +23,16 @@ export const config = {
     retryDelay: parseInt(process.env.SDS_RETRY_DELAY || '1000', 10),
   },
 
+  // Soroban Event Indexer Configuration
+  sorobanIndexer: {
+    enabled: process.env.SOROBAN_INDEXER_ENABLE === 'true',
+    pollDelayMs: parseInt(process.env.SOROBAN_INDEXER_POLL_DELAY || '10000', 10),
+    batchSize: parseInt(process.env.SOROBAN_INDEXER_BATCH_SIZE || '50', 10),
+    targetContracts: process.env.SOROBAN_TARGET_CONTRACTS 
+      ? process.env.SOROBAN_TARGET_CONTRACTS.split(',').map(id => id.trim())
+      : [],
+  },
+
   // Database Configuration
   database: {
     url: process.env.DATABASE_URL,
