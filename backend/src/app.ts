@@ -1,33 +1,42 @@
 import express from 'express';
 import cors from 'cors';
-import morgan from 'morgan';
-import config from './config';
-import logger from './utils/logger';
-import payrollRoutes from './routes/payroll.routes';
-import authRoutes from './routes/authRoutes';
-import employeeRoutes from './routes/employeeRoutes';
-import assetRoutes from './routes/assetRoutes';
-import paymentRoutes from './routes/paymentRoutes';
-import searchRoutes from './routes/searchRoutes';
+import config from './config/index.js';
+import logger from './utils/logger.js';
+import { requestLogger, errorLogger } from './middleware/requestLogger.js';
+import metricsRoutes from './routes/metricsRoutes.js';
+import payrollRoutes from './routes/payroll.routes.js';
+import authRoutes from './routes/authRoutes.js';
+import employeeRoutes from './routes/employeeRoutes.js';
+import assetRoutes from './routes/assetRoutes.js';
+import paymentRoutes from './routes/paymentRoutes.js';
+import searchRoutes from './routes/searchRoutes.js';
 
 const app = express();
 
-// Middleware
+// ─── Core Middleware ──────────────────────────────────────────────────────────
 app.use(cors());
-app.use(morgan('combined'));
+// Structured JSON request logging + Prometheus metrics (replaces morgan)
+app.use(requestLogger);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Health check endpoint
-app.get('/health', (req, res) => {
+// ─── Observability Endpoints ─────────────────────────────────────────────────
+
+// Health check — used by Docker / load-balancer probes
+app.get('/health', (_req, res) => {
   res.json({
     status: 'ok',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
+    environment: config.nodeEnv,
+    version: process.env.npm_package_version ?? '1.0.0',
   });
 });
 
-// API routes
+// Prometheus metrics — scraped by Prometheus every 15 s
+app.use('/metrics', metricsRoutes);
+
+// ─── API Routes ───────────────────────────────────────────────────────────────
 app.use('/api/auth', authRoutes);
 app.use('/api/payroll', payrollRoutes);
 app.use('/api/employees', employeeRoutes);
@@ -35,7 +44,7 @@ app.use('/api/assets', assetRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/search', searchRoutes);
 
-// 404 handler
+// ─── 404 ──────────────────────────────────────────────────────────────────────
 app.use((req, res) => {
   res.status(404).json({
     error: 'Not Found',
@@ -43,8 +52,11 @@ app.use((req, res) => {
   });
 });
 
-// Error handler
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+// ─── Error Handling ───────────────────────────────────────────────────────────
+// errorLogger must come before the final error responder so it can log + count
+app.use(errorLogger);
+
+app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   logger.error('Unhandled error', err);
   res.status(500).json({
     error: 'Internal Server Error',
