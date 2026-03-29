@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useDebounce } from '../hooks/useDebounce';
 import { Avatar } from './Avatar';
 import { AvatarUpload } from './AvatarUpload';
 import { CSVUploader } from './CSVUploader';
@@ -51,6 +52,8 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
   }>({ open: false });
   const [sortKey, setSortKey] = useState<keyof Employee>('name');
   const [sortAsc, setSortAsc] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearch = useDebounce(searchQuery, 300);
 
   const handleDataParsed = (data: CSVRow[]) => {
     const newEmployees = data.map((row) => ({
@@ -82,7 +85,18 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
     }
   };
 
-  const sortedEmployees = [...employees].sort((a, b) => {
+  const filteredEmployees = debouncedSearch
+    ? employees.filter((emp) => {
+        const q = debouncedSearch.toLowerCase();
+        return (
+          emp.name.toLowerCase().includes(q) ||
+          emp.email.toLowerCase().includes(q) ||
+          emp.position.toLowerCase().includes(q)
+        );
+      })
+    : employees;
+
+  const sortedEmployees = [...filteredEmployees].sort((a, b) => {
     const valA = a[sortKey] ?? '';
     const valB = b[sortKey] ?? '';
     if (typeof valA === 'number' && typeof valB === 'number') {
@@ -149,8 +163,17 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
 
   return (
     <div className="w-full card glass noise overflow-hidden p-0">
-      <div className="flex justify-between items-center p-6">
+      <div className="flex flex-wrap justify-between items-center gap-3 p-6">
         <span className="font-bold text-lg">Employees</span>
+        <input
+          type="search"
+          id="employee-search"
+          aria-label="Search employees"
+          placeholder="Search by name, email, or role…"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="rounded border border-gray-300 bg-transparent px-3 py-1.5 text-sm placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent"
+        />
       </div>
       <table className="w-full table-fixed text-left border-collapse">
         <thead>
@@ -192,7 +215,9 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
           {sortedEmployees.length === 0 ? (
             <tr>
               <td colSpan={6} className="p-6 text-center text-gray-500">
-                No employees found
+                {debouncedSearch
+                  ? `No employees match "${debouncedSearch}"`
+                  : 'No employees found'}
               </td>
             </tr>
           ) : (
