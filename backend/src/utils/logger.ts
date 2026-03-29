@@ -1,3 +1,6 @@
+import { randomUUID } from 'crypto';
+import { getRequestId, REQUEST_ID_HEADER } from '../middlewares/requestIdMiddleware.js';
+
 enum LogLevel {
   DEBUG = 0,
   INFO = 1,
@@ -48,7 +51,14 @@ export class Logger {
    */
   private formatMessage(level: string, message: string, data?: any): string {
     const timestamp = new Date().toISOString();
-    const meta = data ? ` | ${JSON.stringify(data)}` : '';
+    const requestId = getRequestId() ?? randomUUID();
+    const normalizedData =
+      data === undefined
+        ? { [REQUEST_ID_HEADER]: requestId }
+        : typeof data === 'object' && data !== null
+          ? { [REQUEST_ID_HEADER]: requestId, ...data }
+          : { [REQUEST_ID_HEADER]: requestId, data };
+    const meta = ` | ${JSON.stringify(normalizedData)}`;
     return `[${timestamp}] [${level}] ${message}${meta}`;
   }
 
@@ -97,7 +107,8 @@ export class Logger {
    */
   error(message: string, error?: any): void {
     if (this.level <= LogLevel.ERROR) {
-      const errorData = error instanceof Error ? error.message : error;
+      const errorData =
+        error instanceof Error ? { message: error.message, stack: error.stack } : error;
       console.error(this.formatMessage('ERROR', message, errorData));
     }
   }

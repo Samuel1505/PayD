@@ -3,11 +3,13 @@ import cors from 'cors';
 import morgan from 'morgan';
 import helmet from 'helmet';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import config from './config/index.js';
 import { config as envConfig } from './config/env.js';
 import logger from './utils/logger.js';
 import passport from './config/passport.js';
 import { apiVersionMiddleware } from './middlewares/apiVersionMiddleware.js';
+import { REQUEST_ID_HEADER, requestIdMiddleware } from './middlewares/requestIdMiddleware.js';
 import { apiRateLimit, authRateLimit, dataRateLimit } from './middlewares/rateLimitMiddleware.js';
 import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './config/swaggerConfig.js';
@@ -75,7 +77,21 @@ const app = express();
 // Middleware
 app.use(helmet());
 app.use(cors(corsOptions));
-app.use(morgan('combined'));
+app.use(requestIdMiddleware);
+app.use(
+  morgan((tokens, req, res) => {
+    const requestId = req.requestId ?? '-';
+    return [
+      tokens.method(req, res),
+      tokens.url(req, res),
+      tokens.status(req, res),
+      tokens.res(req, res, 'content-length') || '-',
+      '-',
+      `${tokens['response-time'](req, res)} ms`,
+      `${REQUEST_ID_HEADER}=${requestId}`,
+    ].join(' ');
+  })
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(passport.initialize());
@@ -149,6 +165,7 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
   logger.error('Unhandled error', err);
   res.status(500).json({
     error: 'Internal Server Error',
+    requestId: req.requestId,
     message: config.nodeEnv === 'development' ? err.message : 'An error occurred',
   });
 });

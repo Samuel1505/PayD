@@ -13,6 +13,7 @@ TypeScript/Node.js backend service for PayD payroll platform with Stellar Data S
 ✅ **Tenant Config Caching** - Organization settings cached in Redis for 5 minutes
 ✅ **Performance Benchmarking** - SDS vs Horizon comparison  
 ✅ **REST API** - Comprehensive endpoints for all operations
+✅ **Request Correlation Logging** - Every log entry includes `x-request-id` for traceability
 
 ## Quick Start
 
@@ -61,6 +62,13 @@ SDS_API_KEY=your-api-key
 SDS_ENDPOINT=https://sds-api.stellar.org
 STELLAR_HORIZON_URL=https://horizon-testnet.stellar.org
 ```
+
+### Request ID Correlation
+
+- The backend accepts an optional `x-request-id` header for incoming requests.
+- If the header is missing or invalid, the API generates a UUID request ID automatically.
+- The resolved `x-request-id` is echoed in the response headers.
+- Application and error logs include `x-request-id` metadata for end-to-end tracing.
 
 ### Running
 
