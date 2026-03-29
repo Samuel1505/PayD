@@ -21,8 +21,9 @@ First off, thank you for considering contributing to PayD! It's people like you 
 
 1. Push your branch to your fork (`git push origin feature/your-feature-name`).
 2. Open a Pull Request against the `main` branch of the `drips-projects/PayD` repository.
-3. Describe your changes in detail in the PR description, referencing any open issues it resolves.
-4. Ensure all CI checks pass.
+3. Use the GitHub pull request template in [`.github/pull_request_template.md`](.github/pull_request_template.md) and complete the checklist items for tests, docs, and accessibility.
+4. Describe your changes in detail in the PR description, referencing any open issues it resolves.
+5. Ensure all CI checks pass.
 
 ## Issue Templates
 
