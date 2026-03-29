@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 const InputComponent = Input as unknown as React.FC<Record<string, unknown>>;
 const SelectComponent = Select as unknown as React.FC<Record<string, unknown>>;
 
+import { AccessibleDatePicker } from '../components/AccessibleDatePicker';
 import { AutosaveIndicator } from '../components/AutosaveIndicator';
 import { BulkPaymentStatusTracker } from '../components/BulkPaymentStatusTracker';
 import { CountdownTimer } from '../components/CountdownTimer';
@@ -247,6 +248,14 @@ export default function PayrollScheduler() {
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    if (simulationResult) {
+      resetSimulation();
+      setContractError(null);
+    }
+  };
+
+  const handleStartDateChange = (value: string) => {
+    setFormData((prev) => ({ ...prev, startDate: value }));
     if (simulationResult) {
       resetSimulation();
       setContractError(null);
@@ -520,14 +529,14 @@ export default function PayrollScheduler() {
               </div>
 
               <div className="md:col-span-2">
-                <InputComponent
+                <AccessibleDatePicker
                   id="startDate"
-                  fieldSize="md"
                   label={t('payroll.commencementDate', 'Commencement Date')}
-                  name="startDate"
-                  type="date"
                   value={formData.startDate}
-                  onChange={handleChange}
+                  onChange={handleStartDateChange}
+                  minDate={formatLocalDateInput(new Date())}
+                  required={true}
+                  helpText="Select the date when payroll will commence (must be today or later)"
                 />
               </div>
 
