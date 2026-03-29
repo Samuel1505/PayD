@@ -255,7 +255,12 @@ export const WalletProvider: React.FC<{
                 >
                   <div className="flex items-center gap-3">
                     {wallet.icon ? (
-                      <img src={wallet.icon} alt={wallet.name} loading="lazy" className="h-6 w-6 rounded" />
+                      <img
+                        src={wallet.icon}
+                        alt={wallet.name}
+                        loading="lazy"
+                        className="h-6 w-6 rounded"
+                      />
                     ) : (
                       <div className="h-6 w-6 rounded bg-white/10" />
                     )}
