@@ -66,6 +66,7 @@ export const payrollWorker = new Worker<PayrollJobData>(
 
         const preflightResult = await BalanceService.preflightCheck(
           distributionKeypair.publicKey(),
+          assetCode,
           assetIssuer,
           preflightPayments
         );
@@ -119,6 +120,7 @@ export const payrollWorker = new Worker<PayrollJobData>(
 
         try {
           const operations = [];
+          
 
           for (const item of chunk) {
             if (!item.employee_wallet_address) {
@@ -132,10 +134,9 @@ export const payrollWorker = new Worker<PayrollJobData>(
             );
 
             if (taxResult.total_tax > 0) {
-              logger.info(
-                `Applying tax deductions for employee ${item.employee_id}: Gross ${taxResult.gross_amount}, Tax ${taxResult.total_tax}, Net ${taxResult.net_amount}`
-              );
-
+              logger.info(`Applying tax deductions for employee ${item.employee_id}: Gross ${taxResult.gross_amount}, Tax ${taxResult.total_tax}, Net ${taxResult.net_amount}`);
+              
+              // Record each deduction for reporting
               for (const deduction of taxResult.deductions) {
                 await taxService.recordDeduction(
                   payroll_run.organization_id,
@@ -182,7 +183,8 @@ export const payrollWorker = new Worker<PayrollJobData>(
           // Update database for items in this chunk and log audit entries
           for (const item of chunk) {
             await PayrollBonusService.updateItemStatus(item.id, 'completed', result.hash);
-
+            
+            // Log successful transaction with item type
             await PayrollAuditService.logTransactionSucceeded(
               payroll_run.organization_id,
               payrollRunId,
@@ -194,7 +196,7 @@ export const payrollWorker = new Worker<PayrollJobData>(
               assetCode,
               item.item_type
             );
-
+            
             // Enqueue notification job for this payment
             try {
               await notificationQueueService.enqueuePaymentNotification({
@@ -207,13 +209,14 @@ export const payrollWorker = new Worker<PayrollJobData>(
                 timestamp: new Date().toISOString(),
               });
             } catch (notificationError) {
+              // Log error but don't fail the payroll processing
               logger.error('Failed to enqueue notification', {
                 transactionId: item.id,
                 employeeId: item.employee_id,
                 error: notificationError instanceof Error ? notificationError.message : 'Unknown error',
               });
             }
-
+            
             completedCount++;
           }
 
@@ -223,14 +226,16 @@ export const payrollWorker = new Worker<PayrollJobData>(
             progress,
             completedCount,
             totalItems,
-            lastTxHash: result.hash,
+            lastTxHash: result.hash
           });
+
         } catch (chunkError: any) {
           logger.error(`Failed to process chunk ${i + 1} for run ${payrollRunId}`, chunkError);
 
           for (const item of chunk) {
             await PayrollBonusService.updateItemStatus(item.id, 'failed');
-
+            
+            // Log failed transaction with item type
             await PayrollAuditService.logTransactionFailed(
               payroll_run.organization_id,
               payrollRunId,

@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 const InputComponent = Input as unknown as React.FC<Record<string, unknown>>;
 const SelectComponent = Select as unknown as React.FC<Record<string, unknown>>;
 
+import { AccessibleDatePicker } from '../components/AccessibleDatePicker';
 import { AutosaveIndicator } from '../components/AutosaveIndicator';
 import { BulkPaymentStatusTracker } from '../components/BulkPaymentStatusTracker';
 import { CountdownTimer } from '../components/CountdownTimer';
@@ -18,6 +19,7 @@ import { useTransactionSimulation } from '../hooks/useTransactionSimulation';
 import { createClaimableBalanceTransaction, generateWallet } from '../services/stellar';
 
 import { ContractErrorPanel } from '../components/ContractErrorPanel';
+import { IssuerMultisigBanner } from '../components/IssuerMultisigBanner';
 import { HelpLink } from '../components/HelpLink';
 import { parseContractError, type ContractErrorDetail } from '../utils/contractErrorParser';
 
@@ -252,6 +254,14 @@ export default function PayrollScheduler() {
     }
   };
 
+  const handleStartDateChange = (value: string) => {
+    setFormData((prev) => ({ ...prev, startDate: value }));
+    if (simulationResult) {
+      resetSimulation();
+      setContractError(null);
+    }
+  };
+
   useEffect(() => {
     if (!socket) return;
 
@@ -429,6 +439,8 @@ export default function PayrollScheduler() {
         </div>
       </div>
 
+      <IssuerMultisigBanner />
+
       {activeSchedule && (
         <div className="w-full mb-12 bg-black/20 border border-success/30 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
           <div className="absolute top-0 left-0 w-1 h-full bg-success"></div>
@@ -517,14 +529,14 @@ export default function PayrollScheduler() {
               </div>
 
               <div className="md:col-span-2">
-                <InputComponent
+                <AccessibleDatePicker
                   id="startDate"
-                  fieldSize="md"
                   label={t('payroll.commencementDate', 'Commencement Date')}
-                  name="startDate"
-                  type="date"
                   value={formData.startDate}
-                  onChange={handleChange}
+                  onChange={handleStartDateChange}
+                  minDate={formatLocalDateInput(new Date())}
+                  required={true}
+                  helpText="Select the date when payroll will commence (must be today or later)"
                 />
               </div>
 

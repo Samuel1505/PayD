@@ -9,6 +9,7 @@ const envSchema = z.object({
   REDIS_URL: z.string().optional(),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   CORS_ORIGIN: z.string().default('http://localhost:5173'),
+  CORS_ALLOWED_ORIGINS: z.string().optional(),
   THROTTLING_TPM: z.string().default('100'),
   THROTTLING_MAX_QUEUE_SIZE: z.string().default('1000'),
   THROTTLING_REFILL_INTERVAL_MS: z.string().default('1000'),
@@ -27,6 +28,11 @@ const envSchema = z.object({
   RESEND_API_KEY: z.string().optional(),
   SENDGRID_API_KEY: z.string().optional(),
   STELLAR_EXPLORER_URL: z.string().default('https://stellar.expert/explorer/testnet/tx'),
+  STELLAR_NETWORK: z.enum(['testnet', 'mainnet', 'public']).default('testnet'),
+  STELLAR_HORIZON_URL: z.string().optional(),
+  STELLAR_MAX_RETRIES: z.string().default('3'),
+  STELLAR_RETRY_DELAY_MS: z.string().default('1000'),
+  STELLAR_RETRY_DELAY_MAX_MS: z.string().default('10000'),
 });
 
 export const config = envSchema.parse(process.env);

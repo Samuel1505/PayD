@@ -1,7 +1,7 @@
 #![no_std]
 
 use soroban_sdk::{
-    Bytes, BytesN, Env, Vec,
+    Bytes, BytesN, Env, String, Vec,
     auth::{Context, CustomAccountInterface},
     contract, contracterror, contractimpl, contracttype,
     crypto::Hash,
@@ -61,6 +61,23 @@ pub struct SmartWalletContract;
 
 #[contractimpl]
 impl SmartWalletContract {
+    // ── SEP-0034 Contract Metadata ───────────────────────────
+
+    /// Returns the human-readable contract name (SEP-0034).
+    pub fn name(env: Env) -> String {
+        String::from_str(&env, env!("CARGO_PKG_NAME"))
+    }
+
+    /// Returns the contract version string (SEP-0034).
+    pub fn version(env: Env) -> String {
+        String::from_str(&env, env!("CARGO_PKG_VERSION"))
+    }
+
+    /// Returns the contract author / organization (SEP-0034).
+    pub fn author(env: Env) -> String {
+        String::from_str(&env, env!("CARGO_PKG_AUTHORS"))
+    }
+
     /// Initializes the wallet with a signer set and a signature threshold.
     pub fn init(env: Env, signers: Vec<SignerKey>, threshold: u32) -> Result<(), WalletError> {
         if env.storage().instance().has(&DataKey::Signers) {

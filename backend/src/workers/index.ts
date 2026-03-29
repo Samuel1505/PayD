@@ -11,9 +11,5 @@ export const startWorkers = () => {
     logger.info('Payroll worker is running');
   }
 
-  if (schedulerWorker.isRunning()) {
-    logger.info('Scheduler worker is running');
-  }
-
   logger.info('Notification worker initialized');
 };
