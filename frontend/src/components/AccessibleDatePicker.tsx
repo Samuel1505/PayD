@@ -1,8 +1,8 @@
 /**
  * AccessibleDatePicker Component
- * 
+ *
  * Provides a fully accessible date picker with keyboard navigation support.
- * 
+ *
  * Features:
  * - Full keyboard navigation (Tab, Arrow Keys, Enter, Escape)
  * - ARIA labels and descriptions for screen readers
@@ -10,7 +10,7 @@
  * - Calendar popup with date selection
  * - Mobile-friendly with native date input fallback
  * - Month/year navigation
- * 
+ *
  * Issue #118: Improve Date Picker Accessibility
  */
 
@@ -18,40 +18,39 @@ import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { ChevronLeft, ChevronRight, X, Calendar } from 'lucide-react';
 
 interface AccessibleDatePickerProps {
-    
   /** Unique identifier for the input */
   id: string;
-  
+
   /** Label text displayed above the input */
   label: string;
-  
+
   /** Current selected date (YYYY-MM-DD format) */
   value: string;
-  
+
   /** Callback when date is changed */
   onChange: (value: string) => void;
-  
+
   /** Minimum selectable date (YYYY-MM-DD format) */
   minDate?: string;
-  
+
   /** Maximum selectable date (YYYY-MM-DD format) */
   maxDate?: string;
-  
+
   /** Additional help text displayed below the input */
   helpText?: string;
-  
+
   /** Whether the input is required */
   required?: boolean;
-  
+
   /** Whether the input is disabled */
   disabled?: boolean;
-  
+
   /** Custom error message */
   error?: string;
-  
+
   /** Placeholder text */
   placeholder?: string;
-  
+
   /** Field size for styling */
   fieldSize?: 'sm' | 'md' | 'lg';
 }
@@ -109,7 +108,7 @@ const isValidDate = (dateStr: string): boolean => {
 
 /**
  * Accessible Date Picker Component
- * 
+ *
  * Usage:
  * ```tsx
  * <AccessibleDatePicker
@@ -176,9 +175,9 @@ export const AccessibleDatePicker: React.FC<AccessibleDatePickerProps> = ({
   }, [isOpen]);
 
   const handlePrevMonth = useCallback(() => {
-    setDisplayMonth(prev => {
+    setDisplayMonth((prev) => {
       if (prev === 0) {
-        setDisplayYear(y => y - 1);
+        setDisplayYear((y) => y - 1);
         return 11;
       }
       return prev - 1;
@@ -186,32 +185,35 @@ export const AccessibleDatePicker: React.FC<AccessibleDatePickerProps> = ({
   }, []);
 
   const handleNextMonth = useCallback(() => {
-    setDisplayMonth(prev => {
+    setDisplayMonth((prev) => {
       if (prev === 11) {
-        setDisplayYear(y => y + 1);
+        setDisplayYear((y) => y + 1);
         return 0;
       }
       return prev + 1;
     });
   }, []);
 
-  const handleDateSelect = useCallback((day: number) => {
-    const selectedDate = new Date(displayYear, displayMonth, day);
-    const dateStr = formatDate(selectedDate);
+  const handleDateSelect = useCallback(
+    (day: number) => {
+      const selectedDate = new Date(displayYear, displayMonth, day);
+      const dateStr = formatDate(selectedDate);
 
-    // Validate against min/max dates
-    if (minDate && dateStr < minDate) return;
-    if (maxDate && dateStr > maxDate) return;
+      // Validate against min/max dates
+      if (minDate && dateStr < minDate) return;
+      if (maxDate && dateStr > maxDate) return;
 
-    onChange(dateStr);
-    setHighlightedDate(dateStr);
-    setIsOpen(false);
-    inputRef.current?.focus();
-  }, [displayYear, displayMonth, minDate, maxDate, onChange]);
+      onChange(dateStr);
+      setHighlightedDate(dateStr);
+      setIsOpen(false);
+      inputRef.current?.focus();
+    },
+    [displayYear, displayMonth, minDate, maxDate, onChange]
+  );
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
-    
+
     if (isValidDate(newValue)) {
       onChange(newValue);
       const date = parseDate(newValue);
@@ -265,9 +267,18 @@ export const AccessibleDatePicker: React.FC<AccessibleDatePickerProps> = ({
   // Generate calendar days
   const daysInMonth = getDaysInMonth(displayYear, displayMonth);
   const firstDayOfMonth = getFirstDayOfMonth(displayYear, displayMonth);
-  const days: (number | null)[] = [
-    ...Array(firstDayOfMonth).fill(null),
-    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
+  const days: Array<{ key: string; day: number | null }> = [
+    ...Array.from({ length: firstDayOfMonth }, (_, i) => ({
+      key: `empty-${displayYear}-${displayMonth}-${i + 1}`,
+      day: null,
+    })),
+    ...Array.from({ length: daysInMonth }, (_, i) => {
+      const day = i + 1;
+      return {
+        key: `day-${displayYear}-${displayMonth}-${day}`,
+        day,
+      };
+    }),
   ];
 
   const monthName = new Date(displayYear, displayMonth, 1).toLocaleDateString('en-US', {
@@ -292,7 +303,11 @@ export const AccessibleDatePicker: React.FC<AccessibleDatePickerProps> = ({
         className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
       >
         {label}
-        {required && <span className="text-red-500 ml-1" aria-label="required">*</span>}
+        {required && (
+          <span className="text-red-500 ml-1" aria-label="required">
+            *
+          </span>
+        )}
       </label>
 
       {/* Input Container */}
@@ -300,7 +315,7 @@ export const AccessibleDatePicker: React.FC<AccessibleDatePickerProps> = ({
         {/* Input Field */}
         <div className="flex items-center gap-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800">
           <Calendar className="w-5 h-5 ml-2 text-gray-400 pointer-events-none" aria-hidden="true" />
-          
+
           <input
             ref={inputRef}
             id={id}
@@ -380,7 +395,7 @@ export const AccessibleDatePicker: React.FC<AccessibleDatePickerProps> = ({
 
             {/* Weekday Headers */}
             <div className="grid grid-cols-7 gap-1 mb-2">
-              {WEEKDAYS.map(day => (
+              {WEEKDAYS.map((day) => (
                 <div
                   key={day}
                   className="text-center text-xs font-semibold text-gray-600 dark:text-gray-400 py-2"
@@ -392,10 +407,8 @@ export const AccessibleDatePicker: React.FC<AccessibleDatePickerProps> = ({
 
             {/* Calendar Days */}
             <div className="grid grid-cols-7 gap-1">
-              {days.map((day, index) => {
-                const dateStr = day
-                  ? formatDate(new Date(displayYear, displayMonth, day))
-                  : null;
+              {days.map(({ key, day }) => {
+                const dateStr = day ? formatDate(new Date(displayYear, displayMonth, day)) : null;
                 const isSelected = dateStr === value;
                 const isHighlighted = dateStr === highlightedDate;
                 const isDisabledDate =
@@ -404,7 +417,7 @@ export const AccessibleDatePicker: React.FC<AccessibleDatePickerProps> = ({
 
                 return (
                   <button
-                    key={index}
+                    key={key}
                     onClick={() => day && !isDisabledDate && handleDateSelect(day)}
                     disabled={!day || isDisabledDate}
                     className={`
@@ -416,16 +429,8 @@ export const AccessibleDatePicker: React.FC<AccessibleDatePickerProps> = ({
                           ? 'text-gray-400 dark:text-gray-600 cursor-not-allowed'
                           : 'text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700'
                       }
-                      ${
-                        isSelected
-                          ? 'bg-blue-500 text-white hover:bg-blue-600'
-                          : ''
-                      }
-                      ${
-                        isHighlighted && !isSelected
-                          ? 'bg-blue-100 dark:bg-blue-900'
-                          : ''
-                      }
+                      ${isSelected ? 'bg-blue-500 text-white hover:bg-blue-600' : ''}
+                      ${isHighlighted && !isSelected ? 'bg-blue-100 dark:bg-blue-900' : ''}
                     `}
                     type="button"
                     aria-label={day ? `${day} ${monthName}` : undefined}
@@ -441,7 +446,8 @@ export const AccessibleDatePicker: React.FC<AccessibleDatePickerProps> = ({
             {/* Keyboard Navigation Help */}
             <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
               <p className="text-xs text-gray-600 dark:text-gray-400">
-                <span className="font-semibold">Keyboard:</span> Arrow keys to navigate, Enter to select, Escape to close
+                <span className="font-semibold">Keyboard:</span> Arrow keys to navigate, Enter to
+                select, Escape to close
               </p>
             </div>
           </div>
@@ -450,21 +456,14 @@ export const AccessibleDatePicker: React.FC<AccessibleDatePickerProps> = ({
 
       {/* Help Text */}
       {helpText && (
-        <p
-          id={helpTextId}
-          className="mt-1 text-sm text-gray-600 dark:text-gray-400"
-        >
+        <p id={helpTextId} className="mt-1 text-sm text-gray-600 dark:text-gray-400">
           {helpText}
         </p>
       )}
 
       {/* Error Message */}
       {error && (
-        <p
-          id={errorId}
-          className="mt-1 text-sm text-red-600 dark:text-red-400"
-          role="alert"
-        >
+        <p id={errorId} className="mt-1 text-sm text-red-600 dark:text-red-400" role="alert">
           {error}
         </p>
       )}

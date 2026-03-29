@@ -6,8 +6,9 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AccessibleDatePicker } from '../AccessibleDatePicker';
 
 describe('AccessibleDatePicker - Accessibility & Keyboard Navigation', () => {
@@ -15,11 +16,11 @@ describe('AccessibleDatePicker - Accessibility & Keyboard Navigation', () => {
     id: 'test-date-picker',
     label: 'Test Date',
     value: '',
-    onChange: jest.fn(),
+    onChange: vi.fn(),
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('ARIA Attributes & Labels', () => {
@@ -118,7 +119,6 @@ describe('AccessibleDatePicker - Accessibility & Keyboard Navigation', () => {
       const user = userEvent.setup();
       render(<AccessibleDatePicker {...defaultProps} disabled={true} />);
 
-      const input = screen.getByLabelText('Test Date');
       await user.keyboard('{Enter}');
 
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
@@ -162,7 +162,7 @@ describe('AccessibleDatePicker - Accessibility & Keyboard Navigation', () => {
   describe('Keyboard Navigation - Tab to Close', () => {
     it('should close calendar when tabbing out', async () => {
       const user = userEvent.setup();
-      const { container } = render(
+      render(
         <div>
           <AccessibleDatePicker {...defaultProps} />
           <input aria-label="next field" />
@@ -185,7 +185,7 @@ describe('AccessibleDatePicker - Accessibility & Keyboard Navigation', () => {
   describe('Keyboard Navigation - Arrow Keys in Calendar', () => {
     it('should navigate calendar days with arrow keys', async () => {
       const user = userEvent.setup();
-      const onChange = jest.fn();
+      const onChange = vi.fn();
       render(<AccessibleDatePicker {...defaultProps} onChange={onChange} value="2024-03-15" />);
 
       const input = screen.getByLabelText('Test Date');
@@ -204,8 +204,7 @@ describe('AccessibleDatePicker - Accessibility & Keyboard Navigation', () => {
   describe('Date Selection & Input', () => {
     it('should call onChange when date is selected from calendar', async () => {
       const user = userEvent.setup();
-      const onChange = jest.fn();
-      const currentDate = new Date();
+      const onChange = vi.fn();
       const dayInMonth = 15;
 
       render(<AccessibleDatePicker {...defaultProps} onChange={onChange} />);
@@ -225,7 +224,7 @@ describe('AccessibleDatePicker - Accessibility & Keyboard Navigation', () => {
 
     it('should accept direct text input in valid format', async () => {
       const user = userEvent.setup();
-      const onChange = jest.fn();
+      const onChange = vi.fn();
       render(<AccessibleDatePicker {...defaultProps} onChange={onChange} />);
 
       const input = screen.getByLabelText('Test Date');
@@ -237,10 +236,10 @@ describe('AccessibleDatePicker - Accessibility & Keyboard Navigation', () => {
 
     it('should validate date format', async () => {
       const user = userEvent.setup();
-      const onChange = jest.fn();
+      const onChange = vi.fn();
       render(<AccessibleDatePicker {...defaultProps} onChange={onChange} />);
 
-      const input = screen.getByLabelText('Test Date') as HTMLInputElement;
+      const input = screen.getByLabelText('Test Date');
       await user.click(input);
       await user.keyboard('invalid-date');
 
@@ -268,7 +267,7 @@ describe('AccessibleDatePicker - Accessibility & Keyboard Navigation', () => {
   describe('Clear Button Accessibility', () => {
     it('should have accessible clear button', async () => {
       const user = userEvent.setup();
-      const onChange = jest.fn();
+      const onChange = vi.fn();
       render(<AccessibleDatePicker {...defaultProps} value="2024-03-15" onChange={onChange} />);
 
       const clearButton = screen.getByLabelText('Clear date');
@@ -280,7 +279,7 @@ describe('AccessibleDatePicker - Accessibility & Keyboard Navigation', () => {
 
     it('should return focus to input after clearing', async () => {
       const user = userEvent.setup();
-      render(<AccessibleDatePicker {...defaultProps} value="2024-03-15" onChange={jest.fn()} />);
+      render(<AccessibleDatePicker {...defaultProps} value="2024-03-15" onChange={vi.fn()} />);
 
       const input = screen.getByLabelText('Test Date');
       const clearButton = screen.getByLabelText('Clear date');
@@ -373,7 +372,7 @@ describe('AccessibleDatePicker - Accessibility & Keyboard Navigation', () => {
 
     it('should show focus ring on keyboard navigation', async () => {
       const user = userEvent.setup();
-      const { container } = render(<AccessibleDatePicker {...defaultProps} />);
+      render(<AccessibleDatePicker {...defaultProps} />);
 
       const input = screen.getByLabelText('Test Date');
       await user.tab();
@@ -420,8 +419,8 @@ describe('AccessibleDatePicker - Accessibility & Keyboard Navigation', () => {
       render(<AccessibleDatePicker {...defaultProps} value="2024-03-15" />);
 
       // Input should display the date
-      const input = screen.getByLabelText('Test Date') as HTMLInputElement;
-      expect(input.value).toBe('2024-03-15');
+      const input = screen.getByLabelText('Test Date');
+      expect(input).toHaveValue('2024-03-15');
     });
 
     it('should announce selected date in calendar', async () => {
@@ -442,8 +441,8 @@ describe('AccessibleDatePicker - Accessibility & Keyboard Navigation', () => {
     it('should support native date input fallback', () => {
       render(<AccessibleDatePicker {...defaultProps} />);
 
-      const input = screen.getByLabelText('Test Date') as HTMLInputElement;
-      expect(input.type).toBe('date');
+      const input = screen.getByLabelText('Test Date');
+      expect(input).toHaveAttribute('type', 'date');
     });
 
     it('should have appropriate field sizing options', () => {
@@ -461,7 +460,7 @@ describe('AccessibleDatePicker - Accessibility & Keyboard Navigation', () => {
   describe('Outside Click Handling', () => {
     it('should close calendar when clicking outside', async () => {
       const user = userEvent.setup();
-      const { container } = render(
+      render(
         <div>
           <AccessibleDatePicker {...defaultProps} />
           <button>Outside</button>

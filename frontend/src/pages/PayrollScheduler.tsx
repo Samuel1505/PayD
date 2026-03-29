@@ -254,6 +254,14 @@ export default function PayrollScheduler() {
     }
   };
 
+  const handleStartDateChange = (value: string) => {
+    setFormData((prev) => ({ ...prev, startDate: value }));
+    if (simulationResult) {
+      resetSimulation();
+      setContractError(null);
+    }
+  };
+
   useEffect(() => {
     if (!socket) return;
 
@@ -525,9 +533,7 @@ export default function PayrollScheduler() {
                   id="startDate"
                   label={t('payroll.commencementDate', 'Commencement Date')}
                   value={formData.startDate}
-                  onChange={(value) =>
-                    handleChange({ target: { name: 'startDate', value } } as any)
-                  }
+                  onChange={handleStartDateChange}
                   minDate={formatLocalDateInput(new Date())}
                   required={true}
                   helpText="Select the date when payroll will commence (must be today or later)"
