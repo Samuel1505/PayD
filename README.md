@@ -57,30 +57,29 @@ PayD utilizes Stellar's asset issuance capabilities to create organization-speci
 
 ### Example Asset: ORGUSD
 
-- **Issuer Account**: Controlled by the organization
-- **Backing**: 1:1 with USD (or other stable currencies)
-- **Distribution**: Through organization's distribution account
-- **Trustlines**: Employees must accept the asset to receive payments
+- **Issuer Account**: Controlled by the organiza
 
-### Stellar Concepts Employed
+---
 
-- **Asset Issuance**: Creating custom tokens for payroll
-- **Distribution Accounts**: Managing bulk payments
-- **Trustlines**: Employee wallet acceptance
-- **Anchors**: Local currency conversion
-- **Fast Settlement**: Sub-5 second transaction finality
+## 📚 Contribution Reward (Bounty) Program
 
-## ⚙️ Core Features
+We value community contributions! High‑priority issues may carry a bounty to recognize and reward contributors.
 
-### 1️⃣ Employer Dashboard
+### Eligible Contributions
+- **Bug fixes** for critical bugs affecting core payroll flows.
+- **Feature implementations** that align with the roadmap and have been approved as high priority.
+- **Documentation improvements** that significantly enhance onboarding or user guidance for bounty‑eligible issues.
 
-- **Employee Management**: Add/remove employees with wallet addresses
-- **Salary Configuration**: Set amounts, frequencies (weekly/monthly)
-- **Bulk Upload**: CSV import for payroll lists
-- **Payment Scheduling**: Automated recurring payments
-- **Analytics**: Payroll history, total costs, FX tracking
+### Claim Process
+1. **Work on an issue** labeled with the `bounty` tag.
+2. **Submit a pull request** that resolves the issue and passes all CI checks.
+3. **Add a comment** on the issue with the PR link, stating you are claiming the bounty.
+4. **Project maintainers** will review the contribution. If approved, the reward will be transferred via the project's Stellar wallet.
 
-### 2️⃣ Employee Portal
+### Reward Details
+- Rewards are paid in **XLM** (Stellar Lumens) or a stable asset of the project's choosing.
+- Amounts vary per issue and are defined in the issue description.
+- Payments are processed within 7 business days after PR merge.
 
 - **Salary Tracking**: View incoming payments
 - **Transaction History**: Complete on-chain records
