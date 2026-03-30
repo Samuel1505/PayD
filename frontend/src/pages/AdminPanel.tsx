@@ -13,6 +13,7 @@ import { useNotification } from '../hooks/useNotification';
 import { useWallet } from '../hooks/useWallet';
 import ContractUpgradeTab from '../components/ContractUpgradeTab';
 import MultisigDetector from '../components/MultisigDetector';
+import { InfoTooltip } from '../components/InfoTooltip';
 
 /** Centralized API base so URL changes happen in one place. */
 const API_BASE = '/api/v1';
@@ -293,7 +294,13 @@ export default function AdminPanel() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className={LABEL_CLASS}>Asset Code</label>
+                  <label className={LABEL_CLASS}>
+                    Asset Code
+                    <InfoTooltip
+                      label="What is ORGUSD?"
+                      content="ORGUSD is the organisation's custom Stellar asset used for payroll. It is pegged to USD and issued by the organisation's issuer account on the Stellar network."
+                    />
+                  </label>
                   <input
                     type="text"
                     value={accountAsset}
@@ -361,7 +368,13 @@ export default function AdminPanel() {
             <div className="grid gap-4 mt-2">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className={LABEL_CLASS}>Asset Code</label>
+                  <label className={LABEL_CLASS}>
+                    Asset Code
+                    <InfoTooltip
+                      label="What is ORGUSD?"
+                      content="ORGUSD is the organisation's custom Stellar asset used for payroll. It is pegged to USD and issued by the organisation's issuer account on the Stellar network."
+                    />
+                  </label>
                   <input
                     type="text"
                     value={globalAsset}
@@ -420,6 +433,10 @@ export default function AdminPanel() {
           <div className="flex flex-col gap-6 max-w-2xl">
             <h2 className="text-xl font-bold flex items-center gap-2">
               <Search className="w-5 h-5 text-accent" /> Trustline Status
+              <InfoTooltip
+                label="What is a Trustline?"
+                content="A trustline is a permission on your Stellar account that allows it to hold a specific asset (e.g. ORGUSD). Employees must establish a trustline before they can receive payments. Each trustline reserves 0.5 XLM."
+              />
             </h2>
             <p className="text-sm text-muted">
               Verify whether an account's trustline is currently frozen for a given asset.
@@ -440,7 +457,13 @@ export default function AdminPanel() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className={LABEL_CLASS}>Asset Code</label>
+                  <label className={LABEL_CLASS}>
+                    Asset Code
+                    <InfoTooltip
+                      label="What is ORGUSD?"
+                      content="ORGUSD is the organisation's custom Stellar asset used for payroll. It is pegged to USD and issued by the organisation's issuer account on the Stellar network."
+                    />
+                  </label>
                   <input
                     type="text"
                     value={statusAsset}
