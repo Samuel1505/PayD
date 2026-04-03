@@ -255,9 +255,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
         </thead>
         <tbody className="divide-y divide-gray-200">
           {isLoading ? (
-            Array.from({ length: SKELETON_ROW_COUNT }, (_, i) => (
-              <EmployeeSkeletonRow key={i} />
-            ))
+            Array.from({ length: SKELETON_ROW_COUNT }, (_, i) => <EmployeeSkeletonRow key={i} />)
           ) : sortedEmployees.length === 0 ? (
             <tr>
               <td colSpan={6} className="p-6 text-center text-gray-500">
@@ -266,10 +264,7 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
             </tr>
           ) : (
             sortedEmployees.map((employee) => (
-              <tr
-                key={employee.id}
-                className="cursor-pointer transition-colors hover:bg-white/5"
-              >
+              <tr key={employee.id} className="cursor-pointer transition-colors hover:bg-white/5">
                 <td className="p-6">
                   <div className="flex items-center gap-3">
                     <Avatar

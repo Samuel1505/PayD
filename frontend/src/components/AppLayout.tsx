@@ -9,8 +9,7 @@ import { Breadcrumb } from './Breadcrumb';
 import { NetworkSwitcher } from './NetworkSwitcher';
 import { useNetworkStore } from '../stores/networkStore';
 
-const APP_VERSION =
-  (import.meta.env.PUBLIC_APP_VERSION as string | undefined)?.trim() ?? '0.0.1';
+const APP_VERSION = (import.meta.env.PUBLIC_APP_VERSION as string | undefined)?.trim() ?? '0.0.1';
 const APP_ENV = import.meta.env.MODE;
 
 // ── Page Wrapper ───────────────────────

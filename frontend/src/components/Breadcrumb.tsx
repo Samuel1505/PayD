@@ -34,8 +34,7 @@ export function buildCrumbs(pathname: string): Crumb[] {
   let accumulated = '';
   for (const segment of segments) {
     accumulated += `/${segment}`;
-    const label =
-      ROUTE_LABELS[segment] ?? segment.charAt(0).toUpperCase() + segment.slice(1);
+    const label = ROUTE_LABELS[segment] ?? segment.charAt(0).toUpperCase() + segment.slice(1);
     crumbs.push({ label, href: accumulated });
   }
 
@@ -61,15 +60,9 @@ export const Breadcrumb: React.FC = () => {
         const isLast = i === crumbs.length - 1;
         return (
           <React.Fragment key={crumb.href}>
-            {i > 0 && (
-              <ChevronRight className="h-3 w-3 shrink-0 opacity-50" aria-hidden />
-            )}
+            {i > 0 && <ChevronRight className="h-3 w-3 shrink-0 opacity-50" aria-hidden />}
             {isLast ? (
-              <span
-                className="font-medium"
-                style={{ color: 'var(--text)' }}
-                aria-current="page"
-              >
+              <span className="font-medium" style={{ color: 'var(--text)' }} aria-current="page">
                 {crumb.label}
               </span>
             ) : (

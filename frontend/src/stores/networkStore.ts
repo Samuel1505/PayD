@@ -4,9 +4,7 @@ import { persist } from 'zustand/middleware';
 export type StellarNetwork = 'TESTNET' | 'MAINNET';
 
 function getDefaultNetwork(): StellarNetwork {
-  const env = (import.meta.env.PUBLIC_STELLAR_NETWORK as string | undefined)
-    ?.toUpperCase()
-    ?.trim();
+  const env = (import.meta.env.PUBLIC_STELLAR_NETWORK as string | undefined)?.toUpperCase()?.trim();
   return env === 'TESTNET' ? 'TESTNET' : 'MAINNET';
 }
 

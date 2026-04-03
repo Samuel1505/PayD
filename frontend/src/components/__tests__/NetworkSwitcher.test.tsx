@@ -25,9 +25,7 @@ describe('NetworkSwitcher', () => {
 
   test('renders a select element with an accessible label', () => {
     render(<NetworkSwitcher />);
-    expect(
-      screen.getByRole('combobox', { name: /select stellar network/i })
-    ).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: /select stellar network/i })).toBeInTheDocument();
   });
 
   test('shows MAINNET as the default selected option', () => {
@@ -66,8 +64,6 @@ describe('NetworkSwitcher', () => {
 
   test('wraps select in a group with an accessible label', () => {
     render(<NetworkSwitcher />);
-    expect(
-      screen.getByRole('group', { name: /stellar network selector/i })
-    ).toBeInTheDocument();
+    expect(screen.getByRole('group', { name: /stellar network selector/i })).toBeInTheDocument();
   });
 });

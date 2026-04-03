@@ -97,10 +97,7 @@ describe('Breadcrumb component', () => {
       </MemoryRouter>
     );
     expect(screen.getByRole('link', { name: /home/i })).toHaveAttribute('href', '/');
-    expect(screen.getByRole('link', { name: /employer/i })).toHaveAttribute(
-      'href',
-      '/employer'
-    );
+    expect(screen.getByRole('link', { name: /employer/i })).toHaveAttribute('href', '/employer');
     expect(screen.getByText('Payroll')).toHaveAttribute('aria-current', 'page');
   });
 });

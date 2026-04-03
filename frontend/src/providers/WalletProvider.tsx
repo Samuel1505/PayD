@@ -157,10 +157,7 @@ export const WalletProvider: React.FC<{
       const message =
         error instanceof Error ? error.message : 'Unable to connect to the selected wallet.';
       setConnectionError(message);
-      notifyWalletEvent(
-        'connection_failed',
-        message
-      );
+      notifyWalletEvent('connection_failed', message);
       return null;
     } finally {
       setIsConnecting(false);

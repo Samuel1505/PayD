@@ -16,8 +16,7 @@ vi.mock('../../hooks/useWallet', () => ({
 }));
 
 // Dynamic import so mocks are registered first
-const importNav = () =>
-  import('../AppNav').then((m) => m.default);
+const importNav = () => import('../AppNav').then((m) => m.default);
 
 describe('AppNav — mobile drawer', () => {
   test('hamburger button is present and drawer is hidden initially', async () => {

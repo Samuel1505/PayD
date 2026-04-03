@@ -145,10 +145,7 @@ describe('WalletProvider', () => {
     });
 
     expect(screen.queryByRole('dialog', { name: /connect to payd/i })).not.toBeInTheDocument();
-    expect(mockNotifyWalletEvent).toHaveBeenCalledWith(
-      'connected',
-      'GABCD1...LLET via freighter'
-    );
+    expect(mockNotifyWalletEvent).toHaveBeenCalledWith('connected', 'GABCD1...LLET via freighter');
   });
 
   it('finishes initialization when silent reconnect hangs', async () => {
