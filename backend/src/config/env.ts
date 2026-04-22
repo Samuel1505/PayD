@@ -3,6 +3,28 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+const MIN_JWT_SECRET_LENGTH = 32;
+const disallowedJwtSecretValues = new Set([
+  'dev-jwt-secret',
+  'dev-jwt-refresh-secret',
+  'your_jwt_secret',
+  'replace-with-a-long-random-secret',
+  'replace-with-a-different-long-random-secret',
+]);
+
+const jwtSecretSchema = (name: string) =>
+  z.preprocess(
+    (value) => (typeof value === 'string' ? value.trim() : ''),
+    z
+      .string()
+      .min(1, `${name} must be set in the environment`)
+      .min(MIN_JWT_SECRET_LENGTH, `${name} must be at least ${MIN_JWT_SECRET_LENGTH} characters long`)
+      .refine(
+        (value) => !disallowedJwtSecretValues.has(value),
+        `${name} must be replaced with a strong random value`
+      )
+  );
+
 const envSchema = z.object({
   PORT: z.string().default('3000'),
   DATABASE_URL: z.string().default('postgres://localhost:5432/payd_test'),
@@ -19,8 +41,8 @@ const envSchema = z.object({
   RATE_LIMIT_API_MAX: z.string().default('100'),
   RATE_LIMIT_DATA_WINDOW_MS: z.string().default('60000'),
   RATE_LIMIT_DATA_MAX: z.string().default('200'),
-  JWT_SECRET: z.string().default('dev-jwt-secret'),
-  JWT_REFRESH_SECRET: z.string().default('dev-jwt-refresh-secret'),
+  JWT_SECRET: jwtSecretSchema('JWT_SECRET'),
+  JWT_REFRESH_SECRET: jwtSecretSchema('JWT_REFRESH_SECRET'),
   // Email notification configuration
   EMAIL_PROVIDER: z.enum(['resend', 'sendgrid']).default('resend'),
   EMAIL_FROM_ADDRESS: z.string().default('noreply@payd.example.com'),
@@ -33,9 +55,14 @@ const envSchema = z.object({
   STELLAR_MAX_RETRIES: z.string().default('3'),
   STELLAR_RETRY_DELAY_MS: z.string().default('1000'),
   STELLAR_RETRY_DELAY_MAX_MS: z.string().default('10000'),
+}).refine((env) => env.JWT_SECRET !== env.JWT_REFRESH_SECRET, {
+  message: 'JWT_REFRESH_SECRET must be different from JWT_SECRET',
+  path: ['JWT_REFRESH_SECRET'],
 });
 
-export const config = envSchema.parse(process.env);
+export const parseEnv = (env: NodeJS.ProcessEnv = process.env) => envSchema.parse(env);
+
+export const config = parseEnv(process.env);
 
 export const getThrottlingConfig = () => ({
   tpm: parseInt(config.THROTTLING_TPM, 10),

@@ -257,8 +257,11 @@ STELLAR_SECRET_KEY=your_issuer_secret_key
 ANCHOR_API_KEY=your_anchor_service_key
 
 # JWT
-JWT_SECRET=your_jwt_secret
+JWT_SECRET=<generate-a-random-32+-char-secret>
+JWT_REFRESH_SECRET=<generate-a-different-random-32+-char-secret>
 ```
+
+Rotate the JWT secrets in your platform environment whenever credentials are exposed or on your normal key-rotation schedule, then restart/redeploy the backend.
 
 ### Development
 

@@ -376,7 +376,11 @@ SDS_RETRY_ATTEMPTS=3
 ENABLE_CACHING=true
 CACHE_TTL=7200000
 LOG_LEVEL=info
+JWT_SECRET=<generate-a-random-32+-char-secret>
+JWT_REFRESH_SECRET=<generate-a-different-random-32+-char-secret>
 ```
+
+Rotate both JWT secrets through your hosting provider's environment variable settings and redeploy the backend so new tokens are issued with the updated keys.
 
 ## Documentation
 
