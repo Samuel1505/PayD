@@ -82,7 +82,15 @@ PayD utilizes Stellar's asset issuance capabilities to create organization-speci
    docker-compose up
    ```
 
+
 For detailed setup instructions, see [CONTRIBUTING.md](CONTRIBUTING.md).
+
+### Windows / WSL2 Setup
+For Windows users, we strongly recommend using WSL2 (Windows Subsystem for Linux).
+1. Install WSL2 by opening an Administrator PowerShell prompt and running `wsl --install`.
+2. Install Docker Desktop and enable the WSL2 backend in its settings.
+3. Open your WSL2 terminal (e.g. Ubuntu) and clone the repository there.
+4. Run all `npm` and `docker-compose` commands inside the WSL2 terminal to avoid permission and path length issues.
 
 ## 📚 Contribution Reward (Bounty) Program
 

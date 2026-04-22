@@ -1,30 +1,13 @@
-#472 #175: Document Contract Storage Layout
+#349  Add Timestamp for Soft-deleted Records
 Repo Avatar
 Gildado/PayD
-#175: Document Contract Storage Layout
-Category: [CONTRACT]
-Difficulty: MEDIUM
-Tags: docs, soroban
-
-Description
-Provide a detailed map of the contract's instance, persistent, and temporary storage footprints.
-
-Acceptance Criteria
- Implement the described feature/fix.
- Ensure full responsiveness and accessibility.
- Add relevant unit or integration tests.
- Update documentation where necessary.
-
- #469 #172: Add Wallet Connection Timeout Logic
-Repo Avatar
-Gildado/PayD
-#172: Add Wallet Connection Timeout Logic
-Category: [FRONTEND]
+ 
+Category: [BACKEND]
 Difficulty: LOW
-Tags: ux, stellar
+Tags: database, audit
 
 Description
-Show an error if the connection to Freighter or Albedo takes longer than 15 seconds.
+Include a deleted_at field instead of physically deleting organization records.
 
 Acceptance Criteria
  Implement the described feature/fix.
@@ -32,16 +15,16 @@ Acceptance Criteria
  Add relevant unit or integration tests.
  Update documentation where necessary.
 
-#466 #169: Implement Payout Simulation Preflight
+#365 Implement Webhook Retry with Exponential Backoff
 Repo Avatar
-Gildado/PayD
-#169: Implement Payout Simulation Preflight
-Category: [FRONTEND]
+Gildado/PayD 
+Implement Webhook Retry with Exponential Backoff
+Category: [BACKEND]
 Difficulty: HARD
-Tags: ux, stellar
+Tags: webhooks, logic
 
 Description
-Use simulateTransaction to check if a payout will succeed before prompting for a signature.
+If a webhook delivery fails, retry multiple times with increasing delays.
 
 Acceptance Criteria
  Implement the described feature/fix.
@@ -49,16 +32,16 @@ Acceptance Criteria
  Add relevant unit or integration tests.
  Update documentation where necessary.
 
-#467 #170: Add 'Network Switcher' Support in UI
+#361  Refactor Database Migrations for Better Rollbacks
 Repo Avatar
 Gildado/PayD
-#170: Add 'Network Switcher' Support in UI
-Category: [FRONTEND]
+ 
+Category: [BACKEND]
 Difficulty: MEDIUM
-Tags: ui, stellar
+Tags: database, devops
 
 Description
-Allow developers to switch between Testnet and Mainnet for testing purposes.
+Ensure every migration file has a reliable down function for rollbacks.
 
 Acceptance Criteria
  Implement the described feature/fix.
@@ -66,3 +49,20 @@ Acceptance Criteria
  Add relevant unit or integration tests.
  Update documentation where necessary.
 
+
+ #404  Improve Windows Installation Guide
+Repo Avatar
+Gildado/PayD
+ 
+Category: [DOCS]
+Difficulty: LOW
+Tags: docs, onboarding
+
+Description
+Add specific instructions for WSL2 or native Windows setup for the PayD platform.
+
+Acceptance Criteria
+ Implement the described feature/fix.
+ Ensure full responsiveness and accessibility.
+ Add relevant unit or integration tests.
+ Update documentation where necessary.

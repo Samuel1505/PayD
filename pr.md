@@ -31,8 +31,14 @@ This PR delivers frontend work for **issuer multisig detection** (partial signin
 
 ### Docs & config
 
-- **README** — Short notes on `/employer`, `payd-theme`, issuer multisig.
+- **README** — Short notes on `/employer`, `payd-theme`, issuer multisig, and WSL2 Windows setup.
 - **`.env.example`** — Optional `VITE_ORG_DISPLAY_NAME`.
+
+### Upstream Sync & Issue Integration
+- **Issue #349 — Timestamp for Soft-deleted Records**: Validated the `023_add_deleted_at_to_organizations.sql` schema implementation that provides the `deleted_at` soft-delete field instead of hard record drops. 
+- **Issue #361 — Refactor Database Migrations**: Resolved the rollbacks mismatch by adding `026_create_payroll_schedules.sql` and `027_create_org_audit_log.sql` into the `backend/src/db/rollbacks` directory.
+- **Issue #365 — Webhook Retry Exponential Backoff**: Enabled true asynchronous polling by adding a `setInterval()` invocation for `webhookNotificationService.processPendingRetries()` in the BullMQ worker index.
+- **Issue #404 — Improve Windows Installation Guide**: Explicit documentation added under `README.md`'s Quick Start for WSL2-native docker operations.
 
 ### Tests
 
