@@ -19,7 +19,7 @@ import metricsRoutes from './routes/metricsRoutes.js';
 // Feature Routes
 import v1Routes from './routes/v1/index.js';
 import authRoutes from './routes/authRoutes.js';
-import webhookRoutes from './routes/webhook.routes.js';
+import webhookRoutes from './routes/webhookNotificationRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
 import { HealthController } from './controllers/healthController.js';
 import { apiErrorResponse, ErrorCodes } from './utils/apiError.js';

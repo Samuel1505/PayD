@@ -28,7 +28,7 @@ import feeRoutes from '../feeRoutes.js';
 import assetPathPaymentRoutes from '../assetPathPaymentRoutes.js';
 import tenantConfigRoutes from '../tenantConfigRoutes.js';
 import bulkPaymentRoutes from '../bulkPaymentRoutes.js';
-import webhookRoutes from '../webhook.routes.js';
+import webhookRoutes from '../webhookNotificationRoutes.js';
 import notificationRoutes from '../notificationRoutes.js';
 import ratesRoutes from '../ratesRoutes.js';
 import stellarThrottlingRoutes from '../stellarThrottlingRoutes.js';

@@ -1,47 +1,13 @@
-#349  Add Timestamp for Soft-deleted Records
+#409  Consolidate API Request Error Handling
 Repo Avatar
 Gildado/PayD
- 
-Category: [BACKEND]
-Difficulty: LOW
-Tags: database, audit
-
-Description
-Include a deleted_at field instead of physically deleting organization records.
-
-Acceptance Criteria
- Implement the described feature/fix.
- Ensure full responsiveness and accessibility.
- Add relevant unit or integration tests.
- Update documentation where necessary.
-
-#365 Implement Webhook Retry with Exponential Backoff
-Repo Avatar
-Gildado/PayD 
-Implement Webhook Retry with Exponential Backoff
-Category: [BACKEND]
-Difficulty: HARD
-Tags: webhooks, logic
-
-Description
-If a webhook delivery fails, retry multiple times with increasing delays.
-
-Acceptance Criteria
- Implement the described feature/fix.
- Ensure full responsiveness and accessibility.
- Add relevant unit or integration tests.
- Update documentation where necessary.
-
-#361  Refactor Database Migrations for Better Rollbacks
-Repo Avatar
-Gildado/PayD
- 
-Category: [BACKEND]
+ Consolidate API Request Error Handling
+Category: [FRONTEND]
 Difficulty: MEDIUM
-Tags: database, devops
+Tags: logic, refactor, api
 
 Description
-Ensure every migration file has a reliable down function for rollbacks.
+Create a central error interpreter for Axios/Fetch to handle common HTTP errors consistently.
 
 Acceptance Criteria
  Implement the described feature/fix.
@@ -49,20 +15,54 @@ Acceptance Criteria
  Add relevant unit or integration tests.
  Update documentation where necessary.
 
-
- #404  Improve Windows Installation Guide
+#347 Refine Button Hover/Active States
 Repo Avatar
 Gildado/PayD
- 
-Category: [DOCS]
+Refine Button Hover/Active States
+Category: [FRONTEND]
 Difficulty: LOW
-Tags: docs, onboarding
+Tags: ui, ux, buttons
 
 Description
-Add specific instructions for WSL2 or native Windows setup for the PayD platform.
+Standardize hover and active states across all primary and secondary buttons to follow the Stellar Design System guidelines.
 
 Acceptance Criteria
  Implement the described feature/fix.
  Ensure full responsiveness and accessibility.
  Add relevant unit or integration tests.
  Update documentation where necessary.
+
+#346 Implement Webhook Notification System
+Repo Avatar
+Gildado/PayD
+Implement Webhook Notification System
+Category: [BACKEND]
+Difficulty: ● HARD
+Tags: webhooks, integration, notifications, api, architecture
+
+Description
+Implement a webhook system that notifies external third-party services when significant events occur in the PayD platform (e.g., payroll.completed, employee.added, balance.low). This allows organizations to build their own custom automation workflows.
+
+Acceptance Criteria
+ Implement a webhook subscription API for organizations.
+ Build a "Retry and Backoff" strategy for failed webhook deliveries.
+ Secure delivery with signed payloads (HMAC).
+ Provide a web UI for developers to view delivery logs and test endpoints.
+
+#408 Technical Whitepaper for PayD Protocol
+Repo Avatar
+Gildado/PayD
+Technical Whitepaper for PayD Protocol
+Category: [DOCS]
+Difficulty: HARD
+Tags: docs, whitepaper
+
+Description
+Draft a high-level PDF/Markdown explaining the cross-border payment architecture on Stellar.
+
+Acceptance Criteria
+ Implement the described feature/fix.
+ Ensure full responsiveness and accessibility.
+ Add relevant unit or integration tests.
+ Update documentation where necessary.
+

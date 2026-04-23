@@ -9,9 +9,12 @@ import {
   xdr,
 } from '@stellar/stellar-sdk';
 import { simulateTransaction } from './transactionSimulation';
+import axiosInstance from '../api/axiosInstance';
 
-const API_BASE_URL =
-  (import.meta.env.VITE_API_URL as string | undefined) || 'http://localhost:3000';
+function normalizeBaseUrl(url: string): string {
+  return url.replace(/\/+$/, '');
+}
+
 const DEFAULT_RPC_URL =
   (import.meta.env.PUBLIC_STELLAR_RPC_URL as string | undefined) ||
   'https://soroban-testnet.stellar.org';
@@ -96,15 +99,7 @@ function getNetworkPassphrase(): string {
   return network === 'MAINNET' ? Networks.PUBLIC : Networks.TESTNET;
 }
 
-function normalizeBaseUrl(url: string): string {
-  return url.replace(/\/+$/, '');
-}
 
-function payrollAuthHeaders(): Record<string, string> {
-  if (typeof localStorage === 'undefined') return {};
-  const token = localStorage.getItem('payd_auth_token');
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
 
 function getReadMethodName(key: 'batch' | 'payment' | 'retry'): string {
   if (key === 'batch') {
@@ -306,30 +301,21 @@ export async function fetchPayrollRuns(
   page = 1,
   limit = 20
 ): Promise<{ data: PayrollRunRecord[]; total: number }> {
-  const response = await fetch(
-    `${normalizeBaseUrl(API_BASE_URL)}/api/v1/payroll-bonus/runs?page=${page}&limit=${limit}`,
-    { headers: payrollAuthHeaders() }
+  const response = await axiosInstance.get<{ success: boolean; data: { data: PayrollRunRecord[]; total: number } }>(
+    `/api/v1/payroll-bonus/runs`,
+    {
+      params: { page, limit },
+    }
   );
 
-  if (!response.ok) {
-    throw new Error(`Failed to fetch payroll runs (${response.status})`);
-  }
-
-  const payload = (await response.json()) as PayrollRunsListResponse;
-  return payload.data;
+  return response.data.data;
 }
 
 export async function fetchPayrollRunSummary(runId: number): Promise<PayrollRunSummary> {
-  const response = await fetch(
-    `${normalizeBaseUrl(API_BASE_URL)}/api/v1/payroll-bonus/runs/${runId}`,
-    { headers: payrollAuthHeaders() }
+  const response = await axiosInstance.get<PayrollRunSummaryResponse>(
+    `/api/v1/payroll-bonus/runs/${runId}`
   );
-  if (!response.ok) {
-    throw new Error(`Failed to fetch payroll run summary (${response.status})`);
-  }
-
-  const payload = (await response.json()) as PayrollRunSummaryResponse;
-  return payload.data;
+  return response.data.data;
 }
 
 export function getTxExplorerUrl(
@@ -429,22 +415,10 @@ export async function executePayroll(
   runId: number | string,
   organizationId: number | string
 ): Promise<{ success: boolean; jobId: string }> {
-  const response = await fetch(
-    `${normalizeBaseUrl(API_BASE_URL)}/api/v1/payroll-bonus/runs/${runId}/execute`,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ organizationId }),
-    }
+  const response = await axiosInstance.post<{ success: boolean; jobId: string }>(
+    `/api/v1/payroll-bonus/runs/${runId}/execute`,
+    { organizationId }
   );
 
-  if (!response.ok) {
-    const errorData = (await response.json()) as { error?: string };
-    throw new Error(errorData.error || `Execution failed (${response.status})`);
-  }
-
-  const payload = (await response.json()) as { success: boolean; jobId: string };
-  return payload;
+  return response.data;
 }

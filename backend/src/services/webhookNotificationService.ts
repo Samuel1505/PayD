@@ -10,12 +10,37 @@ export type WebhookEventType =
   | 'employee.added'
   | 'employee.updated'
   | 'employee.removed'
+  | 'employee.deleted'
   | 'balance.low'
   | 'transaction.completed'
   | 'transaction.failed'
   | 'contract.upgraded'
   | 'multisig.created'
-  | 'multisig.executed';
+  | 'multisig.executed'
+  | 'payment.completed'
+  | 'payment.failed'
+  | 'claimable_balance.created'
+  | 'claimable_balance.claimed';
+
+export const WEBHOOK_EVENTS = {
+  PAYROLL_COMPLETED: 'payroll.completed',
+  PAYROLL_FAILED: 'payroll.failed',
+  PAYROLL_STARTED: 'payroll.started',
+  EMPLOYEE_ADDED: 'employee.added',
+  EMPLOYEE_UPDATED: 'employee.updated',
+  EMPLOYEE_REMOVED: 'employee.removed',
+  EMPLOYEE_DELETED: 'employee.deleted',
+  BALANCE_LOW: 'balance.low',
+  TRANSACTION_COMPLETED: 'transaction.completed',
+  TRANSACTION_FAILED: 'transaction.failed',
+  CONTRACT_UPGRADED: 'contract.upgraded',
+  MULTISIG_CREATED: 'multisig.created',
+  MULTISIG_EXECUTED: 'multisig.executed',
+  PAYMENT_COMPLETED: 'payment.completed',
+  PAYMENT_FAILED: 'payment.failed',
+  CLAIMABLE_BALANCE_CREATED: 'claimable_balance.created',
+  CLAIMABLE_BALANCE_CLAIMED: 'claimable_balance.claimed',
+} as const;
 
 export interface WebhookSubscription {
   id: number;

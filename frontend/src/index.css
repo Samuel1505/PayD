@@ -171,3 +171,56 @@ select {
 .Select__icon {
   pointer-events: none;
 }
+
+/* ── Global Button Refinement ── */
+button,
+.sds-button {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+button:hover:not(:disabled),
+.sds-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.1);
+}
+
+button:active:not(:disabled),
+.sds-button:active:not(:disabled) {
+  transform: translateY(0) scale(0.97);
+  filter: brightness(0.95);
+}
+
+button:focus-visible,
+.sds-button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Primary Button Enhancements */
+.button-primary,
+button[variant='primary'],
+.sds-button--primary {
+  box-shadow: 0 4px 14px 0 rgba(74, 240, 184, 0.2);
+}
+
+.button-primary:hover:not(:disabled),
+button[variant='primary']:hover:not(:disabled),
+.sds-button--primary:hover:not(:disabled) {
+  box-shadow: 0 6px 20px rgba(74, 240, 184, 0.23);
+}
+
+/* Secondary Button Enhancements */
+.button-secondary,
+button[variant='secondary'],
+.sds-button--secondary {
+  border: 1px solid var(--border);
+}
+
+.button-secondary:hover:not(:disabled),
+button[variant='secondary']:hover:not(:disabled),
+.sds-button--secondary:hover:not(:disabled) {
+  border-color: var(--border-hi);
+  background: var(--surface-hi);
+}

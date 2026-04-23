@@ -365,25 +365,21 @@ export default function PayrollScheduler() {
 
       // Trigger Webhook Event (Internal simulation)
       try {
-        await fetch('http://localhost:3001/api/webhooks/test-trigger', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            event: 'payment.completed',
-            payload: {
-              id: newClaim.id,
-              employeeName: newClaim.employeeName,
-              amount: newClaim.amount,
-              status: 'created',
-            },
-          }),
+        await axiosInstance.post('/api/webhooks/trigger', {
+          eventType: 'payment.completed',
+          payload: {
+            id: newClaim.id,
+            employeeName: newClaim.employeeName,
+            amount: newClaim.amount,
+            status: 'created',
+          },
         });
-      } catch {
+      } catch (err: any) {
         notifyApiError(
           'Webhook trigger failed',
-          'Payment was created, but webhook test trigger failed.'
+          err.response?.data?.error || 'Payment was created, but webhook test trigger failed.'
         );
-        console.warn('Webhook test-trigger skipped (Backend might not be running)');
+        console.warn('Webhook trigger error:', err);
       }
 
       resetSimulation();

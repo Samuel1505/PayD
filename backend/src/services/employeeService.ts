@@ -4,7 +4,7 @@ import {
   UpdateEmployeeInput,
   EmployeeQueryInput,
 } from '../schemas/employeeSchema.js';
-import { WebhookService, WEBHOOK_EVENTS } from './webhook.service.js';
+import { webhookNotificationService, WEBHOOK_EVENTS } from './webhookNotificationService.js';
 import { StrKey } from '@stellar/stellar-sdk';
 
 export class EmployeeService {
@@ -116,7 +116,7 @@ export class EmployeeService {
     payload: any
   ): Promise<void> {
     try {
-      await WebhookService.dispatch(eventType, organization_id, payload);
+      await webhookNotificationService.dispatch(eventType, payload, organization_id);
     } catch (error) {
       console.error(`Webhook dispatch failed for ${eventType}:`, error);
     }

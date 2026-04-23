@@ -256,6 +256,16 @@ export const payrollWorker = new Worker<PayrollJobData>(
       // 4. Wrap up
       await PayrollBonusService.updatePayrollRunStatus(payrollRunId, 'completed');
       emitBulkUpdate(batchId, 'completed', { progress: 100, completedCount: totalItems });
+      
+      // Dispatch payroll.completed webhook
+      void webhookNotificationService.dispatch('payroll.completed', {
+        payrollRunId,
+        batchId,
+        organizationId: payroll_run.organization_id,
+        completedCount: totalItems,
+        assetCode
+      }, payroll_run.organization_id);
+
       logger.info(`Successfully completed payroll run ${payrollRunId}`);
     } catch (error: any) {
       logger.error(`Critical failure in payroll worker for run ${payrollRunId}`, error);
@@ -267,6 +277,14 @@ export const payrollWorker = new Worker<PayrollJobData>(
         emitBulkUpdate(summary.payroll_run.batch_id, 'failed', {
           error: error.message,
         });
+
+        // Dispatch payroll.failed webhook
+        void webhookNotificationService.dispatch('payroll.failed', {
+          payrollRunId,
+          batchId: summary.payroll_run.batch_id,
+          organizationId: summary.payroll_run.organization_id,
+          error: error.message || 'Unknown error'
+        }, summary.payroll_run.organization_id);
       }
 
       throw error;
