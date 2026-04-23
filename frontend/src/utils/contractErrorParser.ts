@@ -48,6 +48,30 @@ const CONTRACT_ERROR_MAPPING: Record<number, { message: string; action: string }
     message: 'Batch not found',
     action: 'The requested batch could not be found. Please verify the batch ID.',
   },
+  10: {
+    message: 'Insufficient balance',
+    action: 'Your wallet balance is insufficient for this operation. Please fund your wallet.',
+  },
+  11: {
+    message: 'Invalid trustline',
+    action: 'A trustline may be missing or revoked. Please establish trust before retrying.',
+  },
+  12: {
+    message: 'Account not found',
+    action: 'The specified account does not exist on the network. Please verify the address.',
+  },
+  13: {
+    message: 'Operation not supported',
+    action: 'This operation is not supported by the current contract version.',
+  },
+  14: {
+    message: 'Signature required',
+    action: 'Additional signatures are required. Please collect all required approvals.',
+  },
+  15: {
+    message: 'Invalid memo format',
+    action: 'The memo format is incorrect. Please use a valid memo (ID, TEXT, or HASH).',
+  },
 };
 
 const GENERIC_ERROR_PATTERNS: Array<{

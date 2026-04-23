@@ -3,8 +3,30 @@ import passport from 'passport';
 import { generateToken } from '../services/authService.js';
 import { AuthController } from '../controllers/authController.js';
 import { authRateLimit } from '../middlewares/rateLimitMiddleware.js';
+import { z } from 'zod';
 
 const router = Router();
+
+export const LoginSchema = z.object({
+  email: z.string().email('Invalid email format'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+  organizationId: z.string().uuid('Invalid organization ID').optional(),
+});
+
+export const RegisterSchema = z.object({
+  email: z.string().email('Invalid email format'),
+  password: z.string().min(8, 'Password must be at least 8 characters').regex(
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+    'Password must contain uppercase, lowercase, and number'
+  ),
+  walletAddress: z.string().startsWith('G', 'Invalid Stellar wallet address'),
+  organizationName: z.string().min(2, 'Organization name required').max(100),
+  displayName: z.string().min(2, 'Display name required').max(50).optional(),
+});
+
+export const RefreshSchema = z.object({
+  refreshToken: z.string().min(1, 'Refresh token required'),
+});
 
 const loginRateLimit = authRateLimit({
   identifier: (req) => {
@@ -20,9 +42,41 @@ const loginRateLimit = authRateLimit({
   },
 });
 
-router.post('/register', authRateLimit(), AuthController.register);
-router.post('/login', loginRateLimit, AuthController.login);
-router.post('/refresh', authRateLimit(), AuthController.refresh);
+router.post('/register', authRateLimit(), (req, res, next) => {
+  const result = RegisterSchema.safeParse(req.body);
+  if (!result.success) {
+    return res.status(400).json({ 
+      error: 'Validation failed', 
+      details: result.error.flatten() 
+    });
+  }
+  req.body = result.data;
+  next();
+}, AuthController.register);
+
+router.post('/login', loginRateLimit, (req, res, next) => {
+  const result = LoginSchema.safeParse(req.body);
+  if (!result.success) {
+    return res.status(400).json({ 
+      error: 'Validation failed', 
+      details: result.error.flatten() 
+    });
+  }
+  req.body = result.data;
+  next();
+}, AuthController.login);
+
+router.post('/refresh', authRateLimit(), (req, res, next) => {
+  const result = RefreshSchema.safeParse(req.body);
+  if (!result.success) {
+    return res.status(400).json({ 
+      error: 'Validation failed', 
+      details: result.error.flatten() 
+    });
+  }
+  req.body = result.data;
+  next();
+}, AuthController.refresh);
 
 router.post('/2fa/setup', authRateLimit(), AuthController.setup2fa);
 router.post('/2fa/verify', authRateLimit(), AuthController.verify2fa);
