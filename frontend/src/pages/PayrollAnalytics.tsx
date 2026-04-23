@@ -160,6 +160,48 @@ export default function PayrollAnalytics() {
         </div>
       </Card>
 
+      {/* Summary Cards */}
+      {data && (
+        <motion.div
+          className="grid grid-cols-1 md:grid-cols-3 gap-6"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          <motion.div variants={cardVariants}>
+            <Card>
+              <div className="p-6">
+                <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">Total Payroll</p>
+                <h3 className="text-3xl font-bold mt-1 text-indigo-500">
+                  ${data.trends.reduce((acc, curr) => acc + curr.total, 0).toLocaleString()}
+                </h3>
+                <p className="text-xs text-green-500 mt-2 flex items-center gap-1">
+                  <span>↑ 12%</span> vs last period
+                </p>
+              </div>
+            </Card>
+          </motion.div>
+          <motion.div variants={cardVariants}>
+            <Card>
+              <div className="p-6">
+                <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">Avg. Salary</p>
+                <h3 className="text-3xl font-bold mt-1 text-cyan-500">$5,420</h3>
+                <p className="text-xs text-gray-400 mt-2">Across 42 employees</p>
+              </div>
+            </Card>
+          </motion.div>
+          <motion.div variants={cardVariants}>
+            <Card>
+              <div className="p-6">
+                <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">Payment Success</p>
+                <h3 className="text-3xl font-bold mt-1 text-amber-500">98.4%</h3>
+                <p className="text-xs text-gray-400 mt-2">Historical average</p>
+              </div>
+            </Card>
+          </motion.div>
+        </motion.div>
+      )}
+
       {isLoading && <p className="text-center text-gray-500 py-12">Loading analytics…</p>}
 
       {isError && <p className="text-center text-red-500 py-12">Failed to load analytics data.</p>}

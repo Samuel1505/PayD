@@ -4,7 +4,8 @@ import { Avatar } from './Avatar';
 import { AvatarUpload } from './AvatarUpload';
 import { CSVUploader } from './CSVUploader';
 import type { CSVRow } from './CSVUploader';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, Copy } from 'lucide-react';
+import { Icon } from '@stellar/design-system';
 import { EmployeeRemovalConfirmModal } from './EmployeeRemovalConfirmModal';
 
 interface Employee {
@@ -253,107 +254,118 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
             <th className="p-6 text-xs font-bold uppercase tracking-widest text-muted">Actions</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-200">
+        <tbody className="divide-y divide-gray-200/5">
           {isLoading ? (
             Array.from({ length: SKELETON_ROW_COUNT }, (_, i) => <EmployeeSkeletonRow key={i} />)
           ) : sortedEmployees.length === 0 ? (
             <tr>
-              <td colSpan={6} className="p-6 text-center text-gray-500">
-                {debouncedSearch ? `No employees match "${debouncedSearch}"` : 'No employees found'}
+              <td colSpan={6} className="p-12 text-center">
+                <div className="flex flex-col items-center gap-3">
+                  <Icon.User className="text-muted w-12 h-12 opacity-20" />
+                  <p className="text-muted font-medium">
+                    {debouncedSearch ? `No employees match "${debouncedSearch}"` : 'No employees found'}
+                  </p>
+                </div>
               </td>
             </tr>
           ) : (
-            sortedEmployees.map((employee) => (
-              <tr key={employee.id} className="cursor-pointer transition-colors hover:bg-white/5">
+            sortedEmployees.map((employee, idx) => (
+              <tr
+                key={employee.id}
+                className="group cursor-pointer transition-all hover:bg-accent/[0.03]"
+                style={{ animationDelay: `${idx * 0.05}s` }}
+              >
                 <td className="p-6">
-                  <div className="flex items-center gap-3">
-                    <Avatar
-                      email={employee.email}
-                      name={employee.name}
-                      imageUrl={employee.imageUrl}
-                      size="sm"
-                    />
+                  <div className="flex items-center gap-4">
+                    <div className="relative">
+                      <Avatar
+                        email={employee.email}
+                        name={employee.name}
+                        imageUrl={employee.imageUrl}
+                        size="md"
+                      />
+                      <div className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-bg ${employee.status === 'Active' ? 'bg-success' : 'bg-danger'}`} />
+                    </div>
                     <div className="min-w-0 flex flex-col">
                       <span
-                        className="truncate text-xs text-muted"
+                        className="truncate text-sm font-bold text-text group-hover:text-accent transition-colors"
                         title={employee.name}
-                        aria-label={`Employee name: ${employee.name}`}
                       >
                         {employee.name}
                       </span>
                       <span
-                        className="truncate text-[11px] text-muted/80"
+                        className="truncate text-xs text-muted"
                         title={employee.email}
-                        aria-label={`Employee email: ${employee.email}`}
                       >
                         {employee.email}
                       </span>
-                      <button
-                        type="button"
-                        className="w-fit text-[10px] text-blue-500 hover:underline text-left"
-                        onClick={() => setShowAvatarModal({ open: true, employee })}
-                      >
-                        Update photo
-                      </button>
                     </div>
                   </div>
                 </td>
-                <td className="p-6 truncate text-sm font-medium" title={employee.position}>
-                  {employee.position}
-                </td>
-                <td className="p-6 truncate font-mono text-xs text-muted" title={employee.wallet}>
-                  {shortenWallet(employee.wallet || '')}
+                <td className="p-6">
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium text-text truncate">{employee.position}</span>
+                    <span className="text-[10px] text-muted uppercase tracking-wider">Position</span>
+                  </div>
                 </td>
                 <td className="p-6">
-                  {/* Inline salary edit */}
-                  {onEditEmployee ? (
+                  <div className="flex items-center gap-2 group/wallet">
+                    <code className="text-[10px] text-muted font-mono bg-surface-hi px-2 py-1 rounded border border-border">
+                      {shortenWallet(employee.wallet || '')}
+                    </code>
+                  </div>
+                </td>
+                <td className="p-6">
+                  <div className="flex flex-col items-start">
+                    <span className="text-sm font-bold text-text">
+                      {onEditEmployee ? (
+                        <button
+                          className="hover:text-accent transition-colors"
+                          onClick={() => {
+                            setEditSalary(employee.salary || 0);
+                            setShowEditModal({ open: true, employee });
+                          }}
+                        >
+                          ${(employee.salary ?? 0).toLocaleString()}
+                        </button>
+                      ) : (
+                        `$${(employee.salary ?? 0).toLocaleString()}`
+                      )}
+                    </span>
+                    <span className="text-[10px] text-muted uppercase tracking-wider">per month</span>
+                  </div>
+                </td>
+                <td className="p-6">
+                  <span
+                    className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border transition-all ${
+                      employee.status === 'Active'
+                        ? 'bg-success/10 text-success border-success/20'
+                        : 'bg-danger/10 text-danger border-danger/20'
+                    }`}
+                  >
+                    {employee.status || '-'}
+                  </span>
+                </td>
+                <td className="p-6">
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
-                      className="text-blue-500 underline"
+                      className="p-2 text-muted hover:text-accent hover:bg-accent/10 rounded-lg transition-all"
+                      title="Edit"
                       onClick={() => {
                         setEditSalary(employee.salary || 0);
                         setShowEditModal({ open: true, employee });
                       }}
                     >
-                      {employee.salary ?? 0}
+                      <Pencil className="w-4 h-4" />
                     </button>
-                  ) : (
-                    (employee.salary ?? 0)
-                  )}
-                </td>
-                <td className="p-6">
-                  <span
-                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
-                      employee.status === 'Active'
-                        ? 'bg-green-100 text-green-600 border-green-200'
-                        : 'bg-red-100 text-red-600 border-red-200'
-                    }`}
-                  >
-                    <div
-                      className={`w-1 h-1 rounded-full ${
-                        employee.status === 'Active' ? 'bg-green-600' : 'bg-red-600'
-                      }`}
-                    />
-                    {employee.status || '-'}
-                  </span>
-                </td>
-                <td className="p-6 flex gap-2">
-                  <button
-                    className="text-blue-500 hover:text-blue-700"
-                    title="Edit"
-                    onClick={() => {
-                      setEditSalary(employee.salary || 0);
-                      setShowEditModal({ open: true, employee });
-                    }}
-                  >
-                    <Pencil className="w-5 h-5" />
-                  </button>
-                  <button
-                    className="text-red-500 hover:text-red-700"
-                    title="Remove"
-                    onClick={() => setShowDeleteConfirm({ open: true, employee })}
-                  >
-                    <Trash2 className="w-5 h-5" />
-                  </button>
+                    <button
+                      className="p-2 text-muted hover:text-danger hover:bg-danger/10 rounded-lg transition-all"
+                      title="Remove"
+                      onClick={() => setShowDeleteConfirm({ open: true, employee })}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))
