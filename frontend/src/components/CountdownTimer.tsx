@@ -29,7 +29,7 @@ export const CountdownTimer = ({ targetDate }: { targetDate: Date | null }) => {
       };
 
       setTimeLeft(newTimeLeft);
-      
+
       // Highlight when less than 1 hour remaining
       setIsLowTime(distance < 60 * 60 * 1000);
 
@@ -52,9 +52,19 @@ export const CountdownTimer = ({ targetDate }: { targetDate: Date | null }) => {
   const segments = [
     { key: 'days', label: 'Days', value: String(timeLeft.days), show: timeLeft.days > 0 },
     { key: 'hours', label: 'Hrs', value: timeLeft.hours.toString().padStart(2, '0'), show: true },
-    { key: 'minutes', label: 'Min', value: timeLeft.minutes.toString().padStart(2, '0'), show: true },
-    { key: 'seconds', label: 'Sec', value: timeLeft.seconds.toString().padStart(2, '0'), show: true },
-  ].filter(s => s.show);
+    {
+      key: 'minutes',
+      label: 'Min',
+      value: timeLeft.minutes.toString().padStart(2, '0'),
+      show: true,
+    },
+    {
+      key: 'seconds',
+      label: 'Sec',
+      value: timeLeft.seconds.toString().padStart(2, '0'),
+      show: true,
+    },
+  ].filter((s) => s.show);
 
   return (
     <div

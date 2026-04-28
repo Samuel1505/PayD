@@ -71,8 +71,8 @@ const ConnectAccount: React.FC = () => {
       >
         {isConnecting ? (
           <span className="flex items-center gap-2">
-            <span 
-              className="w-3 h-3 border-2 border-bg/30 border-t-bg rounded-full animate-spin" 
+            <span
+              className="w-3 h-3 border-2 border-bg/30 border-t-bg rounded-full animate-spin"
               role="status"
               aria-label="Loading"
             />

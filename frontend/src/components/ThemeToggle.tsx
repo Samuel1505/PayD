@@ -13,9 +13,7 @@ export const ThemeToggle = () => {
       aria-pressed={theme === 'dark'}
     >
       {theme === 'light' ? <Icon.Moon01 size="md" /> : <Icon.Sun size="md" />}
-      <span className="sr-only">
-        Current theme: {theme === 'light' ? 'Light' : 'Dark'}
-      </span>
+      <span className="sr-only">Current theme: {theme === 'light' ? 'Light' : 'Dark'}</span>
     </button>
   );
 };

@@ -186,7 +186,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-[var(--muted)]">
               Session timeout warning
             </p>
-            <h3 className="mt-2 text-xl font-black text-[var(--text)]">You are about to be signed out</h3>
+            <h3 className="mt-2 text-xl font-black text-[var(--text)]">
+              You are about to be signed out
+            </h3>
             <p className="mt-3 text-sm leading-6 text-[var(--muted)]">
               Your session will expire in {secondsLeft}s. Stay signed in to continue securely.
             </p>

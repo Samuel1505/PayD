@@ -59,7 +59,10 @@ export function ConnectionStatus() {
         aria-label={`Connection status: ${status.label}. ${status.description}`}
         className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 min-h-[28px] ${status.bgClass} ${status.textClass} ${status.borderClass} border focus:ring-${status.textClass.replace('text-', '')}`}
       >
-        <span className={`w-1.5 h-1.5 rounded-full ${status.dotClass} ${status.animate}`} aria-hidden="true" />
+        <span
+          className={`w-1.5 h-1.5 rounded-full ${status.dotClass} ${status.animate}`}
+          aria-hidden="true"
+        />
         <span>{status.label}</span>
       </button>
 
@@ -69,7 +72,10 @@ export function ConnectionStatus() {
           className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-3 py-2 rounded-lg bg-(--surface) border border-(--border-hi) shadow-lg text-xs text-(--text) whitespace-nowrap z-50 animate-in fade-in slide-in-from-bottom-2 duration-200"
         >
           {status.description}
-          <div className="absolute left-1/2 -translate-x-1/2 top-full w-2 h-2 bg-(--surface) border-r border-b border-(--border-hi) transform rotate-45 -mt-1" aria-hidden="true" />
+          <div
+            className="absolute left-1/2 -translate-x-1/2 top-full w-2 h-2 bg-(--surface) border-r border-b border-(--border-hi) transform rotate-45 -mt-1"
+            aria-hidden="true"
+          />
         </div>
       )}
     </div>

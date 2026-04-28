@@ -331,7 +331,10 @@ export const EmployeeList: React.FC<EmployeeListProps> = ({
               {(searchQuery || statusFilter !== 'All') && (
                 <button
                   type="button"
-                  onClick={() => { setSearchQuery(''); setStatusFilter('All'); }}
+                  onClick={() => {
+                    setSearchQuery('');
+                    setStatusFilter('All');
+                  }}
                   className="inline-flex items-center gap-1.5 rounded-2xl border border-hi bg-[var(--surface-hi)] px-3 py-3 text-sm text-[var(--muted)] transition hover:text-[var(--text)]"
                   aria-label="Clear filters"
                 >

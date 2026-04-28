@@ -99,7 +99,12 @@ export default function TransactionHistory() {
           <Heading as="h1" size="lg" weight="bold" addlClassName="mb-2 tracking-tight">
             Transaction <span className="text-accent">History</span>
           </Heading>
-          <Text as="p" size="xs" weight="regular" addlClassName="text-muted font-mono tracking-widest uppercase">
+          <Text
+            as="p"
+            size="xs"
+            weight="regular"
+            addlClassName="text-muted font-mono tracking-widest uppercase"
+          >
             Unified classic + contract event timeline
           </Text>
         </div>
@@ -153,7 +158,9 @@ export default function TransactionHistory() {
                   id="search-filter"
                   fieldSize="md"
                   value={filters.search}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateFilter('search', e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    updateFilter('search', e.target.value)
+                  }
                   placeholder="Tx hash / actor..."
                   addlInputClassName="pl-10"
                 />
@@ -171,7 +178,9 @@ export default function TransactionHistory() {
                 id="status-filter"
                 fieldSize="md"
                 value={filters.status}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => updateFilter('status', e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                  updateFilter('status', e.target.value)
+                }
               >
                 <option value="">All Statuses</option>
                 <option value="confirmed">Confirmed</option>
@@ -191,7 +200,9 @@ export default function TransactionHistory() {
                 id="employee-filter"
                 fieldSize="md"
                 value={filters.employee}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateFilter('employee', e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  updateFilter('employee', e.target.value)
+                }
                 placeholder="Name or wallet..."
               />
             </div>
@@ -207,7 +218,9 @@ export default function TransactionHistory() {
                 id="asset-filter"
                 fieldSize="md"
                 value={filters.asset}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateFilter('asset', e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  updateFilter('asset', e.target.value)
+                }
                 placeholder="USDC, XLM..."
               />
             </div>
@@ -226,7 +239,9 @@ export default function TransactionHistory() {
                   fieldSize="md"
                   type="date"
                   value={filters.startDate}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateFilter('startDate', e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    updateFilter('startDate', e.target.value)
+                  }
                   addlInputClassName="pl-10"
                 />
               </div>
@@ -246,7 +261,9 @@ export default function TransactionHistory() {
                   fieldSize="md"
                   type="date"
                   value={filters.endDate}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateFilter('endDate', e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    updateFilter('endDate', e.target.value)
+                  }
                   addlInputClassName="pl-10"
                 />
               </div>
@@ -262,11 +279,7 @@ export default function TransactionHistory() {
               <span>
                 {error instanceof Error ? error.message : 'Failed to load transaction history'}
               </span>
-              <Button
-                size="sm"
-                variant="destructive"
-                onClick={() => retry()}
-              >
+              <Button size="sm" variant="destructive" onClick={() => retry()}>
                 Retry
               </Button>
             </div>

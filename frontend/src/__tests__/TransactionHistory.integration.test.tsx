@@ -67,7 +67,11 @@ vi.mock('../components/ConnectionStatus', () => ({
 
 vi.mock('@stellar/design-system', () => ({
   Button: ({ children, ...props }: any) => <button {...props}>{children}</button>,
-  Card: ({ children, addlClassName, ...props }: any) => <div className={addlClassName} {...props}>{children}</div>,
+  Card: ({ children, addlClassName, ...props }: any) => (
+    <div className={addlClassName} {...props}>
+      {children}
+    </div>
+  ),
   Heading: ({ children }: any) => <h2>{children}</h2>,
   Text: ({ children }: any) => <p>{children}</p>,
   Input: ({ id, value, onChange, placeholder }: any) => (
