@@ -1,8 +1,11 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Globe, Check } from 'lucide-react';
 
 export default function Settings() {
   const { t, i18n } = useTranslation();
+  const { theme, toggleTheme } = useTheme();
+  const [languageLoading, setLanguageLoading] = useState(false);
 
   const languages = [
     { code: 'en', name: t('settings.languageEnglish'), nativeName: 'English' },
@@ -23,6 +26,9 @@ export default function Settings() {
           <h1 className="text-3xl md:text-4xl font-black mb-2 tracking-tight mt-2">
             {t('settings.title')}
           </h1>
+          <p className="text-sm text-[var(--muted)]">
+            Manage your application preferences and account settings
+          </p>
         </div>
       </div>
 
@@ -91,6 +97,6 @@ export default function Settings() {
           </div>
         </div>
       </div>
-    </div>
+    </main>
   );
 }

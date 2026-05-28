@@ -1,41 +1,12 @@
-/**
- * FormField Component
- *
- * A reusable form field wrapper that provides consistent validation feedback,
- * error messages, and accessibility features across the application.
- *
- * Features:
- * - Red border on invalid state
- * - Error message display below input
- * - Accessibility support (aria-invalid, aria-describedby)
- * - Support for required field indicators
- * - Responsive design
- *
- * Issue #106: Improve Form Validation Feedback
- */
-
-import React from 'react';
+import React, { useId } from 'react';
 
 export interface FormFieldProps {
-  /** Unique identifier for the field */
   id: string;
-
-  /** Label text displayed above the input */
   label: string;
-
-  /** Whether the field is required */
   required?: boolean;
-
-  /** Error message to display (if any) */
   error?: string;
-
-  /** Help text displayed below the input (when no error) */
   helpText?: string;
-
-  /** The input element or component */
   children: React.ReactNode;
-
-  /** Additional CSS class for the wrapper */
   className?: string;
 }
 
@@ -49,31 +20,41 @@ export const FormField: React.FC<FormFieldProps> = ({
   className = '',
 }) => {
   const hasError = !!error;
-  const descriptionId = `${id}-description`;
+  const generatedId = useId();
+  const descriptionId = `${id}-description-${generatedId}`;
+  const errorId = `${id}-error-${generatedId}`;
 
   return (
     <div className={`flex flex-col gap-1.5 ${className}`}>
-      <label htmlFor={id} className="text-sm font-medium text-text">
+      <label htmlFor={id} className="text-sm font-medium text-[var(--text)]">
         {label}
         {required && (
-          <span className="text-danger ml-1" aria-label="required">
+          <span className="text-[var(--danger)] ml-1" aria-hidden="true">
             *
           </span>
         )}
+        {required && <span className="sr-only">(required)</span>}
       </label>
 
-      <div className={`relative transition-colors ${hasError ? 'border-danger' : 'border-border'}`}>
+      <div className="relative">
         {React.isValidElement(children)
-          ? // eslint-disable-next-line react-x/no-clone-element
-            React.cloneElement(children, {
+          ? React.cloneElement(children, {
               id,
-              'aria-invalid': hasError,
-              'aria-describedby': hasError || helpText ? descriptionId : undefined,
+              required,
+              'aria-required': required,
+              'aria-invalid': hasError || undefined,
+              'aria-describedby': error
+                ? errorId
+                : helpText
+                  ? descriptionId
+                  : undefined,
               className: [
                 typeof (children.props as Record<string, unknown>).className === 'string'
                   ? (children.props as Record<string, unknown>).className
                   : '',
-                hasError ? 'border-danger focus:border-danger focus:ring-danger/20' : '',
+                hasError
+                  ? '!border-[var(--danger)] focus:!border-[var(--danger)] focus:!ring-[var(--danger)]/20'
+                  : '',
               ]
                 .filter(Boolean)
                 .join(' '),
@@ -81,12 +62,20 @@ export const FormField: React.FC<FormFieldProps> = ({
           : children}
       </div>
 
-      {(error || helpText) && (
+      {error && (
         <p
-          id={descriptionId}
-          className={`text-xs ${hasError ? 'text-danger font-medium' : 'text-muted'}`}
+          id={errorId}
+          role="alert"
+          aria-live="assertive"
+          className="text-xs text-[var(--danger)] font-medium"
         >
-          {error || helpText}
+          {error}
+        </p>
+      )}
+
+      {helpText && !error && (
+        <p id={descriptionId} className="text-xs text-[var(--muted)]">
+          {helpText}
         </p>
       )}
     </div>
