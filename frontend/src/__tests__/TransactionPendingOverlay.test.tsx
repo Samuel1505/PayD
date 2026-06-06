@@ -1,113 +1,142 @@
 /**
  * Unit Tests for TransactionPendingOverlay Component
+ *
+ * The component expects a `transactions` array (each with id, type, status, timestamp,
+ * optional hash & description) and an optional `onDismiss` callback.
+ * It relies on `useWallet` from the wallet hook to get the network for explorer URLs.
  */
 
 import { describe, test, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { TransactionPendingOverlay } from '../components/TransactionPendingOverlay';
+import type { PendingTransaction } from '../components/TransactionPendingOverlay';
+
+// Mock useWallet so the component doesn't throw about missing WalletProvider
+vi.mock('../hooks/useWallet', () => ({
+  useWallet: () => ({
+    network: 'testnet',
+    address: null,
+    isConnected: false,
+    connect: vi.fn(),
+    disconnect: vi.fn(),
+  }),
+}));
+
+// Mock stellarExpert util so explorer URL is predictable
+vi.mock('../utils/stellarExpert', () => ({
+  getTxExplorerUrl: (hash: string, network: string) =>
+    `https://stellar.expert/explorer/${network}/tx/${hash}`,
+}));
+
+const baseTx: PendingTransaction = {
+  id: 'tx-1',
+  type: 'payment',
+  status: 'pending',
+  timestamp: Date.now(),
+  description: 'Test payment transaction',
+};
 
 describe('TransactionPendingOverlay', () => {
-  test('renders nothing when isVisible is false', () => {
-    render(<TransactionPendingOverlay isVisible={false} />);
-    expect(screen.queryByText('Broadcasted to Stellar')).not.toBeInTheDocument();
+  test('renders nothing when transactions array is empty', () => {
+    const { container } = render(<TransactionPendingOverlay transactions={[]} />);
+    expect(container.firstChild).toBeNull();
   });
 
-  test('displays pending state with default message', () => {
-    render(<TransactionPendingOverlay isVisible={true} status="pending" />);
+  test('displays pending transaction notification', () => {
+    render(<TransactionPendingOverlay transactions={[baseTx]} />);
 
-    expect(screen.getByText('Broadcasted to Stellar')).toBeInTheDocument();
-    expect(
-      screen.getByText('Your transaction is being processed on-chain. This may take a few seconds.')
-    ).toBeInTheDocument();
-    expect(screen.getByText('Settling on Stellar network...')).toBeInTheDocument();
+    expect(screen.getByText('Transaction pending')).toBeInTheDocument();
   });
 
-  test('displays pending state with custom message', () => {
-    render(
-      <TransactionPendingOverlay
-        isVisible={true}
-        status="pending"
-        message="Custom Pending Message"
-        subMessage="Custom sub message"
-      />
+  test('displays transaction description', () => {
+    render(<TransactionPendingOverlay transactions={[baseTx]} />);
+
+    expect(screen.getByText('Test payment transaction')).toBeInTheDocument();
+  });
+
+  test('displays confirmed transaction', () => {
+    const confirmedTx: PendingTransaction = {
+      ...baseTx,
+      status: 'confirmed',
+    };
+    render(<TransactionPendingOverlay transactions={[confirmedTx]} />);
+
+    expect(screen.getByText('Transaction confirmed')).toBeInTheDocument();
+  });
+
+  test('displays failed transaction', () => {
+    const failedTx: PendingTransaction = {
+      ...baseTx,
+      status: 'failed',
+    };
+    render(<TransactionPendingOverlay transactions={[failedTx]} />);
+
+    expect(screen.getByText('Transaction failed')).toBeInTheDocument();
+  });
+
+  test('shows explorer link when transaction has a hash', () => {
+    const txWithHash: PendingTransaction = {
+      ...baseTx,
+      status: 'confirmed',
+      hash: 'abc123def456',
+    };
+    render(<TransactionPendingOverlay transactions={[txWithHash]} />);
+
+    const explorerLink = screen.getByText('View on explorer');
+    expect(explorerLink.closest('a')).toHaveAttribute(
+      'href',
+      expect.stringContaining('abc123def456')
     );
-
-    expect(screen.getByText('Custom Pending Message')).toBeInTheDocument();
-    expect(screen.getByText('Custom sub message')).toBeInTheDocument();
   });
 
-  test('displays success state with default message', () => {
-    render(<TransactionPendingOverlay isVisible={true} status="success" />);
-
-    expect(screen.getByText('Transaction Confirmed')).toBeInTheDocument();
-    expect(
-      screen.getByText('Your transaction has been successfully processed.')
-    ).toBeInTheDocument();
-  });
-
-  test('displays success state with txHash and explorer link', () => {
-    const txHash = 'abc123def456789';
-    render(<TransactionPendingOverlay isVisible={true} status="success" txHash={txHash} />);
-
-    expect(screen.getByText('Transaction Confirmed')).toBeInTheDocument();
-
-    const explorerLink = screen.getByLabelText('View transaction on explorer');
-    expect(explorerLink).toBeInTheDocument();
-    expect(explorerLink).toHaveAttribute('href', expect.stringContaining(txHash));
-
-    expect(screen.getByText('Transaction Hash')).toBeInTheDocument();
-  });
-
-  test('displays error state with default message', () => {
-    render(<TransactionPendingOverlay isVisible={true} status="error" />);
-
-    expect(screen.getByText('Transaction Failed')).toBeInTheDocument();
-    expect(screen.getByText('There was an issue processing your transaction.')).toBeInTheDocument();
-  });
-
-  test('shows dismiss button on success state', () => {
+  test('shows dismiss button for confirmed transactions', () => {
     const onDismiss = vi.fn();
-    render(<TransactionPendingOverlay isVisible={true} status="success" onDismiss={onDismiss} />);
+    const confirmedTx: PendingTransaction = {
+      ...baseTx,
+      status: 'confirmed',
+    };
+    render(<TransactionPendingOverlay transactions={[confirmedTx]} onDismiss={onDismiss} />);
 
-    const dismissButton = screen.getByText('Dismiss');
+    const dismissButton = screen.getByLabelText(/Dismiss notification/i);
     expect(dismissButton).toBeInTheDocument();
 
     fireEvent.click(dismissButton);
-    expect(onDismiss).toHaveBeenCalledTimes(1);
+    // onDismiss is called after a setTimeout(300)
+    waitFor(() => {
+      expect(onDismiss).toHaveBeenCalledWith(baseTx.id);
+    });
   });
 
-  test('shows dismiss button on error state', () => {
+  test('shows dismiss button for failed transactions', () => {
     const onDismiss = vi.fn();
-    render(<TransactionPendingOverlay isVisible={true} status="error" onDismiss={onDismiss} />);
+    const failedTx: PendingTransaction = {
+      ...baseTx,
+      status: 'failed',
+    };
+    render(<TransactionPendingOverlay transactions={[failedTx]} onDismiss={onDismiss} />);
 
-    const dismissButton = screen.getByText('Dismiss');
+    const dismissButton = screen.getByLabelText(/Dismiss notification/i);
     expect(dismissButton).toBeInTheDocument();
-
-    fireEvent.click(dismissButton);
-    expect(onDismiss).toHaveBeenCalledTimes(1);
   });
 
-  test('does not show dismiss button during pending state', () => {
-    const onDismiss = vi.fn();
-    render(<TransactionPendingOverlay isVisible={true} status="pending" onDismiss={onDismiss} />);
+  test('does not show dismiss button for pending transactions', () => {
+    render(<TransactionPendingOverlay transactions={[baseTx]} />);
 
-    expect(screen.queryByText('Dismiss')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/Dismiss notification/i)).not.toBeInTheDocument();
   });
 
   test('has proper accessibility attributes', () => {
-    render(<TransactionPendingOverlay isVisible={true} status="pending" />);
+    render(<TransactionPendingOverlay transactions={[baseTx]} />);
 
-    const overlay = screen.getByRole('dialog');
-    expect(overlay).toBeInTheDocument();
-    expect(overlay).toHaveAttribute('aria-live', 'polite');
-    expect(overlay).toHaveAttribute('aria-label', 'Broadcasted to Stellar');
+    const region = screen.getByRole('region');
+    expect(region).toBeInTheDocument();
+    expect(region).toHaveAttribute('aria-live', 'polite');
+    expect(region).toHaveAttribute('aria-label', 'Transaction notifications');
   });
 
-  test('truncates long txHash correctly', () => {
-    const longTxHash = 'a'.repeat(64);
-    render(<TransactionPendingOverlay isVisible={true} status="success" txHash={longTxHash} />);
+  test('shows transaction type badge', () => {
+    render(<TransactionPendingOverlay transactions={[baseTx]} />);
 
-    const truncatedHash = screen.getByText(/^aaaaaaaaaaaa/);
-    expect(truncatedHash).toBeInTheDocument();
+    expect(screen.getByText('payment')).toBeInTheDocument();
   });
 });

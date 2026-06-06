@@ -46,7 +46,8 @@ describe('SocialIdentityManager', () => {
         onUnlinkProvider={() => {}}
       />
     );
-    expect(screen.getByText(/Connected/)).toBeInTheDocument();
+    // The component renders "Connected {date.toLocaleDateString()}"
+    expect(screen.getByText(/Connected\s+\d/)).toBeInTheDocument();
   });
 
   it('shows available providers to link', () => {

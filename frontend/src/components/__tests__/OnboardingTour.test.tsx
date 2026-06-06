@@ -12,12 +12,20 @@ vi.mock('react-i18next', () => ({
 
 // Mock react-joyride
 vi.mock('react-joyride', () => ({
-  default: ({ run, steps, callback }: { run: boolean; steps: unknown[]; callback: () => void }) => {
+  default: ({
+    run,
+    steps,
+    callback,
+  }: {
+    run: boolean;
+    steps: unknown[];
+    callback: (data: { status: string }) => void;
+  }) => {
     if (!run) return null;
     return (
       <div data-testid="joyride-mock">
         <div>Steps: {steps.length}</div>
-        <button onClick={callback}>Complete Tour</button>
+        <button onClick={() => callback({ status: 'finished' })}>Complete Tour</button>
       </div>
     );
   },

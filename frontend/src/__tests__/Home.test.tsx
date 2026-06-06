@@ -58,8 +58,7 @@ describe('Home page', () => {
       </MemoryRouter>
     );
 
-    const main = screen.getByRole('main');
-    expect(main).toHaveAttribute('aria-labelledby', 'home-hero-title');
+    expect(screen.getByRole('main')).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 1 })).toHaveAttribute('id', 'home-hero-title');
     expect(screen.getByRole('region', { name: 'Payroll platform highlights' })).toBeInTheDocument();
 

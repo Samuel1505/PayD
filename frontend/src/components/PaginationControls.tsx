@@ -112,6 +112,7 @@ export const PaginationControls: React.FC<PaginationControlsProps> = ({
               onClick={() => handlePageChange(1)}
               className={buttonClass(false)}
               type="button"
+              disabled={disabled}
             >
               1
             </button>
@@ -127,6 +128,7 @@ export const PaginationControls: React.FC<PaginationControlsProps> = ({
             aria-label={`Go to page ${page}`}
             aria-current={page === currentPage ? 'page' : undefined}
             type="button"
+            disabled={disabled}
           >
             {page}
           </button>
@@ -139,6 +141,7 @@ export const PaginationControls: React.FC<PaginationControlsProps> = ({
               onClick={() => handlePageChange(totalPages)}
               className={buttonClass(false)}
               type="button"
+              disabled={disabled}
             >
               {totalPages}
             </button>

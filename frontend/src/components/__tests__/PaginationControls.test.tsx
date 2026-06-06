@@ -13,9 +13,10 @@ describe('PaginationControls', () => {
 
   it('displays current page and total pages', () => {
     render(<PaginationControls currentPage={2} totalPages={5} onPageChange={() => {}} />);
-    expect(screen.getByText('2')).toBeInTheDocument();
-    expect(screen.getByText('Page')).toBeInTheDocument();
-    expect(screen.getByText('5')).toBeInTheDocument();
+    // The component renders "Page X of Y" with spans around the numbers
+    expect(screen.getByText(/Page/)).toBeInTheDocument();
+    expect(screen.getByText((_, el) => el?.textContent === '2' && el.tagName === 'SPAN')).toBeInTheDocument();
+    expect(screen.getByText((_, el) => el?.textContent === '5' && el.tagName === 'SPAN')).toBeInTheDocument();
   });
 
   it('calls onPageChange with correct page number', async () => {
@@ -90,6 +91,7 @@ describe('PaginationControls', () => {
       <PaginationControls currentPage={2} totalPages={5} onPageChange={() => {}} disabled={true} />
     );
     const buttons = screen.getAllByRole('button');
+    // All buttons should be disabled — the component disables via the disabled prop
     buttons.forEach((button) => {
       expect(button).toBeDisabled();
     });

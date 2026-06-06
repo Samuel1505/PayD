@@ -62,13 +62,13 @@ describe('ComponentErrorBoundary', () => {
 
     expect(screen.getByRole('alert')).toBeTruthy();
 
-    fireEvent.click(screen.getByRole('button', { name: /try again/i }));
-
     rerender(
       <ComponentErrorBoundary componentName="TestComponent">
         <SafeComponent />
       </ComponentErrorBoundary>
     );
+
+    fireEvent.click(screen.getByRole('button', { name: /try again/i }));
 
     expect(screen.queryByRole('alert')).toBeNull();
     expect(screen.getByText('All good')).toBeTruthy();

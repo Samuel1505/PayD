@@ -28,12 +28,16 @@ describe('OAuthCallbackHandler', () => {
   });
 
   it('shows loading state on initial render', () => {
+    // Provide a token and a non-resolving promise so the handler stays in the validating/loading view
+    window.location.search =
+      '?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U';
+
     render(
       <BrowserRouter>
-        <OAuthCallbackHandler onTokenReceived={async () => {}} />
+        <OAuthCallbackHandler onTokenReceived={async () => new Promise(() => {})} />
       </BrowserRouter>
     );
-    expect(screen.getByText('Signing you in')).toBeInTheDocument();
+    expect(screen.getByText('Verifying your identity')).toBeInTheDocument();
     expect(screen.getByText(/Please wait while we process/)).toBeInTheDocument();
   });
 
@@ -91,7 +95,7 @@ describe('OAuthCallbackHandler', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Authentication failed')).toBeInTheDocument();
-      expect(screen.getByText(/No authentication token received/)).toBeInTheDocument();
+      expect(screen.getAllByText(/No authentication token received/).length).toBeGreaterThan(0);
     });
   });
 
@@ -108,7 +112,7 @@ describe('OAuthCallbackHandler', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Authentication failed')).toBeInTheDocument();
-      expect(screen.getByText(/You denied access/)).toBeInTheDocument();
+      expect(screen.getAllByText(/You denied access/).length).toBeGreaterThan(0);
     });
   });
 

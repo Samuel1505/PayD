@@ -2,7 +2,6 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, expect, test, vi } from 'vitest';
 
 const mockChangeLanguage = vi.fn().mockResolvedValue(undefined);
-const mockToggleTheme = vi.fn();
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -23,13 +22,6 @@ vi.mock('react-i18next', () => ({
   }),
 }));
 
-vi.mock('../hooks/useTheme', () => ({
-  useTheme: () => ({
-    theme: 'dark',
-    toggleTheme: mockToggleTheme,
-  }),
-}));
-
 import Settings from '../pages/Settings';
 
 describe('Settings', () => {
@@ -39,70 +31,53 @@ describe('Settings', () => {
     expect(screen.getByRole('heading', { name: 'Settings', level: 1 })).toBeTruthy();
   });
 
-  test('renders language section with select', () => {
+  test('renders language section heading', () => {
     render(<Settings />);
 
     expect(screen.getByRole('heading', { name: 'Language', level: 2 })).toBeTruthy();
-    expect(screen.getByRole('combobox', { name: 'Language' })).toBeTruthy();
   });
 
-  test('renders language options', () => {
+  test('renders language options as buttons', () => {
     render(<Settings />);
 
-    expect(screen.getByRole('option', { name: 'English' })).toBeTruthy();
-    expect(screen.getByRole('option', { name: 'Español' })).toBeTruthy();
+    expect(screen.getAllByText('English').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Español').length).toBeGreaterThan(0);
   });
 
-  test('changes language on select change', () => {
+  test('changes language when a language button is clicked', () => {
     render(<Settings />);
 
-    const select = screen.getByRole('combobox', { name: 'Language' });
-    fireEvent.change(select, { target: { value: 'es' } });
+    const spanishButton = screen.getByRole('button', { name: /Select Español/i });
+    fireEvent.click(spanishButton);
 
     expect(mockChangeLanguage).toHaveBeenCalledWith('es');
   });
 
-  test('renders appearance section with theme toggle', () => {
+  test('shows current language indicator', () => {
     render(<Settings />);
 
-    expect(screen.getByRole('heading', { name: 'Appearance', level: 2 })).toBeTruthy();
-    expect(screen.getByRole('button', { name: /switch to light mode/i })).toBeTruthy();
+    // English is the current language
+    expect(screen.getByText(/Current Language/)).toBeTruthy();
   });
 
-  test('theme toggle button calls toggleTheme on click', () => {
+  test('renders language description text', () => {
     render(<Settings />);
 
-    const toggleButton = screen.getByRole('button', { name: /switch to light mode/i });
-    fireEvent.click(toggleButton);
-
-    expect(mockToggleTheme).toHaveBeenCalled();
+    expect(screen.getByText('Choose your preferred language')).toBeTruthy();
   });
 
-  test('theme toggle shows pressed state for dark mode', () => {
+  test('renders more settings placeholder', () => {
     render(<Settings />);
 
-    const toggleButton = screen.getByRole('button', { name: /switch to light mode/i });
-    expect(toggleButton.getAttribute('aria-pressed')).toBe('true');
+    expect(screen.getByText('More settings coming soon')).toBeTruthy();
   });
 
-  test('renders notifications section', () => {
+  test('language buttons are interactive', () => {
     render(<Settings />);
 
-    expect(screen.getByRole('heading', { name: 'Notifications', level: 2 })).toBeTruthy();
-  });
+    const englishButton = screen.getByRole('button', { name: /Select English/i });
+    fireEvent.click(englishButton);
 
-  test('all sections are properly labelled', () => {
-    render(<Settings />);
-
-    expect(screen.getByRole('region', { name: 'Language' })).toBeTruthy();
-    expect(screen.getByRole('region', { name: 'Appearance' })).toBeTruthy();
-    expect(screen.getByRole('region', { name: 'Notifications' })).toBeTruthy();
-  });
-
-  test('language select is enabled by default', () => {
-    render(<Settings />);
-
-    const select = screen.getByRole('combobox', { name: 'Language' });
-    expect((select as HTMLSelectElement).disabled).toBe(false);
+    expect(mockChangeLanguage).toHaveBeenCalledWith('en');
   });
 });

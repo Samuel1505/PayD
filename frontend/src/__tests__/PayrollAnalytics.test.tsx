@@ -112,14 +112,25 @@ describe('PayrollAnalytics', () => {
     });
   });
 
-  it('renders chart type toggle buttons', () => {
+  it('renders chart type toggle buttons', async () => {
     renderComponent();
-    expect(screen.getByLabelText('Line chart')).toBeInTheDocument();
-    expect(screen.getByLabelText('Area chart')).toBeInTheDocument();
+    await waitFor(
+      () => {
+        expect(screen.getByLabelText('Line chart')).toBeInTheDocument();
+        expect(screen.getByLabelText('Area chart')).toBeInTheDocument();
+      },
+      { timeout: 3000 }
+    );
   });
 
   it('toggles the trend chart type to area', async () => {
     renderComponent();
+    await waitFor(
+      () => {
+        expect(screen.getByLabelText('Area chart')).toBeInTheDocument();
+      },
+      { timeout: 3000 }
+    );
     const areaBtn = screen.getByLabelText('Area chart');
     fireEvent.click(areaBtn);
     await waitFor(() => {
@@ -145,7 +156,11 @@ describe('PayrollAnalytics', () => {
 
   it('renders the export CSV button', async () => {
     renderComponent();
-    await waitFor(() => screen.getByTitle('Export CSV'), { timeout: 3000 });
-    expect(screen.getByTitle('Export CSV')).toBeInTheDocument();
+    await waitFor(
+      () => {
+        expect(screen.getByLabelText('Export trends as CSV')).toBeInTheDocument();
+      },
+      { timeout: 3000 }
+    );
   });
 });

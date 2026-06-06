@@ -53,9 +53,10 @@ describe('Timeline', () => {
 
   it('renders in horizontal layout when specified', () => {
     const { container } = render(<Timeline items={mockItems} direction="horizontal" />);
-    const timelineNav = container.querySelector('div');
-    expect(timelineNav).toBeInTheDocument();
-    expect(timelineNav).toHaveClass('flex');
+    // The outer div has `w-full`, the inner div has `flex items-start gap-4 ...`
+    const flexContainer = container.querySelector('.flex.items-start');
+    expect(flexContainer).toBeInTheDocument();
+    expect(flexContainer).toHaveClass('flex');
   });
 
   it('applies custom className', () => {
