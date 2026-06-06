@@ -15,8 +15,12 @@ describe('PaginationControls', () => {
     render(<PaginationControls currentPage={2} totalPages={5} onPageChange={() => {}} />);
     // The component renders "Page X of Y" with spans around the numbers
     expect(screen.getByText(/Page/)).toBeInTheDocument();
-    expect(screen.getByText((_, el) => el?.textContent === '2' && el.tagName === 'SPAN')).toBeInTheDocument();
-    expect(screen.getByText((_, el) => el?.textContent === '5' && el.tagName === 'SPAN')).toBeInTheDocument();
+    expect(
+      screen.getByText((_, el) => el?.textContent === '2' && el.tagName === 'SPAN')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText((_, el) => el?.textContent === '5' && el.tagName === 'SPAN')
+    ).toBeInTheDocument();
   });
 
   it('calls onPageChange with correct page number', async () => {
