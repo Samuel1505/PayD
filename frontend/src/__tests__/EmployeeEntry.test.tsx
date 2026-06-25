@@ -124,7 +124,7 @@ vi.mock('react-i18next', () => ({
   }),
 }));
 
-import EmployeeEntry from '../pages/EmployeeEntry';
+import EmployeeEntry, { validateEmailDomain } from '../pages/EmployeeEntry';
 
 describe('EmployeeEntry', () => {
   it('creates an employee, generates a wallet, and returns the employee to the directory', () => {
@@ -159,5 +159,47 @@ describe('EmployeeEntry', () => {
     fireEvent.click(screen.getByRole('button', { name: /view employee directory/i }));
 
     expect(screen.getByTestId('employee-list')).toHaveTextContent('Jane Smith');
+  });
+
+  it('accepts any domain when ALLOWED_EMAIL_DOMAINS is empty', () => {
+    render(<EmployeeEntry />);
+    fireEvent.click(screen.getByRole('button', { name: /add employee/i }));
+    fireEvent.change(screen.getByLabelText('Full Name'), {
+      target: { value: 'Test User' },
+    });
+    fireEvent.change(screen.getByLabelText('Work Email'), {
+      target: { value: 'test@gmail.com' },
+    });
+    fireEvent.change(screen.getByLabelText('Role / Team'), {
+      target: { value: 'Engineer' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /create employee record/i }));
+    expect(notifySuccessMock).toHaveBeenCalled();
+  });
+});
+
+describe('validateEmailDomain', () => {
+  it('returns null for unrestricted domain when allowed list is empty', () => {
+    expect(validateEmailDomain('test@gmail.com', [])).toBeNull();
+  });
+
+  it('returns null for email matching an allowed domain', () => {
+    const allowed = ['company.com', 'org.co'];
+    expect(validateEmailDomain('user@company.com', allowed)).toBeNull();
+  });
+
+  it('returns error for email not matching any allowed domain', () => {
+    const allowed = ['company.com'];
+    const result = validateEmailDomain('user@gmail.com', allowed);
+    expect(result).toContain('allowed domain');
+    expect(result).toContain('company.com');
+  });
+
+  it('returns error for invalid email format', () => {
+    expect(validateEmailDomain('not-an-email', ['company.com'])).toBe('Enter a valid email address');
+  });
+
+  it('returns error for empty email', () => {
+    expect(validateEmailDomain('', ['company.com'])).toBe('Work email is required');
   });
 });

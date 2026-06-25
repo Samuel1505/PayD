@@ -13,6 +13,7 @@ import { AutosaveIndicator } from '../components/AutosaveIndicator';
 import { BulkPaymentStatusTracker } from '../components/BulkPaymentStatusTracker';
 import { CountdownTimer } from '../components/CountdownTimer';
 import { FormField } from '../components/FormField';
+import ComponentErrorBoundary from '../components/ComponentErrorBoundary';
 import { PayrollScheduleForm } from '../components/payroll/PayrollScheduleForm';
 import { TransactionSimulationPanel } from '../components/TransactionSimulationPanel';
 import { useAutosave } from '../hooks/useAutosave';
@@ -430,7 +431,9 @@ export default function PayrollScheduler() {
           >
             &larr; Back to Dashboard
           </button>
-          <PayrollScheduleForm />
+          <ComponentErrorBoundary componentName="PayrollScheduleForm">
+            <PayrollScheduleForm />
+          </ComponentErrorBoundary>
         </div>
       ) : (
         <div className="w-full grid grid-cols-1 lg:grid-cols-5 gap-8 mb-12">

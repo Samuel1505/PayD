@@ -221,6 +221,12 @@
     "tourCompleted": "¡Recorrido completado!",
     "tourCompletedMessage": "Estás listo para comenzar a gestionar la nómina con PayD."
   },
+  "assets": {
+    "USDC": "USD Coin (USDC)",
+    "EURC": "Euro Coin (EURC)",
+    "XLM": "Stellar Lumens (XLM)",
+    "ORGUSD": "Org USD (ORGUSD)"
+  },
   "revenueSplitDashboard": {
     "titlePrefix": "División de Ingresos",
     "titleHighlight": "Panel",

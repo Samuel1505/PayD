@@ -53,6 +53,22 @@ interface EmployeeNotificationState {
   employeeCurrency?: string;
 }
 
+// Configure allowed email domains for org-level restriction.
+// Set to an empty array to allow any domain (default).
+export const ALLOWED_EMAIL_DOMAINS: string[] = [];
+
+export function validateEmailDomain(email: string, allowedDomains: string[]): string | null {
+  if (!email.trim()) return 'Work email is required';
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) return 'Enter a valid email address';
+  if (allowedDomains.length > 0) {
+    const domain = email.trim().split('@')[1]?.toLowerCase();
+    if (!domain || !allowedDomains.includes(domain)) {
+      return `Email must be from an allowed domain: ${allowedDomains.join(', ')}`;
+    }
+  }
+  return null;
+}
+
 const initialFormState: EmployeeFormState = {
   fullName: '',
   workEmail: '',
@@ -158,10 +174,9 @@ export default function EmployeeEntry() {
       errors.fullName = 'Full name is required';
     }
 
-    if (!formData.workEmail.trim()) {
-      errors.workEmail = 'Work email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.workEmail.trim())) {
-      errors.workEmail = 'Enter a valid email address';
+    const emailError = validateEmailDomain(formData.workEmail, ALLOWED_EMAIL_DOMAINS);
+    if (emailError) {
+      errors.workEmail = emailError;
     }
 
     if (!formData.role.trim()) {

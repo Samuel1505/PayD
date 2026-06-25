@@ -1,38 +1,48 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { StrKey } from '@stellar/stellar-sdk';
 import { CSVUploader, CSVRow } from '../components/CSVUploader';
 import { Button, Card } from '@stellar/design-system';
 import { IssuerMultisigBanner } from '../components/IssuerMultisigBanner';
+import { SUPPORTED_ASSETS } from '../config/assets';
 
 const REQUIRED_COLUMNS = ['name', 'wallet_address', 'amount', 'currency'];
 
-const validators: Record<string, (value: string) => string | null> = {
-  wallet_address: (value) => {
-    if (!StrKey.isValidEd25519PublicKey(value)) {
-      return 'Invalid Stellar wallet address';
-    }
-    return null;
-  },
-  amount: (value) => {
-    const num = parseFloat(value);
-    if (isNaN(num) || num <= 0) {
-      return 'Amount must be a positive number';
-    }
-    return null;
-  },
-  currency: (value) => {
-    const supported = ['XLM', 'USDC', 'EURC'];
-    if (!supported.includes(value.toUpperCase())) {
-      return `Currency must be one of: ${supported.join(', ')}`;
-    }
-    return null;
-  },
-};
+const SUPPORTED_CURRENCY_CODES = SUPPORTED_ASSETS.map((a) => a.code);
 
 export default function BulkPayrollUpload() {
+  const { t } = useTranslation();
   const [parsedRows, setParsedRows] = useState<CSVRow[]>([]);
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const validators = useMemo<Record<string, (value: string) => string | null>>(
+    () => ({
+      wallet_address: (value) => {
+        if (!StrKey.isValidEd25519PublicKey(value)) {
+          return 'Invalid Stellar wallet address';
+        }
+        return null;
+      },
+      amount: (value) => {
+        const num = parseFloat(value);
+        if (isNaN(num) || num <= 0) {
+          return 'Amount must be a positive number';
+        }
+        return null;
+      },
+      currency: (value) => {
+        if (!SUPPORTED_CURRENCY_CODES.includes(value.toUpperCase())) {
+          const supportedLabels = SUPPORTED_CURRENCY_CODES.map(
+            (code) => `${code} (${t(`assets.${code}`, code)})`
+          ).join(', ');
+          return `Currency must be one of: ${supportedLabels}`;
+        }
+        return null;
+      },
+    }),
+    [t]
+  );
 
   const validRows = parsedRows.filter((r) => r.isValid);
   const invalidRows = parsedRows.filter((r) => !r.isValid);
