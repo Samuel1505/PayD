@@ -142,7 +142,12 @@
     "languageLabel": "Language",
     "languageDescription": "Choose your preferred language for the dashboard.",
     "languageEnglish": "English",
-    "languageSpanish": "Spanish"
+    "languageSpanish": "Spanish",
+    "languageSaved": "Language updated to {{language}}",
+    "themeLabel": "Appearance",
+    "themeDescription": "Choose your preferred color scheme for the dashboard.",
+    "themeDark": "Dark",
+    "themeLight": "Light"
   },
   "employeeProfile": {
     "title": "Employee Profile",
