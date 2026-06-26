@@ -288,3 +288,25 @@ fn ed25519_signer_rejects_secp256k1_proof() {
         assert_eq!(result, Err(WalletError::UnknownSigner));
     });
 }
+
+#[test]
+fn secp256k1_signer_rejects_ed25519_proof() {
+    // Register a secp256k1 signer, then submit an ed25519 proof — type mismatch
+    // means signer_matches_proof always returns false → UnknownSigner.
+    let env = Env::default();
+
+    let (_ed_signer_key, ed_signing_key) = make_ed25519_signer(&env, [20u8; 32]);
+    let (secp_signer_key, _secp_signing_key) = make_secp256k1_signer(&env, [21u8; 32]);
+    let signers = Vec::from_array(&env, [secp_signer_key]);
+    let (contract_id, _client) = register_wallet(&env, signers, 1);
+
+    let raw = Bytes::from_slice(&env, &[43u8; 32]);
+    let payload = env.crypto().sha256(&raw);
+    // Submit an ed25519 proof to a wallet that only has a secp256k1 signer
+    let proof = Vec::from_array(&env, [sign_ed25519(&payload, &ed_signing_key, &env)]);
+
+    env.as_contract(&contract_id, || {
+        let result = SmartWalletContract::verify_signatures_inner(&env, &payload, &proof);
+        assert_eq!(result, Err(WalletError::UnknownSigner));
+    });
+}
